@@ -1,0 +1,24 @@
+apply plugin: 'kotlin'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+group 'de.materna.fegen.web'
+version "$fegen_web_version${fegen_snapshot ? '-SNAPSHOT' : ''}"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly gradleApi()
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation project(':fegen-core')
+}
+
+kotlinArtifact {
+    artifactProject = project
+    artifactId = "fegen-web"
+    name = "FeGen Web"
+    description = "Common code used by FeGen plugins generating Typescript code"
+}

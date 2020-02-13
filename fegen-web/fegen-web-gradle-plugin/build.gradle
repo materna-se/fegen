@@ -1,0 +1,27 @@
+apply plugin: 'kotlin'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+group 'com.github.materna-se.fegen'
+version "$fegen_web_gradle_version${fegen_snapshot ? '-SNAPSHOT' : ''}"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly gradleApi()
+    implementation localGroovy()
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation project(':fegen-core')
+    implementation project(':fegen-core:fegen-gradle')
+    implementation project(':fegen-web')
+}
+
+kotlinArtifact {
+    artifactProject = project
+    artifactId = "fegen-web-gradle-plugin"
+    name = "FeGen web Gradle Plugin"
+    description = "Gradle plugin that generates Typescript code from a Spring Data application to access its REST API"
+}

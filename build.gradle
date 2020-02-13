@@ -1,0 +1,187 @@
+import de.materna.fegen.build.ArtifactData
+import de.materna.fegen.build.license.LicensePlugin
+import groovy.swing.SwingBuilder
+
+buildscript {
+    ext {
+        kotlin_version = '1.3.61'
+
+        fegen_snapshot = false
+        fegen_core_version = '1.0-RC1'
+        fegen_gradle_version = '1.0-RC1'
+        fegen_maven_version = '1.0-RC1'
+        fegen_kotlin_version = '1.0-RC1'
+        fegen_kotlin_gradle_version = '1.0-RC1'
+        fegen_kotlin_interservice_runtime_version = '1.0-RC1'
+        fegen_kotlin_maven_version = '1.0-RC1'
+        fegen_web_version = '1.0-RC1'
+        fegen_web_gradle_version = '1.0-RC1'
+        fegen_web_maven_version = '1.0-RC1'
+        // Version of web runtime needs to be set in package.json
+
+        kotlinArtifact = { closure ->
+            def data = new ArtifactData()
+            closure.delegate = data
+            closure()
+
+            data.artifactProject.compileKotlin {
+                kotlinOptions.jvmTarget = "1.8"
+            }
+            data.artifactProject.compileTestKotlin {
+                kotlinOptions.jvmTarget = "1.8"
+            }
+            def javaExt = data.artifactProject.extensions.getByName("java")
+            javaExt.withJavadocJar()
+            javaExt.withSourcesJar()
+            data.artifactProject.publishing {
+                publications {
+                    mavenKotlin(MavenPublication) {
+                        artifactId = data.artifactId
+                        from data.artifactProject.components.java
+                        pom {
+                            name = data.name
+                            description = data.description
+                            url = "https://github.com/materna-se/fegen"
+                            license {
+                                name = "MIT"
+                                url = "http://www.opensource.org/licenses/mit-license.php"
+                            }
+                            developers {
+                                developer {
+                                    name = "Johannes Neubauer"
+                                    email = "johannes.neubauer@materna.de"
+                                    organization = "Materna Information & Communications SE"
+                                    organizationUrl = "https://www.materna.de"
+                                }
+                            }
+                        }
+                    }
+                }
+                repositories {
+                    maven {
+                        def releasesRepoUrl = "$buildDir/repos/releases"
+                        def snapshotRepoUrl = "$buildDir/repos/snapshots"
+                        url = project.fegen_snapshot ? snapshotRepoUrl : releasesRepoUrl
+                    }
+                }
+            }
+            if (!data.artifactProject.fegen_snapshot) {
+                data.artifactProject.signing {
+                    sign data.artifactProject.publishing.publications.mavenKotlin
+                }
+            }
+        }
+
+        // Use maven to generate a plugin.xml when publishing a plugin
+        mavenPlugin = { Project project ->
+            project.tasks.create("addPluginXml", Exec.class) {
+                // Task depends on the built kotlin class files
+                mustRunAfter "compileKotlin"
+
+                // let the following task generate a pom.xml
+                dependsOn "generatePomFileForMavenKotlinPublication"
+
+                // Temporarily copy the pom.xml to the project dir to make the project look like a maven project
+                doFirst {
+                    def pomSource = new File("${project.buildDir}/publications/mavenKotlin/pom-default.xml")
+                    def pomParts = pomSource.text.split("</artifactId>")
+                    def pomDestination = new File("${project.projectDir}/pom.xml")
+                    pomDestination.withWriter { writer ->
+                        writer.append pomParts.head() + "</artifactId>\n"
+                        writer.append "  <packaging>maven-plugin</packaging>\n"
+                        // This later tells maven where to read class files and where to put the plugin.xml
+                        writer.append "  <build>\n"
+                        writer.append "    <directory>${project.projectDir}</directory>\n"
+                        writer.append "    <outputDirectory>${project.buildDir}/classes/kotlin/main</outputDirectory>\n"
+                        writer.append "  </build>\n"
+                        writer.append pomParts.tail().join("</artifactId>")
+                    }
+                    pomDestination.deleteOnExit()
+                }
+
+                def isWindows = System.lineSeparator() != "/"
+                def mvnw = isWindows ? "mvnw.cmd" : "mvnw"
+                // Let maven generate the plugin.xml
+                commandLine "${project.projectDir}/$mvnw", "-e", "-B", "org.apache.maven.plugins:maven-plugin-plugin:3.6.0:descriptor"
+            }
+
+            // plugin.xml must be added to compiled files before jar is built
+            project.assemble {
+                mustRunAfter "addPluginXml"
+            }
+
+            // Task must run when any publish tasks should be run
+            project.tasks.each { task ->
+                if (task instanceof PublishToMavenLocal || task instanceof PublishToMavenRepository) {
+                    task.dependsOn "addPluginXml"
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+        classpath "com.github.node-gradle:gradle-node-plugin:2.0.0"
+    }
+}
+
+apply plugin: 'base'
+apply plugin: LicensePlugin
+
+license {
+    includes = [
+            "**/src/main/kotlin/**/*.kt",
+            "**/src/test/kotlin/**/*.kt",
+            "**/*.swift",
+            "fegen-kotlin/fegen-kotlin-android-runtime/**/*.kt",
+            "fegen-web/fegen-web-runtime/src/**/*.ts",
+            "fegen-examples/fegen-example-gradle/web-api/src/tests/**/*.ts",
+            "fegen-examples/fegen-example-gradle/web-frontend/src/**/*.ts",
+            "fegen-examples/fegen-example-gradle/web-frontend/src/**/*.tsx"
+    ]
+    excludes = [
+            "fegen-examples/fegen-example-gradle/kotlin-api/src/main/kotlin/**/api/*.kt",
+            "fegen-examples/fegen-example-gradle/web-frontend/src/*.ts",
+            "fegen-examples/fegen-example-gradle/web-frontend/src/*.tsx",
+            "fegen-examples/fegen-example-maven/kotlin-api/src/main/kotlin/**/api/*.kt"
+    ]
+}
+
+gradle.taskGraph.whenReady { taskGraph ->
+    if (taskGraph.allTasks.any { it instanceof Sign }) {
+        if (!project.hasProperty("signing.keyId") || !project.hasProperty("signing.secretKeyRingFile")) {
+            logger.error("Please add the following properties in your \"\$HOME/.gradle/gradle.properties\" file:")
+            logger.error("signing.keyId=0123ABCD")
+            logger.error("signing.secretKeyRingFile=path/to/secring.gpg")
+            throw new GradleException("No key specified although artifacts must be signed")
+        }
+        def id = project.getProperties().get("signing.keyId")
+        if (!project.hasProperty("signing.password")) {
+            def password = ""
+            new SwingBuilder().edt {
+                dialog(modal: true, title: "Gradle artifact signing", alwaysOnTop: true, resizable: true, locationRelativeTo: null, pack: true, show: true) {
+                    vbox {
+                        label(text: "To publish artifacts to maven central they must be signed")
+                        label(text: "Please enter the password for the key with ID $id")
+                        input = passwordField()
+                        button(defaultButton: true, text: "OK", actionPerformed: {
+                            password = new String(input.password)
+                            dispose()
+                        })
+                    }
+                }
+            }
+            if (password.isEmpty()) {
+                throw new GradleException("No password specified")
+            }
+            allprojects {
+                ext."signing.password" = password
+            }
+        }
+    }
+}

@@ -1,0 +1,31 @@
+apply plugin: 'kotlin'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+group 'com.github.materna-se.fegen'
+version "$fegen_web_maven_version${fegen_snapshot ? '-SNAPSHOT' : ''}"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+
+    implementation 'org.apache.maven:maven-core:3.6.3'
+    implementation 'org.apache.maven:maven-plugin-api:3.6.3'
+    implementation 'org.apache.maven.plugin-tools:maven-plugin-annotations:3.6.0'
+
+    implementation project(':fegen-core')
+    implementation project(':fegen-core:fegen-maven')
+    implementation project(':fegen-web')
+}
+
+kotlinArtifact {
+    artifactProject = project
+    artifactId = "fegen-web-maven-plugin"
+    name = "FeGen web Maven Plugin"
+    description = "Maven plugin that generates Typescript code from a Spring Data application to access its REST API"
+}
+
+mavenPlugin(project)

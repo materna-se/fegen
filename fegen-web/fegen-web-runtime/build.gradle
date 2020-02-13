@@ -1,0 +1,15 @@
+apply plugin: 'base'
+apply plugin: 'com.github.node-gradle.node'
+
+npmInstall {
+    inputs.file 'package.json'
+    outputs.file 'package-lock.json'
+}
+
+npm_run_build {
+    dependsOn npmInstall
+}
+
+assemble {
+    dependsOn npm_run_build
+}

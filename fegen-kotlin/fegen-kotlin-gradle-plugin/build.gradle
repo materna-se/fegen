@@ -1,0 +1,27 @@
+apply plugin: 'kotlin'
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+group 'com.github.materna-se.fegen'
+version "$fegen_kotlin_gradle_version${fegen_snapshot ? '-SNAPSHOT' : ''}"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    compileOnly gradleApi()
+    implementation localGroovy()
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation project(':fegen-core')
+    implementation project(':fegen-core:fegen-gradle')
+    implementation project(':fegen-kotlin')
+}
+
+kotlinArtifact {
+    artifactProject = project
+    artifactId = "fegen-kotlin-gradle-plugin"
+    name = "FeGen Kotlin Gradle Plugin"
+    description = "Gradle plugin that generates Kotlin code from a Spring Data application to access its REST API"
+}

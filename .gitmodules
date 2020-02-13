@@ -1,0 +1,3 @@
+[submodule "fegen-examples"]
+	path = fegen-examples
+	url = https://github.com/materna-se/fegen-examples
