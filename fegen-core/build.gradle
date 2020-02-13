@@ -34,6 +34,6 @@ dependencies {
 kotlinArtifact {
     artifactProject = project
     artifactId = "fegen-core"
-    name = "FeGen core"
-    description = "Common code used by multiple FeGen plugins"
+    artifactName = "FeGen core"
+    artifactDescription = "Common code used by multiple FeGen plugins"
 }

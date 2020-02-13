@@ -19,6 +19,6 @@ dependencies {
 kotlinArtifact {
     artifactProject = project
     artifactId = "fegen-kotlin"
-    name = "FeGen Kotlin"
-    description = "Common code used by FeGen plugins generating Kotlin code"
+    artifactName = "FeGen Kotlin"
+    artifactDescription = "Common code used by FeGen plugins generating Kotlin code"
 }

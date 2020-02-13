@@ -20,6 +20,6 @@ dependencies {
 kotlinArtifact {
     artifactProject = project
     artifactId = "fegen-maven"
-    name = "FeGen Maven"
-    description = "Common code used by FeGen maven plugins"
+    artifactName = "FeGen Maven"
+    artifactDescription = "Common code used by FeGen maven plugins"
 }

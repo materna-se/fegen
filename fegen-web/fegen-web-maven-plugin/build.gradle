@@ -6,6 +6,7 @@ group 'com.github.materna-se.fegen'
 version "$fegen_web_maven_version${fegen_snapshot ? '-SNAPSHOT' : ''}"
 
 repositories {
+    mavenLocal()
     mavenCentral()
 }
 
@@ -24,8 +25,8 @@ dependencies {
 kotlinArtifact {
     artifactProject = project
     artifactId = "fegen-web-maven-plugin"
-    name = "FeGen web Maven Plugin"
-    description = "Maven plugin that generates Typescript code from a Spring Data application to access its REST API"
+    artifactName = "FeGen web Maven Plugin"
+    artifactDescription = "Maven plugin that generates Typescript code from a Spring Data application to access its REST API"
 }
 
 mavenPlugin(project)

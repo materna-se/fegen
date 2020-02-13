@@ -19,6 +19,26 @@ buildscript {
         fegen_web_maven_version = '1.0-RC1'
         // Version of web runtime needs to be set in package.json
 
+        queryPassword = { title, text ->
+            def result = ""
+            new SwingBuilder().edt {
+                dialog(modal: true, title: title, alwaysOnTop: true, resizable: true, locationRelativeTo: null, pack: true, show: true) {
+                    vbox {
+                        label(text: text)
+                        input = passwordField()
+                        button(defaultButton: true, text: "OK", actionPerformed: {
+                            result = new String(input.password)
+                            dispose()
+                        })
+                    }
+                }
+            }
+            if (result.isEmpty()) {
+                throw new GradleException("No password specified")
+            }
+            return result
+        }
+
         kotlinArtifact = { closure ->
             def data = new ArtifactData()
             closure.delegate = data
@@ -39,8 +59,8 @@ buildscript {
                         artifactId = data.artifactId
                         from data.artifactProject.components.java
                         pom {
-                            name = data.name
-                            description = data.description
+                            name = data.artifactName
+                            description = data.artifactDescription
                             url = "https://github.com/materna-se/fegen"
                             license {
                                 name = "MIT"
@@ -54,14 +74,24 @@ buildscript {
                                     organizationUrl = "https://www.materna.de"
                                 }
                             }
+                            scm {
+                                connection = "scm:git:git://github.com/materna-se/fegen.git"
+                                developerConnection = "scm:git:git://github.com/materna-se/fegen.git"
+                                url = "https://github.com/materna-se/fegen/tree/master"
+                            }
                         }
                     }
                 }
                 repositories {
                     maven {
-                        def releasesRepoUrl = "$buildDir/repos/releases"
-                        def snapshotRepoUrl = "$buildDir/repos/snapshots"
-                        url = project.fegen_snapshot ? snapshotRepoUrl : releasesRepoUrl
+                        def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+                        def snapshotRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots"
+                        url = data.artifactProject.fegen_snapshot ? snapshotRepoUrl : releasesRepoUrl
+                        credentials {
+                            // The username should be stored in "$HOME/.gradle/gradle.properties"
+                            username = project.ext.get("mavenCentral.username")
+                            password = project.ext.getProperty("mavenCentral.password")
+                        }
                     }
                 }
             }
@@ -162,23 +192,7 @@ gradle.taskGraph.whenReady { taskGraph ->
         }
         def id = project.getProperties().get("signing.keyId")
         if (!project.hasProperty("signing.password")) {
-            def password = ""
-            new SwingBuilder().edt {
-                dialog(modal: true, title: "Gradle artifact signing", alwaysOnTop: true, resizable: true, locationRelativeTo: null, pack: true, show: true) {
-                    vbox {
-                        label(text: "To publish artifacts to maven central they must be signed")
-                        label(text: "Please enter the password for the key with ID $id")
-                        input = passwordField()
-                        button(defaultButton: true, text: "OK", actionPerformed: {
-                            password = new String(input.password)
-                            dispose()
-                        })
-                    }
-                }
-            }
-            if (password.isEmpty()) {
-                throw new GradleException("No password specified")
-            }
+            def password = queryPassword("Gradle artifact signing", "To publish artifacts they must be signed\nPlease enter the password for the key with ID $id")
             allprojects {
                 ext."signing.password" = password
             }
