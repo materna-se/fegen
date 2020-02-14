@@ -192,7 +192,7 @@ gradle.taskGraph.whenReady { taskGraph ->
         }
         def id = project.getProperties().get("signing.keyId")
         if (!project.hasProperty("signing.password")) {
-            def password = queryPassword("Gradle artifact signing", "To publish artifacts they must be signed\nPlease enter the password for the key with ID $id")
+            def password = queryPassword("Gradle artifact signing", "To publish artifacts they must be signed. Please enter the password for the key with ID $id")
             allprojects {
                 ext."signing.password" = password
             }

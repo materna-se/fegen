@@ -75,7 +75,9 @@ val ResolvedMember<Field>.explicitOptional: Boolean
     get() = hasAnnotation(Nullable::class.java) || hasAnnotation(javax.annotation.Nullable::class.java)
 
 val ResolvedMember<Field>.required: Boolean
-    get() = hasManyToOneRequiredAnnotation ||
+    get() = hasAnnotation(OneToMany::class.java) ||
+            hasAnnotation(ManyToMany::class.java) ||
+            hasManyToOneRequiredAnnotation ||
             hasOneToOneRequiredAnnotation ||
             hasColumnRequiredAnnotation ||
             rawMember.type.isPrimitive ||
@@ -165,9 +167,7 @@ val Class<*>.isSearchController
 val Method.searchTypeName
     get() = if (declaringClass.isSearchController) {
         declaringClass.getAnnotation(RequestMapping::class.java)?.run {
-            (value.firstOrNull() ?: path.firstOrNull())?.let {
-                it.substringBefore("/search")
-            }
+            (value.firstOrNull() ?: path.firstOrNull())?.substringBefore("/search")
         }?.capitalize()
     } else {
         null
