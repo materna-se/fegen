@@ -7,16 +7,16 @@ buildscript {
         kotlin_version = '1.3.61'
 
         fegen_snapshot = false
-        fegen_core_version = '1.0-RC1'
-        fegen_gradle_version = '1.0-RC1'
-        fegen_maven_version = '1.0-RC1'
-        fegen_kotlin_version = '1.0-RC1'
-        fegen_kotlin_gradle_version = '1.0-RC1'
-        fegen_kotlin_interservice_runtime_version = '1.0-RC1'
-        fegen_kotlin_maven_version = '1.0-RC1'
-        fegen_web_version = '1.0-RC1'
-        fegen_web_gradle_version = '1.0-RC1'
-        fegen_web_maven_version = '1.0-RC1'
+        fegen_core_version = '1.0-RC2'
+        fegen_gradle_version = '1.0-RC2'
+        fegen_maven_version = '1.0-RC2'
+        fegen_kotlin_version = '1.0-RC2'
+        fegen_kotlin_gradle_version = '1.0-RC2'
+        fegen_kotlin_interservice_runtime_version = '1.0-RC2'
+        fegen_kotlin_maven_version = '1.0-RC2'
+        fegen_web_version = '1.0-RC2'
+        fegen_web_gradle_version = '1.0-RC2'
+        fegen_web_maven_version = '1.0-RC2'
         // Version of web runtime needs to be set in package.json
 
         queryPassword = { title, text ->
