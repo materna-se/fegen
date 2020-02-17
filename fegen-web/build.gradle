@@ -2,7 +2,7 @@ apply plugin: 'kotlin'
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
-group 'de.materna.fegen.web'
+group 'com.github.materna-se.fegen'
 version "$fegen_web_version${fegen_snapshot ? '-SNAPSHOT' : ''}"
 
 repositories {
@@ -19,6 +19,6 @@ dependencies {
 kotlinArtifact {
     artifactProject = project
     artifactId = "fegen-web"
-    name = "FeGen Web"
-    description = "Common code used by FeGen plugins generating Typescript code"
+    artifactName = "FeGen Web"
+    artifactDescription = "Common code used by FeGen plugins generating Typescript code"
 }

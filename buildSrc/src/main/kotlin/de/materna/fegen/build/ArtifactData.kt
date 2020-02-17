@@ -26,6 +26,6 @@ import org.gradle.api.Project
 class ArtifactData {
     var artifactProject: Project? = null
     var artifactId: String? = null
-    var name: String? = null
-    var description: String? = null
+    var artifactName: String? = null
+    var artifactDescription: String? = null
 }

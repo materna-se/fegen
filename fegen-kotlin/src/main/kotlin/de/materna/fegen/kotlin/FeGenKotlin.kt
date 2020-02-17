@@ -60,7 +60,7 @@ class FeGenKotlin(
         if (scanPkg == null) {
             throw IllegalStateException("scanPkg must be specified")
         }
-        this.scanPkg = scanPkg;
+        this.scanPkg = scanPkg
         this.entityPkg = entityPkg ?: "$scanPkg.entity"
         this.repositoryPkg = repositoryPkg ?: "$scanPkg.repository"
         if (frontendPath == null) {
@@ -87,11 +87,17 @@ class FeGenKotlin(
         logger.info("___END FEGEN KOTLIN CONFIG___")
     }
 
+    fun generateFile(filename: String, text: String) {
+        val file = frontendGenDir.resolve(filename)
+        file.parentFile.mkdirs()
+        file.writeText(text)
+    }
+
     override fun generateEntities() {
-        frontendGenDir.resolve("Entities.kt").writeText(toEntitiesKt())
+        generateFile("Entities.kt", toEntitiesKt())
     }
 
     override fun generateApiClient() {
-        frontendGenDir.resolve("ApiClient.kt").writeText(toApiClientKt())
+        generateFile("ApiClient.kt", toApiClientKt())
     }
 }

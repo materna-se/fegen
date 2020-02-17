@@ -176,11 +176,11 @@ class FeGenUtil(
                         if (field != null) {
                             implicitNullable.check(logger, { !field.required && !field.explicitOptional }) { print ->
                                 print("Field \"$name\" in entity \"${clazz.canonicalName}\" is implicitly nullable.")
-                                print("Please add a @Nullable annotation if this is intentional")
+                                print("  Please add a @Nullable annotation if this is intentional")
                                 if (implicitNullable == DiagnosticsLevel.WARN) {
-                                    print("Set implicitNullable to ALLOW in FeGen's build configuration to hide this warning")
+                                    print("  Set implicitNullable to ALLOW in FeGen's build configuration to hide this warning")
                                 } else {
-                                    print("Set implicitNullable to WARN to continue the build despite missing @Nullable annotations")
+                                    print("  Set implicitNullable to WARN to continue the build despite missing @Nullable annotations")
                                 }
                             }
                         }
@@ -388,7 +388,7 @@ class FeGenUtil(
         if (repositoryClasses.isEmpty()) {
             logger.info("No repository classes found")
             logger.info("Repository classes must be located in the package $repositoryPkg")
-            logger.info("and must be annotated with RepositoryRestResource");
+            logger.info("and must be annotated with RepositoryRestResource")
         } else {
             logger.info("Repository classes found: ${repositoryClasses.size}")
         }

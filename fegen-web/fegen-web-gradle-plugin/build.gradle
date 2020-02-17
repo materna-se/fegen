@@ -22,6 +22,6 @@ dependencies {
 kotlinArtifact {
     artifactProject = project
     artifactId = "fegen-web-gradle-plugin"
-    name = "FeGen web Gradle Plugin"
-    description = "Gradle plugin that generates Typescript code from a Spring Data application to access its REST API"
+    artifactName = "FeGen web Gradle Plugin"
+    artifactDescription = "Gradle plugin that generates Typescript code from a Spring Data application to access its REST API"
 }
