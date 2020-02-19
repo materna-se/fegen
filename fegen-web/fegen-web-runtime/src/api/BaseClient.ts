@@ -67,7 +67,7 @@ export abstract class BaseClient<C, B extends ApiBase> {
         return await this._requestAdapter.createObject(requestObj, this._uri) as WithId<B>;
     }
 
-    public async readProjections<T extends Dto<B>>(projectionName?: string, page?: number, size?: number, sort?: string) : Promise<PagedItems<T>> {
+    public async readProjections<T extends WithId<B>>(projectionName?: string, page?: number, size?: number, sort?: string) : Promise<PagedItems<T>> {
         return await this._requestAdapter.getPage<T>(this._uri, this._embeddedPropName, projectionName, page, size, sort);
     }
 
