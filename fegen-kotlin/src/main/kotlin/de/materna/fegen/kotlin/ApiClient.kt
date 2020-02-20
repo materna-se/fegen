@@ -427,7 +427,7 @@ if (paging) """
             """.doIndent(2)
     returnType != null -> """
                 return requestAdapter.doSingleRequest<${if (projection == null) "$returnDeclarationSingle, ${(returnType as ComplexType).nameDto}" else
-        "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.name}"}>(
+        "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.nameBase}"}>(
                     url = url,
                     method = "$method"${if (body == null) "" else """,
                     body = body
@@ -494,28 +494,10 @@ private val CustomEndpoint.params
     get() = listOf(pathVariables, listOf(body), requestParams).flatten()
             .filterNotNull()
             .sortedBy { it.optional }
-            .join(separator = ", ") { parameter }
+            .join(separator = ", ") { parameter(true) }
 
 private val CustomEndpoint.paramNames
     get() = listOf(pathVariables, listOf(body), requestParams).flatten()
             .filterNotNull()
             .sortedBy { it.optional }
             .join(separator = ", ") { parameterNames }
-
-private val CustomEndpoint.bodyParam
-    get() = body?.let { "body: ${it.parameterDeclaration}" } ?: ""
-
-private val CustomEndpoint.bodyParamName
-    get() = if (body != null) "body" else ""
-
-private val CustomEndpoint.clientMethodPathParams
-    get() = if (pathVariables.isNotEmpty()) pathVariables.join(separator = ", ") pVariable@{ "$name: $declaration${if (optional) "?" else ""}" } else ""
-
-private val CustomEndpoint.clientMethodPathParamNames
-    get() = if (pathVariables.isNotEmpty()) pathVariables.join(separator = ", ") pVariable@{ name } else ""
-
-private val CustomEndpoint.clientMethodRequestParams
-    get() = if (requestParams.isNotEmpty()) requestParams.join(separator = ", ") rVariable@{ "$name: $declaration${if (optional) "?" else ""}" } else ""
-
-private val CustomEndpoint.clientMethodRequestParamNames
-    get() = if (requestParams.isNotEmpty()) requestParams.join(separator = ", ") rVariable@{ name } else ""
