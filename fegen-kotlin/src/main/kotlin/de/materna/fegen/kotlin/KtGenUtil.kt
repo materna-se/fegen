@@ -65,48 +65,48 @@ internal val ProjectionType.parentTypeName
         parentType.name
 
 internal val ProjectionType.projectionTypeInterfaceName
-    get() = if(baseProjection) "$parentTypeName$name" else name
+    get() = if (baseProjection) "$parentTypeName$name" else name
 
 internal val DTReference.declarationDto
-    get() = when(this) {
-        is DTRSimple  -> declaration
+    get() = when (this) {
+        is DTRSimple -> declaration
         is DTRComplex -> declarationDto
-        is DTREnum    -> declaration
+        is DTREnum -> declaration
     }
 
 internal val DTRComplex.declarationDto
-    get() = "${if(list) "List<" else ""}${type.nameDto}${if(list) ">" else ""}"
+    get() = "${if (list) "List<" else ""}${type.nameDto}${if (list) ">" else ""}"
 
 internal val DTReference.declaration
-    get() = "${if(list) "List<" else ""}${when(this) {
-        is DTRSimple     -> type.declaration
+    get() = "${if (list) "List<" else ""}${when (this) {
+        is DTRSimple -> type.declaration
         is DTRProjection -> type.declaration
-        is DTREntity     -> type.declaration
-        is DTREnum       -> type.declaration
-    }}${if(list) ">" else ""}"
+        is DTREntity -> type.declaration
+        is DTREnum -> type.declaration
+    }}${if (list) ">" else ""}"
 
 internal val SimpleType.declaration
-    get() = when(this) {
-        SimpleType.STRING          -> "String"
-        SimpleType.BOOLEAN         -> "Boolean"
-        SimpleType.DATE            -> if(handleDatesAsString) "String" else "LocalDate"
-        SimpleType.DATETIME        -> if(handleDatesAsString) "String" else "LocalDateTime"
-        SimpleType.ZONED_DATETIME  -> if(handleDatesAsString) "String" else "ZonedDateTime"
-        SimpleType.OFFSET_DATETIME -> if(handleDatesAsString) "String" else "OffsetDateTime"
-        SimpleType.DURATION        -> if(handleDatesAsString) "String" else "Duration"
-        SimpleType.LONG            -> "Long"
-        SimpleType.INTEGER         -> "Int"
-        SimpleType.DOUBLE          -> "Double"
-        SimpleType.BIGDECIMAL      -> "BigDecimal"
-        SimpleType.UUID            -> "UUID"
+    get() = when (this) {
+        SimpleType.STRING -> "String"
+        SimpleType.BOOLEAN -> "Boolean"
+        SimpleType.DATE -> if (handleDatesAsString) "String" else "LocalDate"
+        SimpleType.DATETIME -> if (handleDatesAsString) "String" else "LocalDateTime"
+        SimpleType.ZONED_DATETIME -> if (handleDatesAsString) "String" else "ZonedDateTime"
+        SimpleType.OFFSET_DATETIME -> if (handleDatesAsString) "String" else "OffsetDateTime"
+        SimpleType.DURATION -> if (handleDatesAsString) "String" else "Duration"
+        SimpleType.LONG -> "Long"
+        SimpleType.INTEGER -> "Int"
+        SimpleType.DOUBLE -> "Double"
+        SimpleType.BIGDECIMAL -> "BigDecimal"
+        SimpleType.UUID -> "UUID"
     }
 
 internal val EnumType.declaration
     get() = name
 
 internal val ComplexType.declaration
-    get() = when(this) {
-        is EntityType     -> declaration
+    get() = when (this) {
+        is EntityType -> declaration
         is ProjectionType -> declaration
     }
 
@@ -115,29 +115,29 @@ internal val EntityType.declaration
     get() = name
 
 internal val ProjectionType.declaration
-    get() = if(baseProjection) parentType.name else projectionTypeInterfaceName
+    get() = if (baseProjection) parentType.name else projectionTypeInterfaceName
 
 internal val DTReference.initialization
-    get() = if (name == "id") "-1L" else when(this) {
-        is DTRSimple  -> type.initialization
-        is DTREnum    -> type.initialization
+    get() = if (name == "id") "-1L" else when (this) {
+        is DTRSimple -> type.initialization
+        is DTREnum -> type.initialization
         is DTRComplex -> type.initialization
     }
 
 private val SimpleType.initialization
-    get() = when(this) {
-        SimpleType.STRING          -> "\"\""
-        SimpleType.UUID            -> "UUID.randomUUID()"
-        SimpleType.BOOLEAN         -> "false"
-        SimpleType.DATE            -> if(handleDatesAsString) "\"1970-01-01\"" else "LocalDate.parse(\"1970-01-01\")"
-        SimpleType.DATETIME        -> if(handleDatesAsString) "\"1970-01-01T00:00:00\"" else "LocalDateTime.parse(\"1970-01-01T00:00:00\")"
-        SimpleType.ZONED_DATETIME  -> if(handleDatesAsString) "\"1970-01-01T00:00:00Z\"" else "ZonedDateTime.parse(\"1970-01-01T00:00:00Z\")"
-        SimpleType.OFFSET_DATETIME -> if(handleDatesAsString) "\"1970-01-01T00:00:00+00:00\"" else "OffsetDateTime.parse(\"1970-01-01T00:00:00+00:00\")"
-        SimpleType.DURATION        -> if(handleDatesAsString) "\"PT0S\"" else "Duration.parse(\"PT0S\")"
-        SimpleType.INTEGER         -> "0"
-        SimpleType.LONG            -> "0L"
-        SimpleType.DOUBLE          -> "0.0"
-        SimpleType.BIGDECIMAL      -> "BigDecimal(0)"
+    get() = when (this) {
+        SimpleType.STRING -> "\"\""
+        SimpleType.UUID -> "UUID.randomUUID()"
+        SimpleType.BOOLEAN -> "false"
+        SimpleType.DATE -> if (handleDatesAsString) "\"1970-01-01\"" else "LocalDate.parse(\"1970-01-01\")"
+        SimpleType.DATETIME -> if (handleDatesAsString) "\"1970-01-01T00:00:00\"" else "LocalDateTime.parse(\"1970-01-01T00:00:00\")"
+        SimpleType.ZONED_DATETIME -> if (handleDatesAsString) "\"1970-01-01T00:00:00Z\"" else "ZonedDateTime.parse(\"1970-01-01T00:00:00Z\")"
+        SimpleType.OFFSET_DATETIME -> if (handleDatesAsString) "\"1970-01-01T00:00:00+00:00\"" else "OffsetDateTime.parse(\"1970-01-01T00:00:00+00:00\")"
+        SimpleType.DURATION -> if (handleDatesAsString) "\"PT0S\"" else "Duration.parse(\"PT0S\")"
+        SimpleType.INTEGER -> "0"
+        SimpleType.LONG -> "0L"
+        SimpleType.DOUBLE -> "0.0"
+        SimpleType.BIGDECIMAL -> "BigDecimal(0)"
     }
 
 private val EnumType.initialization
@@ -166,12 +166,16 @@ internal val Search.returnDeclaration
         else -> "${returnType.name}?"
     }
 
+internal val CustomEndpoint.returnDeclarationSingle
+    get(): String = returnType?.let {
+        if (it is ProjectionType && it.baseProjection) it.parentTypeName else it.name
+    } ?: "Unit"
+
 internal val CustomEndpoint.returnDeclaration
-    get() = when {
-        returnType == null -> "Unit"
-        paging -> "PagedItems<${returnType!!.name}>"
-        list -> "List<${returnType!!.name}>"
-        else -> "${returnType!!.name}?"
+    get(): String = when {
+        paging -> "PagedItems<$returnDeclarationSingle>"
+        list -> "List<$returnDeclarationSingle>"
+        else -> returnDeclarationSingle
     }
 
 internal fun Search.projectionReturnDeclaration(projection: ProjectionType) =
@@ -189,9 +193,9 @@ internal fun CustomEndpoint.projectionReturnDeclaration(projection: ProjectionTy
         }
 
 internal val ComplexType.allSimpleFields
-    get() = when(this){
+    get() = when (this) {
         is ProjectionType -> (simpleFields + parentType.simpleFields)
-        is EntityType     -> simpleFields
+        is EntityType -> simpleFields
     }
 
 internal val ComplexType.allSortableFields
@@ -202,10 +206,10 @@ internal val ComplexType.mayHaveSortParameter
     get() = allSortableFields.any()
 
 internal val ComplexType.readOrderByParameter
-    get() = allSortableFields.join(prefix=", sort: ", separator = " | ") { """"${name},ASC" | "${name},DESC"""" }
+    get() = allSortableFields.join(prefix = ", sort: ", separator = " | ") { """"${name},ASC" | "${name},DESC"""" }
 
 internal val DomainType.uriREST
-    get() = "$restBasePath/$nameREST"
+    get() = "$restBasePath/$nameRest"
 
 internal val DomainType.searchResourceName
-    get() = "$nameREST/search"
+    get() = "$nameRest/search"

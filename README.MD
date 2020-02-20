@@ -44,6 +44,8 @@ The following guide describes how to use FeGen with a main project that contains
 FeGen will generate code for two different sub projects that enable type safe usage of the API in Typescript and Kotlin respectively.
 The backend implementation will be in Kotlin in the examples, however using Java is also supported by FeGen.
 
+If you run into any issue while using FeGen, check if it is listed in the [common pitfalls](./PITFALLS.MD) document. 
+
 ### Preparing the Backend
 
 The first step to use FeGen is to include the FeGen plugins for either Typescript, Kotlin or both in your build file.
@@ -122,7 +124,7 @@ The following configuration keys are optional:
 | `entityPkg` | `${scanPkg}.entity` | The package that contains all entities and projections you want to generate frontend code for |
 | `repositoryPkg` | `${scanPkg}.repository` | The package that contains all repositories and custom endpoints you want to generate frontend code for |
 | `datesAsString` | `false` | Whether time data such as `java.time.LocalDateTime` should be transmitted as strings |
-| `implicitlyNullable` | `"ERROR"` | How to treat fields of entities that are nullable, but not explicitly annotated with `@Nullable`. Possible values are `"ERROR"`, `"WARN"` and `"ALLOW"` |
+| `implicitNullable` | `"ERROR"` | How to treat fields of entities that are nullable, but not explicitly annotated with `@Nullable`. Possible values are `"ERROR"`, `"WARN"` and `"ALLOW"` |
 
 The following configuration keys are required when the output of FeGen is Kotlin code (meaning that the fegenKotlin plugin is used):
 
@@ -200,9 +202,9 @@ The other option is to create an Android library to use the Spring API in an And
 
 To make your Spring API available to other Spring applications, create a gradle project to contain the generated code and add the following dependencies to your `build.gradle`:
 
-- `com.github.materna-se.fegen:fegen-kotlin-interservice-runtime`
-- `org.jetbrains.kotlinx:kotlinx-coroutines-core`
-- `com.fasterxml.jackson.module:jackson-module-kotlin`
+- `com.github.materna-se.fegen:fegen-kotlin-interservice-runtime:1.0`
+- `org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.3`
+- `com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1`
 
 #### Android
 

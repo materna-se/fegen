@@ -27,9 +27,11 @@ import java.util.*
 sealed class DomainType {
     abstract var name: String
 
-    val nameREST by lazy {
-        English.plural(name.decapitalize())
+    val nameRest by lazy {
+        nameRestOverride ?: English.plural(name.decapitalize())
     }
+
+    var nameRestOverride: String? = null
 }
 
 sealed class ComplexType: DomainType() {

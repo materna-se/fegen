@@ -21,16 +21,7 @@
  */
 package de.materna.fegen.kotlin
 
-import de.materna.fegen.core.CustomEndpoint
-import de.materna.fegen.core.DTREntity
-import de.materna.fegen.core.DTReference
-import de.materna.fegen.core.EntityType
-import de.materna.fegen.core.ProjectionType
-import de.materna.fegen.core.Search
-import de.materna.fegen.core.doIndent
-import de.materna.fegen.core.handleDatesAsString
-import de.materna.fegen.core.join
-import de.materna.fegen.core.restBasePath
+import de.materna.fegen.core.*
 
 /**
  * Generates the ApiClient class which helps to navigate to the different clients as well as the client classes itself.
@@ -123,7 +114,7 @@ fun FeGenKotlin.toApiClientKt() = """
             ) =
                 requestAdapter.doPageRequest<T, U>(
                     url = "$uriREST",
-                    embeddedPropName = "$nameREST",
+                    embeddedPropName = "$nameRest",
                     projectionName = projectionName,
                     page = page,
                     size = size,
@@ -161,7 +152,7 @@ fun FeGenKotlin.toApiClientKt() = """
                     requestAdapter.read${if (list) "List" else ""}AssociationProjection<${this@domainType.name}, ${type.name}, ${type.nameDto}>(
                         obj = obj,
                         linkName = "$name"${if (list) """,
-                        property = "${type.nameREST}"""".trimIndent() else ""}${if (list) """,
+                        property = "${type.nameRest}"""".trimIndent() else ""}${if (list) """,
                         type = object: TypeReference<ApiHateoasList<${type.nameDto}, ${type.name}>>() {}
                         """.trimIndent() else ""}
                     )
@@ -172,7 +163,7 @@ fun FeGenKotlin.toApiClientKt() = """
                         requestAdapter.read${if (list) "List" else ""}AssociationProjection<${this@domainType.name}, $projectionTypeInterfaceName, ${projectionTypeInterfaceName}Dto>(
                             obj = obj,
                             linkName = "${this@dtField.name}"${if (list) """,
-                            property = "${parentType.nameREST}"""".trimIndent() else ""},
+                            property = "${parentType.nameRest}"""".trimIndent() else ""},
                             projectionName = "$projectionName"${if (list) """,
                             type = object: TypeReference<ApiHateoasList<${projectionTypeInterfaceName}Dto, $projectionTypeInterfaceName>>() {}
                             """.trimIndent() else ""}
@@ -361,7 +352,7 @@ if (paging) """
     paging -> """
                 return requestAdapter.doPageRequest<${if (projection == null) "${returnType.name}, ${(returnType).nameDto}" else "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}>(
                     url = url,
-                    embeddedPropName = "${returnType.nameREST}",
+                    embeddedPropName = "${returnType.nameRest}",
                     ${if (projection != null) "projectionName = \"${projection.projectionName}\"," else ""}
                     page = page,
                     size = size,
@@ -372,7 +363,7 @@ if (paging) """
     list -> """
                 return requestAdapter.doListRequest<${if (projection == null) "${returnType.name}, ${(returnType).nameDto}" else "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}>(
                     url = url,
-                    embeddedPropName = "${returnType.nameREST}"${if (projection != null) """,
+                    embeddedPropName = "${returnType.nameRest}"${if (projection != null) """,
                     projectionName = "${projection.projectionName}"""".trimIndent() else ""},
                     type = object : TypeReference<ApiHateoasList<${if (projection == null) "${(returnType).nameDto}, ${returnType.name}" else "${projection.projectionTypeInterfaceName}Dto, ${projection.projectionTypeInterfaceName}"}>>() {}
                 )
@@ -415,35 +406,35 @@ if (paging) """
 
         ${when {
     paging -> """
-                return requestAdapter.doPageRequest<${if (projection == null) "${returnType!!.name}, ${(returnType as EntityType).nameDto}" else
+                return requestAdapter.doPageRequest<${if (projection == null) "$returnDeclarationSingle, ${(returnType as ComplexType).nameDto}" else
         "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.name}"}>(
                     url = url,
                     method = "$method",${if (body == null) "" else """
                     body = body,
                     """.trimIndent()}
-                    embeddedPropName = "${parentType.nameREST}",
+                    embeddedPropName = "${parentType.nameRest}",
                     ${if (projection != null) "projectionName = \"${projection.projectionName}\"," else ""}
                     page = page,
                     size = size,
                     sort = sort,
-                    type = object : TypeReference<ApiHateoasPage<${if (projection == null) "${(returnType as EntityType).nameDto}, ${returnType!!
+                    type = object : TypeReference<ApiHateoasPage<${if (projection == null) "${(returnType as ComplexType).nameDto}, ${returnType!!
             .name}" else "${projection.projectionTypeInterfaceName}Dto, ${projection.projectionTypeInterfaceName}"}>>() {}
                 )
             """.doIndent(2)
     list -> """
-                return requestAdapter.doListRequest<${if (projection == null) "${returnType!!.name}, ${(returnType as EntityType).nameDto}" else
+                return requestAdapter.doListRequest<${if (projection == null) "$returnDeclarationSingle, ${(returnType as ComplexType).nameDto}" else
         "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.name}"}>(
                     url = url,
                     method = "$method",${if (body == null) "" else """
                     body = body,
                     """.trimIndent()}
-                    embeddedPropName = "${parentType.nameREST}"${if (projection != null) """,
+                    embeddedPropName = "${parentType.nameRest}"${if (projection != null) """,
                     projectionName = "${projection.projectionName}"""".trimIndent() else ""},
                     ignoreBasePath = true
                 )
             """.doIndent(2)
     returnType != null -> """
-                return requestAdapter.doSingleRequest<${if (projection == null) "${returnType!!.name}, ${(returnType as EntityType).nameDto}" else
+                return requestAdapter.doSingleRequest<${if (projection == null) "$returnDeclarationSingle, ${(returnType as ComplexType).nameDto}" else
         "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.name}"}>(
                     url = url,
                     method = "$method"${if (body == null) "" else """,
@@ -481,7 +472,7 @@ if (paging) """
 """.trimIndent()
 
 val CustomEndpoint.uriPatternString
-    get() = (name.replace(regex = Regex("\\{([^\\}]+)\\}")) { "${'$'}${it.groupValues[1]}" }).trim('/')
+    get() = (name.replace(regex = Regex("\\{([^}]+)\\}")) { "${'$'}${it.groupValues[1]}" }).trim('/')
 
 private val Search.path
     get() = "${if (inRepo) returnType.searchResourceName else "search"}/$name"

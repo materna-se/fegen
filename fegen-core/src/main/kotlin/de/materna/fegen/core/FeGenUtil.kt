@@ -115,6 +115,15 @@ class FeGenUtil(
             it.isEntity
         }.associateWith { ec -> EntityType(name = ec.simpleName) }.toMap()
 
+        for (repoClass in searchForRepositoryClasses()) {
+            val customPath = repoClass.getAnnotation(RepositoryRestResource::class.java).path
+            if (customPath.isNotBlank()) {
+                val entity = class2ET[repoClass.repositoryType]
+                        ?: error("Repository ${repoClass.canonicalName} refers to unknown entity ${repoClass.repositoryType}")
+                entity.nameRestOverride = customPath.removePrefix("/")
+            }
+        }
+
         // create a domain type instance for each projection and associate each class to the respective domain type (for cyclic dependencies)
         val class2PT = classes.asSequence().filter {
             it.isProjection
@@ -392,15 +401,6 @@ class FeGenUtil(
         } else {
             logger.info("Repository classes found: ${repositoryClasses.size}")
         }
-        // use @RepositoryRestResource path value for the name of domain types!
-        repositoryClasses.forEach {
-            val path = it.getAnnotation(RepositoryRestResource::class.java)?.path
-
-            val domainType = class2DT[it.repositoryType] as? EntityType ?: return@forEach
-            if (!path.isNullOrEmpty()) {
-                domainType.name = path.capitalize()
-            }
-        }
 
         // retrieve all exported (search) methods
         repositoryClasses.associateWith { c ->
@@ -523,7 +523,7 @@ class FeGenUtil(
         val controllerClasses2DT = searchForComponentClassesByAnnotation(RestController::class.java).associateWith { c ->
             c.getAnnotation(RequestMapping::class.java)?.run {
                 (value.firstOrNull() ?: path.firstOrNull())?.let { path ->
-                    class2DT.values.firstOrNull { dt -> path.endsWith(dt.nameREST) }
+                    class2DT.values.firstOrNull { dt -> path.endsWith(dt.nameRest) }
                 }
             } as EntityType?
         }.mapNotNull { if (it.value != null) it.key to (it.value as EntityType) else null }
@@ -542,7 +542,7 @@ class FeGenUtil(
                 try {
                     it.requestMapping != null
                 } catch (e: Exception) {
-                    logger.warn("Method ${c.canonicalName}.${it.name} will be ignored: ${e.message}")
+                    logger.warn("Method ${c.canonicalName}::${it.name} will be ignored: ${e.message}")
                     false
                 }
             }.filter { m ->
@@ -561,9 +561,16 @@ class FeGenUtil(
                 logger.warn("Custom endpoints must be methods annotated with RequestMapping")
             }
 
-            methods.forEach { m ->
-                val returnType = class2DT[m.entityType]
-                if (returnType != null && returnType !is ProjectionType) {
+            methods.forEach methodLoop@{ m ->
+                val returnType = try {
+                    m.customEndpointReturnType
+                } catch (e: CustomEndpointReturnTypeError) {
+                    logger.warn(e.getMessage(c, m))
+                    logger.warn("This custom endpoint will be ignored")
+                    return@methodLoop
+                }
+                val returnDomainType = returnType?.let { class2DT[it.clazz] }
+                if (returnType != null && returnDomainType !is ProjectionType) {
                     logger.warn("Return type of custom endpoint ${c.simpleName}::${m.name} is not a projection")
                     logger.warn("This may cause issues when using the return type in the frontend")
                 }
@@ -599,10 +606,9 @@ class FeGenUtil(
                                     class2DT = class2DT
                             ) as? DTREntity
                         },
-                        //returnType = class2DT.entries.firstOrNull{(c, dt) -> c.name == m.entityType?.name}?.value,
-                        returnType = returnType,
-                        paging = m.paging,
-                        list = m.list,
+                        returnType = returnDomainType,
+                        paging = returnType?.paging ?: false,
+                        list = returnType?.list ?: false,
                         canReceiveProjection = m.canReceiveProjection
                 )
             }

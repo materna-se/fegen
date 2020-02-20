@@ -172,7 +172,7 @@ open class RequestAdapter(val request: FetchRequest) {
             bodyContent: String = "",
             projectionName: String? = null,
             ignoreBasePath: Boolean = false
-    ): T? {
+    ): T {
 
         var fullUrl = url
 
@@ -313,7 +313,7 @@ open class RequestAdapter(val request: FetchRequest) {
     suspend inline fun <reified TNew : ApiBase<T, U>, reified T : ApiObj<U>, reified U : ApiDto<T>,
             TColl : ApiObj<*>> createObjectAndAddWithAssociation(
             newObject: TNew, objectWithCollection: TColl, collectionPropertyName: String, createURI: String
-    ) = createObject(newObject, createURI)?.apply {
+    ) = createObject(newObject, createURI).apply {
         addObjectToCollection(
                 objToBeAdd = this,
                 objectWithCollection = objectWithCollection,

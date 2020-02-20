@@ -30,10 +30,10 @@ internal val CustomEndpoint.uriPatternString
 
 // TODO use a configurable context path instead of 'rest' (e.g. for supporting api-versions)
 internal val DomainType.uriREST
-  get() = "$restBasePath/$nameREST"
+  get() = "$restBasePath/$nameRest"
 
 internal val DomainType.searchResourceName
-  get() = "$nameREST/search"
+  get() = "$nameRest/search"
 
 internal val Search.path
   get() = if (inRepo) "${returnType.searchResourceName}/$name" else "search/$name"

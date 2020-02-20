@@ -40,6 +40,8 @@ import org.springframework.data.web.PageableDefault
 import org.springframework.data.web.SortDefault
 import org.springframework.hateoas.PagedModel
 import org.springframework.hateoas.CollectionModel
+import org.springframework.hateoas.EntityModel
+import org.springframework.http.ResponseEntity
 import org.springframework.lang.Nullable
 import org.springframework.web.bind.annotation.*
 import java.io.File
@@ -149,6 +151,82 @@ private val Method.resourceType
 
 val Method.rawResourceType
     get() = resourceType?.rawType as? Class<*>
+
+enum class RestMultiplicity {
+    SINGLE, LIST, PAGED;
+}
+
+class EntityBasedType(val clazz: Class<*>, private val multiplicity: RestMultiplicity) {
+
+    val projection: Class<*>?
+
+    val entity: Class<*>
+
+    val valid get() = entity.getAnnotation(Entity::class.java) != null
+
+    val list get() = multiplicity == RestMultiplicity.LIST
+
+    val paging get() = multiplicity == RestMultiplicity.PAGED
+
+    init {
+        val projectionAnnotation = clazz.getAnnotation(Projection::class.java)
+        if (projectionAnnotation != null) {
+            projection = clazz
+            entity = projectionAnnotation.types.first().java
+        } else {
+            projection = null
+            entity = clazz
+        }
+    }
+}
+
+sealed class CustomEndpointReturnTypeError: Exception() {
+
+    abstract val problem: String
+
+    fun getMessage(c: Class<*>, m: Method) = "Return type of custom endpoint ${c.simpleName}::${m.name} is invalid\n$problem"
+
+    class NoResponseEntity(private val returnType: Type) : CustomEndpointReturnTypeError() {
+        override val problem
+            get() = "Only void or ResponseEntity are allowed as return types of custom endpoints. Type ${returnType.typeName} is invalid."
+    }
+
+    class UnknownResponseEntityContent(private val responseContent: Type) : CustomEndpointReturnTypeError() {
+        override val problem
+            get() = "ResponseEntity may only be parameterized with EntityModel, CollectionModel and PagedModel in return types of custom endpoints. Type ${responseContent.typeName} is invalid"
+    }
+
+    class NoEntityBaseType(private val clazz: Class<*>) : CustomEndpointReturnTypeError() {
+        override val problem
+            get() = "Only projections may be returned from custom endpoints. ${clazz.canonicalName} is not annotated with @Projection"
+    }
+}
+
+val Method.customEndpointReturnType
+    get(): EntityBasedType? =
+        genericReturnType.let { returnType ->
+            when (returnType) {
+                Void.TYPE ->  null
+                is ParameterizedType -> {
+                    if (returnType.rawType != ResponseEntity::class.java) {
+                        throw CustomEndpointReturnTypeError.NoResponseEntity(returnType)
+                    }
+                    val responseContent = returnType.actualTypeArguments.first() as ParameterizedType
+                    val multiplicity = when (responseContent.rawType) {
+                        PagedModel::class.java -> RestMultiplicity.PAGED
+                        CollectionModel::class.java -> RestMultiplicity.LIST
+                        EntityModel::class.java -> RestMultiplicity.SINGLE
+                        else -> throw CustomEndpointReturnTypeError.UnknownResponseEntityContent(responseContent)
+                    }
+                    val result = EntityBasedType(responseContent.actualTypeArguments.first() as Class<*>, multiplicity)
+                    if (!result.valid) {
+                        throw CustomEndpointReturnTypeError.NoEntityBaseType(result.clazz)
+                    }
+                    result
+                }
+                else -> throw CustomEndpointReturnTypeError.NoResponseEntity(returnType)
+            }
+        }
 
 val Method.entityType
     get() = resourceType?.actualTypeArguments?.first()?.let {
