@@ -251,23 +251,29 @@ val Method.searchTypeName
         null
     }
 
+private fun pathForRequestMapping(method: Method, requestMapping: Any): String =
+        (requestMapping::class.java.getMethod("value").invoke(requestMapping) as Array<*>).firstOrNull() as String? ?:
+        (requestMapping::class.java.getMethod("path").invoke(requestMapping) as Array<*>).firstOrNull() as String? ?:
+    throw IllegalStateException("Request mapping of ${method.name} must have a value or a path")
+
 val Method.requestMapping
-    get() = (
-            getAnnotation(RequestMapping::class.java)?.run {
-                (value.firstOrNull() ?: name) to when (method.firstOrNull()) {
+    get(): Pair<String, EndpointMethod>? = (
+            getAnnotation(RequestMapping::class.java)?.let {rm ->
+                val path = pathForRequestMapping(this, rm)
+                path to when (rm.method.firstOrNull()) {
                     RequestMethod.GET -> EndpointMethod.GET
                     RequestMethod.POST -> EndpointMethod.POST
                     RequestMethod.PUT -> EndpointMethod.PUT
                     RequestMethod.PATCH -> EndpointMethod.PATCH
                     RequestMethod.DELETE -> EndpointMethod.DELETE
                     null -> throw RuntimeException("HTTP method must be specified")
-                    else -> throw RuntimeException("HTTP method ${method.first().name} is not supported")
+                    else -> throw RuntimeException("HTTP method ${rm.method.first().name} is not supported")
                 }
-            } ?: getAnnotation(GetMapping::class.java)?.run { (value.firstOrNull() ?: path) to EndpointMethod.GET }
-            ?: getAnnotation(PostMapping::class.java)?.run { (value.firstOrNull() ?: path) to EndpointMethod.POST }
-            ?: getAnnotation(PutMapping::class.java)?.run { (value.firstOrNull() ?: path) to EndpointMethod.PUT }
-            ?: getAnnotation(PatchMapping::class.java)?.run { (value.firstOrNull() ?: path) to EndpointMethod.PATCH }
-            ?: getAnnotation(DeleteMapping::class.java)?.run { (value.firstOrNull() ?: path) to EndpointMethod.DELETE }
+            } ?: getAnnotation(GetMapping::class.java)?.let { pathForRequestMapping(this, it) to EndpointMethod.GET }
+            ?: getAnnotation(PostMapping::class.java)?.let { pathForRequestMapping(this, it) to EndpointMethod.POST }
+            ?: getAnnotation(PutMapping::class.java)?.let { pathForRequestMapping(this, it) to EndpointMethod.PUT }
+            ?: getAnnotation(PatchMapping::class.java)?.let { pathForRequestMapping(this, it) to EndpointMethod.PATCH }
+            ?: getAnnotation(DeleteMapping::class.java)?.let { pathForRequestMapping(this, it) to EndpointMethod.DELETE }
             )
 
 val Method.paging
