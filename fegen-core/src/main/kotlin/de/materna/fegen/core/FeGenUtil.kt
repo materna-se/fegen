@@ -542,7 +542,7 @@ class FeGenUtil(
                 try {
                     it.requestMapping != null
                 } catch (e: Exception) {
-                    logger.warn("Method ${c.canonicalName}.${it.name} will be ignored: ${e.message}")
+                    logger.warn("Method ${c.canonicalName}::${it.name} will be ignored: ${e.message}")
                     false
                 }
             }.filter { m ->
@@ -561,9 +561,16 @@ class FeGenUtil(
                 logger.warn("Custom endpoints must be methods annotated with RequestMapping")
             }
 
-            methods.forEach { m ->
-                val returnType = class2DT[m.entityType]
-                if (returnType != null && returnType !is ProjectionType) {
+            methods.forEach methodLoop@{ m ->
+                val returnType = try {
+                    m.customEndpointReturnType
+                } catch (e: CustomEndpointReturnTypeError) {
+                    logger.warn(e.getMessage(c, m))
+                    logger.warn("This custom endpoint will be ignored")
+                    return@methodLoop
+                }
+                val returnDomainType = returnType?.let { class2DT[it.clazz] }
+                if (returnType != null && returnDomainType !is ProjectionType) {
                     logger.warn("Return type of custom endpoint ${c.simpleName}::${m.name} is not a projection")
                     logger.warn("This may cause issues when using the return type in the frontend")
                 }
@@ -599,10 +606,9 @@ class FeGenUtil(
                                     class2DT = class2DT
                             ) as? DTREntity
                         },
-                        //returnType = class2DT.entries.firstOrNull{(c, dt) -> c.name == m.entityType?.name}?.value,
-                        returnType = returnType,
-                        paging = m.paging,
-                        list = m.list,
+                        returnType = returnDomainType,
+                        paging = returnType?.paging ?: false,
+                        list = returnType?.list ?: false,
                         canReceiveProjection = m.canReceiveProjection
                 )
             }
