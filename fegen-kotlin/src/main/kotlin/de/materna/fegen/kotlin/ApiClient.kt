@@ -21,16 +21,7 @@
  */
 package de.materna.fegen.kotlin
 
-import de.materna.fegen.core.CustomEndpoint
-import de.materna.fegen.core.DTREntity
-import de.materna.fegen.core.DTReference
-import de.materna.fegen.core.EntityType
-import de.materna.fegen.core.ProjectionType
-import de.materna.fegen.core.Search
-import de.materna.fegen.core.doIndent
-import de.materna.fegen.core.handleDatesAsString
-import de.materna.fegen.core.join
-import de.materna.fegen.core.restBasePath
+import de.materna.fegen.core.*
 
 /**
  * Generates the ApiClient class which helps to navigate to the different clients as well as the client classes itself.
@@ -415,7 +406,7 @@ if (paging) """
 
         ${when {
     paging -> """
-                return requestAdapter.doPageRequest<${if (projection == null) "${returnType!!.name}, ${(returnType as EntityType).nameDto}" else
+                return requestAdapter.doPageRequest<${if (projection == null) "$returnDeclarationSingle, ${(returnType as ComplexType).nameDto}" else
         "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.name}"}>(
                     url = url,
                     method = "$method",${if (body == null) "" else """
@@ -426,12 +417,12 @@ if (paging) """
                     page = page,
                     size = size,
                     sort = sort,
-                    type = object : TypeReference<ApiHateoasPage<${if (projection == null) "${(returnType as EntityType).nameDto}, ${returnType!!
+                    type = object : TypeReference<ApiHateoasPage<${if (projection == null) "${(returnType as ComplexType).nameDto}, ${returnType!!
             .name}" else "${projection.projectionTypeInterfaceName}Dto, ${projection.projectionTypeInterfaceName}"}>>() {}
                 )
             """.doIndent(2)
     list -> """
-                return requestAdapter.doListRequest<${if (projection == null) "${returnType!!.name}, ${(returnType as EntityType).nameDto}" else
+                return requestAdapter.doListRequest<${if (projection == null) "$returnDeclarationSingle, ${(returnType as ComplexType).nameDto}" else
         "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.name}"}>(
                     url = url,
                     method = "$method",${if (body == null) "" else """
@@ -443,7 +434,7 @@ if (paging) """
                 )
             """.doIndent(2)
     returnType != null -> """
-                return requestAdapter.doSingleRequest<${if (projection == null) "${returnType!!.name}, ${(returnType as EntityType).nameDto}" else
+                return requestAdapter.doSingleRequest<${if (projection == null) "$returnDeclarationSingle, ${(returnType as ComplexType).nameDto}" else
         "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.name}"}>(
                     url = url,
                     method = "$method"${if (body == null) "" else """,
@@ -481,7 +472,7 @@ if (paging) """
 """.trimIndent()
 
 val CustomEndpoint.uriPatternString
-    get() = (name.replace(regex = Regex("\\{([^\\}]+)\\}")) { "${'$'}${it.groupValues[1]}" }).trim('/')
+    get() = (name.replace(regex = Regex("\\{([^}]+)\\}")) { "${'$'}${it.groupValues[1]}" }).trim('/')
 
 private val Search.path
     get() = "${if (inRepo) returnType.searchResourceName else "search"}/$name"
