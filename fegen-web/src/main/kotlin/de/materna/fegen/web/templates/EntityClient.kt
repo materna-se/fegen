@@ -40,7 +40,7 @@ fun FeGenWeb.toEntityClientTS() = entityTypes.join(separator = "\n\n") domainTyp
 export class $nameClient extends BaseClient<ApiClient, $nameBase> {
 
     constructor(apiClient: ApiClient, requestAdapter?: RequestAdapter){
-        super("$uriREST", "$nameREST", apiClient, requestAdapter);
+        super("$uriREST", "$nameRest", apiClient, requestAdapter);
         this.readOne = this.readOne.bind(this);
         this.readProjection = this.readProjection.bind(this);
         ${entityFields.join(indent = 3, separator = "\n") {
@@ -149,7 +149,7 @@ private fun associationEntityTemplate(entityType: EntityType, projectionTypes: L
         if(response.status === 404) { return ${if (list) "[]" else "undefined"}; }
         if(!response.ok){ throw response; }
         ${if (list) """
-            return (((await response.json()) as ApiHateoasObjectBase<T[]>)._embedded.${type.nameREST}).map(item => (apiHelper.injectIds(item)));""".doIndent(5)
+            return (((await response.json()) as ApiHateoasObjectBase<T[]>)._embedded.${type.nameRest}).map(item => (apiHelper.injectIds(item)));""".doIndent(5)
     else """
         const result = (await response.json()) as T;
         return apiHelper.injectIds(result);"""}
@@ -204,7 +204,7 @@ private fun searchEntityTemplate(entityType: EntityType) = """
     }
 
     val responseHandling = if (list || paging) """
-            const elements = ((responseObj._embedded && responseObj._embedded.${entityType.nameREST}) || []).map(item => (apiHelper.injectIds(item)));
+            const elements = ((responseObj._embedded && responseObj._embedded.${entityType.nameRest}) || []).map(item => (apiHelper.injectIds(item)));
         
             return {
                 items: elements,

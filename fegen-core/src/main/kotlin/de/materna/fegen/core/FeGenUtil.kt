@@ -115,6 +115,15 @@ class FeGenUtil(
             it.isEntity
         }.associateWith { ec -> EntityType(name = ec.simpleName) }.toMap()
 
+        for (repoClass in searchForRepositoryClasses()) {
+            val customPath = repoClass.getAnnotation(RepositoryRestResource::class.java).path
+            if (customPath.isNotBlank()) {
+                val entity = class2ET[repoClass.repositoryType]
+                        ?: error("Repository ${repoClass.canonicalName} refers to unknown entity ${repoClass.repositoryType}")
+                entity.nameRestOverride = customPath.removePrefix("/")
+            }
+        }
+
         // create a domain type instance for each projection and associate each class to the respective domain type (for cyclic dependencies)
         val class2PT = classes.asSequence().filter {
             it.isProjection
@@ -392,15 +401,6 @@ class FeGenUtil(
         } else {
             logger.info("Repository classes found: ${repositoryClasses.size}")
         }
-        // use @RepositoryRestResource path value for the name of domain types!
-        repositoryClasses.forEach {
-            val path = it.getAnnotation(RepositoryRestResource::class.java)?.path
-
-            val domainType = class2DT[it.repositoryType] as? EntityType ?: return@forEach
-            if (!path.isNullOrEmpty()) {
-                domainType.name = path.capitalize()
-            }
-        }
 
         // retrieve all exported (search) methods
         repositoryClasses.associateWith { c ->
@@ -523,7 +523,7 @@ class FeGenUtil(
         val controllerClasses2DT = searchForComponentClassesByAnnotation(RestController::class.java).associateWith { c ->
             c.getAnnotation(RequestMapping::class.java)?.run {
                 (value.firstOrNull() ?: path.firstOrNull())?.let { path ->
-                    class2DT.values.firstOrNull { dt -> path.endsWith(dt.nameREST) }
+                    class2DT.values.firstOrNull { dt -> path.endsWith(dt.nameRest) }
                 }
             } as EntityType?
         }.mapNotNull { if (it.value != null) it.key to (it.value as EntityType) else null }

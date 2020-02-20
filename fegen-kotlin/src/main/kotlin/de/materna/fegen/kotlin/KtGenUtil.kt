@@ -209,7 +209,7 @@ internal val ComplexType.readOrderByParameter
     get() = allSortableFields.join(prefix = ", sort: ", separator = " | ") { """"${name},ASC" | "${name},DESC"""" }
 
 internal val DomainType.uriREST
-    get() = "$restBasePath/$nameREST"
+    get() = "$restBasePath/$nameRest"
 
 internal val DomainType.searchResourceName
-    get() = "$nameREST/search"
+    get() = "$nameRest/search"
