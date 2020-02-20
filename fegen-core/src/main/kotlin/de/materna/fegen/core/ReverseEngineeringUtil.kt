@@ -184,7 +184,7 @@ sealed class CustomEndpointReturnTypeError: Exception() {
 
     abstract val problem: String
 
-    fun getMessage(c: Class<*>, m: Method) = "Return type of custom endpoint ${c.simpleName}::${m.name} is invalid\n$problem"
+    fun getMessage(c: Class<*>, m: Method) = "Return type of custom endpoint ${c.canonicalName}::${m.name} is invalid\n$problem"
 
     class NoResponseEntity(private val returnType: Type) : CustomEndpointReturnTypeError() {
         override val problem
@@ -196,9 +196,9 @@ sealed class CustomEndpointReturnTypeError: Exception() {
             get() = "ResponseEntity may only be parameterized with EntityModel, CollectionModel and PagedModel in return types of custom endpoints. Type ${responseContent.typeName} is invalid"
     }
 
-    class NoEntityBaseType(private val clazz: Class<*>) : CustomEndpointReturnTypeError() {
+    class NoEntityBaseType(private val clazz: Type) : CustomEndpointReturnTypeError() {
         override val problem
-            get() = "Only projections may be returned from custom endpoints. ${clazz.canonicalName} is not annotated with @Projection"
+            get() = "Only projections may be returned from custom endpoints. ${clazz.typeName} is not annotated with @Projection"
     }
 }
 
@@ -218,7 +218,11 @@ val Method.customEndpointReturnType
                         EntityModel::class.java -> RestMultiplicity.SINGLE
                         else -> throw CustomEndpointReturnTypeError.UnknownResponseEntityContent(responseContent)
                     }
-                    val result = EntityBasedType(responseContent.actualTypeArguments.first() as Class<*>, multiplicity)
+                    val entityType = responseContent.actualTypeArguments.first()
+                    if (entityType !is Class<*>) {
+                        throw CustomEndpointReturnTypeError.NoEntityBaseType(entityType)
+                    }
+                    val result = EntityBasedType(entityType, multiplicity)
                     if (!result.valid) {
                         throw CustomEndpointReturnTypeError.NoEntityBaseType(result.clazz)
                     }
