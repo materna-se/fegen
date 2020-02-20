@@ -154,7 +154,7 @@ internal val List<DTReference>.paramNames
     get() = join(separator = ", ") { parameterNames }
 
 internal val DTReference.parameter
-    get() = "$name: $declaration"
+    get() = "$name: $declaration${if (optional) "?" else ""}"
 
 internal val DTReference.parameterNames
     get() = name

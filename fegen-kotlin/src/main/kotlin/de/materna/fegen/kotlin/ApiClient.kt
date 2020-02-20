@@ -341,11 +341,7 @@ if (paging) """
     """.doIndent(2) else ""}): ${if (projection == null) returnDeclaration else projectionReturnDeclaration(projection)} {
 
         val url = "$restBasePath/$path".appendParams(
-            ${parameters.join(indent = 4, separator = ",\n") {
-    """
-                    "$name=${"$"}{URLEncoder.encode(${name}.toString(), "UTF-8")${if (optional) " ?: \"\"" else ""}}"
-                """.trimIndent()
-}}
+            ${parameters.join(indent = 4, separator = ",\n") { "\"$name\" to $name" }}
         )
 
         ${when {
@@ -398,11 +394,7 @@ if (paging) """
         page, size, sort
     """.doIndent(2) else ""}): ${if (projection == null || returnType == null) returnDeclaration else projectionReturnDeclaration(projection)} {
 
-        val url = "$baseUri/$uriPatternString".appendParams(${requestParams.join(indent = 4, separator = ",\n") {
-    """
-                "$name=${"$"}{URLEncoder.encode(${name}.toString(), "UTF-8")${if (optional) " ?: \"\"" else ""}}"
-            """.trimIndent()
-}})
+        val url = "$baseUri/$uriPatternString".appendParams(${requestParams.join(indent = 4, separator = ",\n") { "\"$name\" to $name" }})
 
         ${when {
     paging -> """
@@ -501,11 +493,13 @@ private val CustomEndpoint.clientMethodName
 private val CustomEndpoint.params
     get() = listOf(pathVariables, listOf(body), requestParams).flatten()
             .filterNotNull()
+            .sortedBy { it.optional }
             .join(separator = ", ") { parameter }
 
 private val CustomEndpoint.paramNames
     get() = listOf(pathVariables, listOf(body), requestParams).flatten()
             .filterNotNull()
+            .sortedBy { it.optional }
             .join(separator = ", ") { parameterNames }
 
 private val CustomEndpoint.bodyParam
