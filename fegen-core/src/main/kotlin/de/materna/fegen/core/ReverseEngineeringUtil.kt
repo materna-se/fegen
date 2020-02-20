@@ -263,11 +263,11 @@ val Method.requestMapping
                     null -> throw RuntimeException("HTTP method must be specified")
                     else -> throw RuntimeException("HTTP method ${method.first().name} is not supported")
                 }
-            } ?: getAnnotation(GetMapping::class.java)?.run { (value.firstOrNull() ?: name) to EndpointMethod.GET }
-            ?: getAnnotation(PostMapping::class.java)?.run { (value.firstOrNull() ?: name) to EndpointMethod.POST }
-            ?: getAnnotation(PutMapping::class.java)?.run { (value.firstOrNull() ?: name) to EndpointMethod.PUT }
-            ?: getAnnotation(PatchMapping::class.java)?.run { (value.firstOrNull() ?: name) to EndpointMethod.PATCH }
-            ?: getAnnotation(DeleteMapping::class.java)?.run { (value.firstOrNull() ?: name) to EndpointMethod.DELETE }
+            } ?: getAnnotation(GetMapping::class.java)?.run { (value.firstOrNull() ?: path) to EndpointMethod.GET }
+            ?: getAnnotation(PostMapping::class.java)?.run { (value.firstOrNull() ?: path) to EndpointMethod.POST }
+            ?: getAnnotation(PutMapping::class.java)?.run { (value.firstOrNull() ?: path) to EndpointMethod.PUT }
+            ?: getAnnotation(PatchMapping::class.java)?.run { (value.firstOrNull() ?: path) to EndpointMethod.PATCH }
+            ?: getAnnotation(DeleteMapping::class.java)?.run { (value.firstOrNull() ?: path) to EndpointMethod.DELETE }
             )
 
 val Method.paging
