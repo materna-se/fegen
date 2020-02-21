@@ -570,9 +570,8 @@ class FeGenUtil(
                     return@methodLoop
                 }
                 val returnDomainType = returnType?.let { class2DT[it.clazz] }
-                if (returnType != null && returnDomainType !is ProjectionType) {
-                    logger.warn("Return type of custom endpoint ${c.simpleName}::${m.name} is not a projection")
-                    logger.warn("This may cause issues when using the return type in the frontend")
+                if (returnType != null && returnDomainType !is EntityType) {
+                    logger.warn("Return type of custom endpoint ${c.canonicalName}::${m.name} is not an entity")
                 }
                 val (name, endpointMethod) = m.requestMapping!!
                 domainType.customEndpoints += CustomEndpoint(
