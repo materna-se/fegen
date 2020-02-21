@@ -128,7 +128,7 @@ open class FetchRequestWrapper(
         return "$baseUrlWithEndingSlash$urlWithoutLeadingSlash"
     }
 
-    private suspend fun Headers.Builder.addAuthHeader(performRefresh: Boolean = false) {
+    private fun Headers.Builder.addAuthHeader(performRefresh: Boolean = false) {
         val authHelper = authHelper ?: return
 
         (if(performRefresh) authHelper.refreshAuth()

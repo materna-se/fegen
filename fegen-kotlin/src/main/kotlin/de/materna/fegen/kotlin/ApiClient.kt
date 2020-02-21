@@ -422,7 +422,9 @@ if (paging) """
                     """.trimIndent()}
                     embeddedPropName = "${parentType.nameRest}"${if (projection != null) """,
                     projectionName = "${projection.projectionName}"""".trimIndent() else ""},
-                    ignoreBasePath = true
+                    ignoreBasePath = true,
+                    type = object : TypeReference<ApiHateoasList<${if (projection == null) "${(returnType as ComplexType).nameDto}, ${returnType!!
+            .name}" else "${projection.projectionTypeInterfaceName}Dto, ${projection.projectionTypeInterfaceName}"}>>() {}
                 )
             """.doIndent(2)
     returnType != null -> """
