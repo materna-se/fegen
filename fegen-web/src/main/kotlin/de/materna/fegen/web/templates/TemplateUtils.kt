@@ -66,7 +66,12 @@ internal val CustomEndpoint.clientMethodName
   }}>" else ""}"
 
 internal val CustomEndpoint.clientMethodReturnType
-  get() = "Promise<${if (returnType != null) "T" else "void"}>"
+  get() = when {
+      returnType == null -> "void"
+      list -> "Items<T>"
+      paging -> "PagedItems<T>"
+      else -> "T"
+    }
 
 internal val CustomEndpoint.params
   get() = listOf(pathVariables, listOf(body), requestParams).flatten()
