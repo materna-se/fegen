@@ -399,7 +399,7 @@ if (paging) """
         ${when {
     paging -> """
                 return requestAdapter.doPageRequest<${if (projection == null) "$returnDeclarationSingle, ${(returnType as ComplexType).nameDto}" else
-        "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.name}"}>(
+        "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.nameBase}"}>(
                     url = url,
                     method = "$method",${if (body == null) "" else """
                     body = body,
@@ -415,7 +415,7 @@ if (paging) """
             """.doIndent(2)
     list -> """
                 return requestAdapter.doListRequest<${if (projection == null) "$returnDeclarationSingle, ${(returnType as ComplexType).nameDto}" else
-        "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.name}"}>(
+        "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.nameBase}"}>(
                     url = url,
                     method = "$method",${if (body == null) "" else """
                     body = body,

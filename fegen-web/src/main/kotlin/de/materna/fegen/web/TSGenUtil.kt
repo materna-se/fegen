@@ -57,7 +57,15 @@ internal val DTReference.declaration
         is DTRProjection -> type.declaration
         is DTRComplex    -> type.declaration
         is DTREnum       -> type.declaration
-    }}${if(list) { "[]" } else { "" }}"
+    }}${if(list) "[]" else ""}"
+
+internal val DTReference.baseDeclaration
+    get() = "${when (this) {
+        is DTRSimple -> type.declaration
+        is DTRProjection -> type.declaration
+        is DTREntity -> type.nameBase
+        is DTREnum -> type.declaration
+    }}${if (list) "[]" else ""}"
 
 internal val SimpleType.declaration
     get() = when(this) {
@@ -103,10 +111,10 @@ private val ComplexType.initialization
     get() = "null"
 
 internal val List<DTReference>.paramDecl
-    get() = join(separator = ", ") { parameter }
+    get() = join(separator = ", ") { parameter() }
 
-internal val DTReference.parameter
-    get() = "$name${if (optional) "?" else ""}: $declaration"
+internal fun DTReference.parameter(base: Boolean = false) =
+        "$name${if (optional) "?" else ""}: ${if (base) baseDeclaration else declaration}"
 
 internal val Search.returnDeclaration
     get() = when {

@@ -22,14 +22,13 @@
 package de.materna.fegen.web.templates
 
 import de.materna.fegen.core.*
-import de.materna.fegen.web.FeGenWeb
+import de.materna.fegen.web.*
 import de.materna.fegen.web.declaration
 import de.materna.fegen.web.initialization
 import de.materna.fegen.web.mayHaveSortParameter
 import de.materna.fegen.web.nameBase
 import de.materna.fegen.web.nameClient
 import de.materna.fegen.web.nameDto
-import de.materna.fegen.web.pagingParameters
 import de.materna.fegen.web.paramDecl
 import de.materna.fegen.web.projectionTypeInterfaceName
 import de.materna.fegen.web.readOrderByParameter
@@ -232,7 +231,7 @@ private fun searchEntityTemplate(entityType: EntityType) = """
 private fun customEndpointEntityTemplate(entityType: EntityType) = """ 
     ${entityType.customEndpoints.join(indent = 1, separator = "\n\n") customEndpoint@{
     """
-    public async $clientMethodName(${params.paramDecl}): $clientMethodReturnType  {
+    public async $clientMethodName(${params.join(separator = ", ") { parameter(true) }}): $clientMethodReturnType  {
         const request = this._requestAdapter.getRequest();
     
         const baseUrl = `${baseUri}/${uriPatternString}`${if (canReceiveProjection) """, projection && `projection=${'$'}{projection}`""" else ""};
