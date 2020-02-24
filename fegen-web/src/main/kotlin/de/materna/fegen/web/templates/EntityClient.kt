@@ -237,12 +237,12 @@ private fun customEndpointEntityTemplate(entityType: EntityType) = """
     val responseType = responseType(paging, list)
     val responseHandling = responseHandling(list, paging, entityType.nameRest)
     """
-    public async $clientMethodName(${params.join(separator = ", ") { parameter(true) }}): Promise<$clientMethodReturnType>  {
+    public async $clientMethodName(${params.join(separator = ", ") { parameter(true) }}$pagingParams): Promise<$clientMethodReturnType>  {
         const request = this._requestAdapter.getRequest();
     
         const baseUrl = `${baseUri}/${uriPatternString}`${if (canReceiveProjection) """, projection && `projection=${'$'}{projection}`""" else ""};
         
-        const params = {${requestParams.join(separator = ", ") { name }}};
+        const params = {${requestParams.join(separator = ", ") { name }}$pagingRequestParams};
     
         const url = stringHelper.appendParams(baseUrl, params);
     
