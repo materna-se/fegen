@@ -53,6 +53,7 @@ open class FetchRequestWrapper(
         val fullUrl = url.createUrl(ignoreBasePath)
         val headers = Headers.Builder()
         headers.add("Content-Type", contentType)
+        headers.add("Accept", "application/hal+json")
         headers.addAuthHeader(performRefresh)
 
         val code: Int
