@@ -391,7 +391,7 @@ private fun CustomEndpoint.buildFunction(projection: ProjectionType? = null) = "
     suspend fun custom$clientMethodName${projection?.projectionTypeInterfaceName
         ?: ""}($params${if (params.isEmpty() || !paging) "" else ", "}${
 if (paging) """
-        page, size, sort
+        page: Int? = null, size: Int? = null, sort: String? = null
     """.doIndent(2) else ""}): ${if (projection == null || returnType == null) returnDeclaration else projectionReturnDeclaration(projection)} {
 
         val url = "$baseUri/$uriPatternString".appendParams(${requestParams.join(indent = 4, separator = ",\n") { "\"$name\" to $name" }})
@@ -461,7 +461,7 @@ if (paging) """
         runBlocking { client.custom$clientMethodName${projection?.projectionTypeInterfaceName
         ?: ""}($paramNames${if (paramNames.isEmpty() || !paging) "" else ", "}${
 if (paging) """
-                page: Int? = null, size: Int? = null, sort: String? = null
+                page, size, sort
             """.doIndent(2) else ""}) }
 """.trimIndent()
 
