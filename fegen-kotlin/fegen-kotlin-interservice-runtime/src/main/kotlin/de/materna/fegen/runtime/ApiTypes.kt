@@ -69,8 +69,8 @@ data class ApiHateoasList<out T: ApiDto<U>, out U>(
 
 data class ApiHateoasPage<out T: ApiDto<U>, out U>(
     val _embedded: Map<String, List<T>>,
-    val _links: Map<String, ApiNavigationLink>,
-    val page: PageData
+    val page: PageData,
+    val _links: Map<String, ApiNavigationLink> = emptyMap()
 )
 
 data class PageData(

@@ -409,6 +409,7 @@ if (paging) """
                     page = page,
                     size = size,
                     sort = sort,
+                    ignoreBasePath = true,
                     type = object : TypeReference<ApiHateoasPage<${if (projection == null) "${(returnType as ComplexType).nameDto}, ${returnType!!
             .name}" else "${projection.projectionTypeInterfaceName}Dto, ${projection.projectionTypeInterfaceName}"}>>() {}
                 )
