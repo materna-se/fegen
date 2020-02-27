@@ -53,6 +53,7 @@ open class FetchRequestWrapper(
         val fullUrl = url.createUrl(ignoreBasePath)
         val headers = Headers.Builder()
         headers.add("Content-Type", contentType)
+        headers.add("Accept", "application/hal+json")
         headers.addAuthHeader(performRefresh)
 
         val code: Int
@@ -128,7 +129,7 @@ open class FetchRequestWrapper(
         return "$baseUrlWithEndingSlash$urlWithoutLeadingSlash"
     }
 
-    private suspend fun Headers.Builder.addAuthHeader(performRefresh: Boolean = false) {
+    private fun Headers.Builder.addAuthHeader(performRefresh: Boolean = false) {
         val authHelper = authHelper ?: return
 
         (if(performRefresh) authHelper.refreshAuth()

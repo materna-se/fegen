@@ -151,7 +151,7 @@ open class RequestAdapter(val request: FetchRequest) {
         }
     }
 
-    suspend inline fun <reified T : ApiObj<U>, reified U : ApiDto<T>, V : ApiObj<*>> doSingleRequest(
+    suspend inline fun <reified T : ApiObj<U>, reified U : ApiDto<T>, V : ApiBase<*, *>> doSingleRequest(
             url: String,
             method: String = "GET",
             body: V,

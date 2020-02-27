@@ -341,11 +341,7 @@ if (paging) """
     """.doIndent(2) else ""}): ${if (projection == null) returnDeclaration else projectionReturnDeclaration(projection)} {
 
         val url = "$restBasePath/$path".appendParams(
-            ${parameters.join(indent = 4, separator = ",\n") {
-    """
-                    "$name=${"$"}{URLEncoder.encode(${name}.toString(), "UTF-8")${if (optional) " ?: \"\"" else ""}}"
-                """.trimIndent()
-}}
+            ${parameters.join(indent = 4, separator = ",\n") { "\"$name\" to $name" }}
         )
 
         ${when {
@@ -395,19 +391,15 @@ private fun CustomEndpoint.buildFunction(projection: ProjectionType? = null) = "
     suspend fun custom$clientMethodName${projection?.projectionTypeInterfaceName
         ?: ""}($params${if (params.isEmpty() || !paging) "" else ", "}${
 if (paging) """
-        page, size, sort
+        page: Int? = null, size: Int? = null, sort: String? = null
     """.doIndent(2) else ""}): ${if (projection == null || returnType == null) returnDeclaration else projectionReturnDeclaration(projection)} {
 
-        val url = "$baseUri/$uriPatternString".appendParams(${requestParams.join(indent = 4, separator = ",\n") {
-    """
-                "$name=${"$"}{URLEncoder.encode(${name}.toString(), "UTF-8")${if (optional) " ?: \"\"" else ""}}"
-            """.trimIndent()
-}})
+        val url = "$baseUri/$uriPatternString".appendParams(${requestParams.join(indent = 4, separator = ",\n") { "\"$name\" to $name" }})
 
         ${when {
     paging -> """
                 return requestAdapter.doPageRequest<${if (projection == null) "$returnDeclarationSingle, ${(returnType as ComplexType).nameDto}" else
-        "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.name}"}>(
+        "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.nameBase}"}>(
                     url = url,
                     method = "$method",${if (body == null) "" else """
                     body = body,
@@ -417,25 +409,28 @@ if (paging) """
                     page = page,
                     size = size,
                     sort = sort,
+                    ignoreBasePath = true,
                     type = object : TypeReference<ApiHateoasPage<${if (projection == null) "${(returnType as ComplexType).nameDto}, ${returnType!!
             .name}" else "${projection.projectionTypeInterfaceName}Dto, ${projection.projectionTypeInterfaceName}"}>>() {}
                 )
             """.doIndent(2)
     list -> """
                 return requestAdapter.doListRequest<${if (projection == null) "$returnDeclarationSingle, ${(returnType as ComplexType).nameDto}" else
-        "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.name}"}>(
+        "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.nameBase}"}>(
                     url = url,
                     method = "$method",${if (body == null) "" else """
                     body = body,
                     """.trimIndent()}
                     embeddedPropName = "${parentType.nameRest}"${if (projection != null) """,
                     projectionName = "${projection.projectionName}"""".trimIndent() else ""},
-                    ignoreBasePath = true
+                    ignoreBasePath = true,
+                    type = object : TypeReference<ApiHateoasList<${if (projection == null) "${(returnType as ComplexType).nameDto}, ${returnType!!
+            .name}" else "${projection.projectionTypeInterfaceName}Dto, ${projection.projectionTypeInterfaceName}"}>>() {}
                 )
             """.doIndent(2)
     returnType != null -> """
                 return requestAdapter.doSingleRequest<${if (projection == null) "$returnDeclarationSingle, ${(returnType as ComplexType).nameDto}" else
-        "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.name}"}>(
+        "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.nameBase}"}>(
                     url = url,
                     method = "$method"${if (body == null) "" else """,
                     body = body
@@ -467,7 +462,7 @@ if (paging) """
         runBlocking { client.custom$clientMethodName${projection?.projectionTypeInterfaceName
         ?: ""}($paramNames${if (paramNames.isEmpty() || !paging) "" else ", "}${
 if (paging) """
-                page: Int? = null, size: Int? = null, sort: String? = null
+                page, size, sort
             """.doIndent(2) else ""}) }
 """.trimIndent()
 
@@ -501,27 +496,11 @@ private val CustomEndpoint.clientMethodName
 private val CustomEndpoint.params
     get() = listOf(pathVariables, listOf(body), requestParams).flatten()
             .filterNotNull()
-            .join(separator = ", ") { parameter }
+            .sortedBy { it.optional }
+            .join(separator = ", ") { parameter(true) }
 
 private val CustomEndpoint.paramNames
     get() = listOf(pathVariables, listOf(body), requestParams).flatten()
             .filterNotNull()
+            .sortedBy { it.optional }
             .join(separator = ", ") { parameterNames }
-
-private val CustomEndpoint.bodyParam
-    get() = body?.let { "body: ${it.parameterDeclaration}" } ?: ""
-
-private val CustomEndpoint.bodyParamName
-    get() = if (body != null) "body" else ""
-
-private val CustomEndpoint.clientMethodPathParams
-    get() = if (pathVariables.isNotEmpty()) pathVariables.join(separator = ", ") pVariable@{ "$name: $declaration${if (optional) "?" else ""}" } else ""
-
-private val CustomEndpoint.clientMethodPathParamNames
-    get() = if (pathVariables.isNotEmpty()) pathVariables.join(separator = ", ") pVariable@{ name } else ""
-
-private val CustomEndpoint.clientMethodRequestParams
-    get() = if (requestParams.isNotEmpty()) requestParams.join(separator = ", ") rVariable@{ "$name: $declaration${if (optional) "?" else ""}" } else ""
-
-private val CustomEndpoint.clientMethodRequestParamNames
-    get() = if (requestParams.isNotEmpty()) requestParams.join(separator = ", ") rVariable@{ name } else ""

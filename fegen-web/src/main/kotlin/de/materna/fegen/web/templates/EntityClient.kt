@@ -22,14 +22,13 @@
 package de.materna.fegen.web.templates
 
 import de.materna.fegen.core.*
-import de.materna.fegen.web.FeGenWeb
+import de.materna.fegen.web.*
 import de.materna.fegen.web.declaration
 import de.materna.fegen.web.initialization
 import de.materna.fegen.web.mayHaveSortParameter
 import de.materna.fegen.web.nameBase
 import de.materna.fegen.web.nameClient
 import de.materna.fegen.web.nameDto
-import de.materna.fegen.web.pagingParameters
 import de.materna.fegen.web.paramDecl
 import de.materna.fegen.web.projectionTypeInterfaceName
 import de.materna.fegen.web.readOrderByParameter
@@ -185,6 +184,23 @@ private fun associationEntityTemplate(entityType: EntityType, projectionTypes: L
     }""".doIndent(1)}""".trimIndent()
 }.trimIndent()}"""
 
+private fun responseHandling(list: Boolean, paging: Boolean, nameRest: String) = if (list || paging) """
+            const elements = ((responseObj._embedded && responseObj._embedded.${nameRest}) || []).map(item => (apiHelper.injectIds(item)));
+        
+            return {
+                items: elements,
+                _links: responseObj._links${if (paging) "\n, page: responseObj.page" else ""}
+            };
+        """.doIndent(2) else """
+            return responseObj;
+        """.doIndent(2)
+
+private fun responseType(paging: Boolean, list: Boolean) = when {
+    paging -> "ApiHateoasObjectReadMultiple<T[]>"
+    list -> "ApiHateoasObjectBase<T[]>"
+    else -> "T"
+}
+
 private fun searchEntityTemplate(entityType: EntityType) = """
     ${entityType.searches.join(indent = 1, separator = "\n\n") search@{
     val configurePagingParameters = """
@@ -197,22 +213,9 @@ private fun searchEntityTemplate(entityType: EntityType) = """
         
     """.doIndent(2)
 
-    val responseType = when {
-        paging -> "ApiHateoasObjectReadMultiple<T[]>"
-        list -> "ApiHateoasObjectBase<T[]>"
-        else -> "T"
-    }
+    val responseType = responseType(paging, list)
 
-    val responseHandling = if (list || paging) """
-            const elements = ((responseObj._embedded && responseObj._embedded.${entityType.nameRest}) || []).map(item => (apiHelper.injectIds(item)));
-        
-            return {
-                items: elements,
-                _links: responseObj._links${if (paging) "\n, page: responseObj.page" else ""}
-            };
-        """.doIndent(2) else """
-            return responseObj;
-        """.doIndent(2)
+    val responseHandling = responseHandling(list, paging, entityType.nameRest)
 
     return@search """
     public async search${name.capitalize()}<T extends ${returnType.name}>(${parameters.paramDecl}${if (parameters.isNotEmpty()) ", " else ""}$pagingParameters): Promise<$returnDeclaration> {
@@ -231,17 +234,18 @@ private fun searchEntityTemplate(entityType: EntityType) = """
 
 private fun customEndpointEntityTemplate(entityType: EntityType) = """ 
     ${entityType.customEndpoints.join(indent = 1, separator = "\n\n") customEndpoint@{
+    val responseType = responseType(paging, list)
+    val responseHandling = responseHandling(list, paging, entityType.nameRest)
     """
-    public async $clientMethodName(${params.paramDecl}): $clientMethodReturnType  {
+    public async $clientMethodName(${params.join(separator = ", ") { parameter(true) }}$pagingParams): Promise<$clientMethodReturnType>  {
         const request = this._requestAdapter.getRequest();
     
         const baseUrl = `${baseUri}/${uriPatternString}`${if (canReceiveProjection) """, projection && `projection=${'$'}{projection}`""" else ""};
         
-        const params = {${requestParams.join(separator = ", ") { name }}};
+        const params = {${requestParams.join(separator = ", ") { name }}$pagingRequestParams};
     
         const url = stringHelper.appendParams(baseUrl, params);
     
-        ${if (list || paging) "// TODO: FIXME handle list and paging results " else ""}
         const response = await request.fetch(
             url,
             {
@@ -258,7 +262,9 @@ private fun customEndpointEntityTemplate(entityType: EntityType) = """
             throw response;
         }
         ${if (returnType != null) """
-        const obj = (await response.json()) as T;
-        return apiHelper.injectIds(obj);""" else ""}
+        const responseObj = (await response.json()) as $responseType;
+
+        $responseHandling
+        """ else ""}
     }""".trimIndent()
 }.trimIndent()}"""

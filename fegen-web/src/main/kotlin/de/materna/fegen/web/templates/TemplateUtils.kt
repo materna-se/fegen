@@ -24,6 +24,7 @@ package de.materna.fegen.web.templates
 import de.materna.fegen.core.*
 import de.materna.fegen.web.declaration
 import de.materna.fegen.web.projectionTypeInterfaceName
+import de.materna.fegen.web.readOrderByParameter
 
 internal val CustomEndpoint.uriPatternString
   get() = (name.replace(regex = Regex("\\{([^\\}]+)\\}")) { "${'$'}{${it.groupValues[1]}}" }).trim('/')
@@ -66,12 +67,41 @@ internal val CustomEndpoint.clientMethodName
   }}>" else ""}"
 
 internal val CustomEndpoint.clientMethodReturnType
-  get() = "Promise<${if (returnType != null) "T" else "void"}>"
+  get() = when {
+      returnType == null -> "void"
+      list -> "Items<T>"
+      paging -> "PagedItems<T>"
+      else -> "T"
+    }
 
 internal val CustomEndpoint.params
   get() = listOf(pathVariables, listOf(body), requestParams).flatten()
           .filterNotNull()
           .sortedBy { it.optional }
+
+internal val CustomEndpoint.pagingParams get(): String {
+  if (!paging) {
+    return ""
+  }
+  var result = if (params.isNotEmpty()) ", " else ""
+  result += "page?: number, size?: number"
+  (returnType as? ComplexType)?.let {
+    result += it.readOrderByParameter
+  }
+  return result
+}
+
+internal val CustomEndpoint.pagingRequestParams
+  get(): String {
+  if (!paging) {
+    return ""
+  }
+  var result = "page, size"
+  (returnType as? ComplexType)?.let {
+    result += ", sort"
+  }
+  return result
+}
 
 internal val CustomEndpoint.bodyParam
   get() = body?.let { "data${it.parameterDeclaration}" } ?: ""

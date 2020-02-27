@@ -21,6 +21,8 @@
  */
 package de.materna.fegen.runtime
 
+import java.net.URLEncoder
+
 fun removeTemplatesFromHref(link: ApiNavigationLink): String {
     if (link.templated != null && link.templated == true) {
         var href = link.href
@@ -68,7 +70,11 @@ fun objectHasSelfLink(obj: ApiBase<*, *>?): Boolean {
     return (obj?._links != null)
 }
 
-fun String.appendParams(vararg parameters: String?): String {
-    val filteredParams = parameters.filter { it != null }.map { it!! }
-    return "$this${if(filteredParams.isNotEmpty()) "?${filteredParams.joinToString(separator = "&")}" else ""}"
+fun String.appendParams(vararg parameters: Pair<String, Any?>): String {
+    val filteredParams = parameters.filter { (_, v) -> v != null }
+    return if (filteredParams.isEmpty()) {
+        this
+    } else {
+        this + "?" + filteredParams.joinToString(separator = "&") { (n, v) -> n + "=" + URLEncoder.encode(v.toString(), "UTF-8") }
+    }
 }
