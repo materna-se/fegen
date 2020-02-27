@@ -500,14 +500,18 @@ You can then specify custom endpoints in such classes where parameters are annot
 open fun createOrUpdateContact(
         @RequestParam firstName: String,
         @RequestParam lastName: String
-): ResponseEntity<User.BaseProjection> {
+): ResponseEntity<EntityModel<User>> {
     // ...
 }
 ```
 
 FeGen will generate a Typescript method in the API client corresponding to the class' `@RequestMapping` `path` or value if the Java or Kotlin method has a `@RequestMapping` (or `@GetMapping`, `@PostMapping`, etc.) annotation.
 
-Using a custom search in the frontend works the same as with repository searches.
+Custom endpoints must have a void return type or return entities.
+In the latter case, the entity class must be wrapped in an `EntityModel` (if a single entity should be returned) or in `CollectionModel` or `PagedModel` (if multiple entities should be returned).
+Those classes themselves must be wrapped in a `ResponseEntity`. 
+
+Using a custom endpoint in the frontend works the same as with repository searches.
 
 ## Building FeGen
 
