@@ -32,7 +32,6 @@ Code can be generated for the following target platforms:
 
 FeGen currently has some limitations such as the following which may be lifted in future versions:
 
-- Return values of custom endpoints cannot be processed in the frontend
 - A plugin for Swift (to use in iOS apps) exists, but is not yet publicly released
 - Only primitive types and (lists of) entities are supported as API parameters
     - Generating code for API endpoints used to up- or download files is not supported
@@ -91,6 +90,16 @@ fegenKotlin {
 }
 ```
 
+If you want to use custom endpoints and are using a Spring version that ships with version 1.0.0 or later of `spring-hateoas`, you will need also need to add `fegen-spring-util` as a dependency.
+This ensures that links required by FeGen will be added to the return values of custom endpoints.
+
+```
+dependencies {
+    ...
+    implementation "com.github.materna-se.fegen:fegen-spring-util:1.0"
+}
+```
+
 If you are using maven, add a configuration like the following to the `build/plugins` section of your `pom.xml`:
 
 ```
@@ -105,6 +114,16 @@ If you are using maven, add a configuration like the following to the `build/plu
         <frontendPath>../web-api/src</frontendPath>
     </configuration>
 </plugin>
+```
+
+To use custom endpoints with `spring-hateoas >= 1.0`, you should also add the following to the `dependencies` section.
+
+```
+<dependency>
+    <groupId>com.github.materna-se.fegen</groupId>
+    <artifactId>fegen-spring-util</artifactId>
+    <version>1.0</version>
+</dependency>
 ```
 
 #### Configuration
@@ -509,9 +528,11 @@ FeGen will generate a Typescript method in the API client corresponding to the c
 
 Custom endpoints must have a void return type or return entities.
 In the latter case, the entity class must be wrapped in an `EntityModel` (if a single entity should be returned) or in `CollectionModel` or `PagedModel` (if multiple entities should be returned).
-Those classes themselves must be wrapped in a `ResponseEntity`. 
+Those classes themselves must be wrapped in a `ResponseEntity`.
 
-Using a custom endpoint in the frontend works the same as with repository searches.
+To reliably use the returned values in the frontend, make sure you added the `fegen-spring-util` dependency to your Spring project.
+
+Calling a custom endpoint in the frontend works the same as with repository searches.
 
 ## Building FeGen
 
