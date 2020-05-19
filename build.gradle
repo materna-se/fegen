@@ -88,15 +88,17 @@ buildscript {
                         def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
                         def snapshotRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots"
                         url = data.artifactProject.fegen_snapshot ? snapshotRepoUrl : releasesRepoUrl
-                        credentials {
-                            // The username should be stored in "$HOME/.gradle/gradle.properties"
-                            username = project.ext.get("mavenCentral.username")
-                            password = project.ext.getProperty("mavenCentral.password")
+                        if (project.ext.has("mavenCentral.username") && project.ext.has("mavenCentral.password")) {
+                            credentials {
+                                // The username should be stored in "$HOME/.gradle/gradle.properties"
+                                username = project.ext.get("mavenCentral.username")
+                                password = project.ext.getProperty("mavenCentral.password")
+                            }
                         }
                     }
                 }
             }
-            if (!data.artifactProject.fegen_snapshot) {
+            if (project.hasProperty("signing.keyId") && project.hasProperty("signing.secretKeyRingFile")) {
                 data.artifactProject.signing {
                     sign data.artifactProject.publishing.publications.mavenKotlin
                 }
@@ -184,7 +186,17 @@ license {
 }
 
 gradle.taskGraph.whenReady { taskGraph ->
-    if (taskGraph.allTasks.any { it instanceof Sign }) {
+    if (taskGraph.allTasks.any { it instanceof PublishToMavenRepository }) {
+        if (!project.ext.has("mavenCentral.username")) {
+            logger.error("Please specify the property mavenCentral.username")
+            logger.error("in your \"\$HOME/.gradle/gradle.properties\" file")
+        }
+        if (!project.ext.has("mavenCentral.password")) {
+            logger.error("Please specify the property mavenCentral.password")
+            logger.error("in your \"\$HOME/.gradle/gradle.properties\" file")
+        }
+    }
+    if (taskGraph.allTasks.any { it instanceof Sign || (it instanceof PublishToMavenRepository && !data.artifactProject.fegen_snapshot) }) {
         if (!project.hasProperty("signing.keyId") || !project.hasProperty("signing.secretKeyRingFile")) {
             logger.error("Please add the following properties in your \"\$HOME/.gradle/gradle.properties\" file:")
             logger.error("signing.keyId=0123ABCD")
