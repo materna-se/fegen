@@ -186,29 +186,36 @@ license {
 }
 
 gradle.taskGraph.whenReady { taskGraph ->
+    def missingConfig = false
     if (taskGraph.allTasks.any { it instanceof PublishToMavenRepository }) {
         if (!project.ext.has("mavenCentral.username")) {
             logger.error("Please specify the property mavenCentral.username")
             logger.error("in your \"\$HOME/.gradle/gradle.properties\" file")
+            missingConfig = true
         }
         if (!project.ext.has("mavenCentral.password")) {
             logger.error("Please specify the property mavenCentral.password")
             logger.error("in your \"\$HOME/.gradle/gradle.properties\" file")
+            missingConfig = true
         }
     }
-    if (taskGraph.allTasks.any { it instanceof Sign || (it instanceof PublishToMavenRepository && !data.artifactProject.fegen_snapshot) }) {
+    if (taskGraph.allTasks.any { it instanceof Sign || (it instanceof PublishToMavenRepository && !project.ext.fegen_snapshot) }) {
         if (!project.hasProperty("signing.keyId") || !project.hasProperty("signing.secretKeyRingFile")) {
             logger.error("Please add the following properties in your \"\$HOME/.gradle/gradle.properties\" file:")
             logger.error("signing.keyId=0123ABCD")
             logger.error("signing.secretKeyRingFile=path/to/secring.gpg")
-            throw new GradleException("No key specified although artifacts must be signed")
-        }
-        def id = project.getProperties().get("signing.keyId")
-        if (!project.hasProperty("signing.password")) {
-            def password = queryPassword("Gradle artifact signing", "To publish artifacts they must be signed. Please enter the password for the key with ID $id")
-            allprojects {
-                ext."signing.password" = password
+            missingConfig = true
+        } else {
+            def id = project.getProperties().get("signing.keyId")
+            if (!project.hasProperty("signing.password")) {
+                def password = queryPassword("Gradle artifact signing", "To publish artifacts they must be signed. Please enter the password for the key with ID $id")
+                allprojects {
+                    ext."signing.password" = password
+                }
             }
         }
+    }
+    if (missingConfig) {
+        throw new GradleException("The gradle.properties file in your home directory is missing properties. Refer to the previous log output to see which ones.")
     }
 }
