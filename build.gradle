@@ -114,11 +114,12 @@ buildscript {
                 // let the following task generate a pom.xml
                 dependsOn "generatePomFileForMavenKotlinPublication"
 
+                def pomDestination = new File("${project.projectDir}/pom.xml")
+
                 // Temporarily copy the pom.xml to the project dir to make the project look like a maven project
                 doFirst {
                     def pomSource = new File("${project.buildDir}/publications/mavenKotlin/pom-default.xml")
                     def pomParts = pomSource.text.split("</artifactId>")
-                    def pomDestination = new File("${project.projectDir}/pom.xml")
                     pomDestination.withWriter { writer ->
                         writer.append pomParts.head() + "</artifactId>\n"
                         writer.append "  <packaging>maven-plugin</packaging>\n"
@@ -136,6 +137,10 @@ buildscript {
                 def mvnw = isWindows ? "mvnw.cmd" : "mvnw"
                 // Let maven generate the plugin.xml
                 commandLine "${project.projectDir}/$mvnw", "-e", "-B", "org.apache.maven.plugins:maven-plugin-plugin:3.6.0:descriptor"
+
+                doLast {
+                    pomDestination.delete()
+                }
             }
 
             // plugin.xml must be added to compiled files before jar is built
