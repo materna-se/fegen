@@ -7,17 +7,17 @@ buildscript {
         kotlin_version = '1.3.61'
 
         fegen_snapshot = false
-        fegen_core_version = '1.0-RC5'
-        fegen_gradle_version = '1.0-RC5'
-        fegen_maven_version = '1.0-RC5'
-        fegen_kotlin_version = '1.0-RC5'
-        fegen_kotlin_gradle_version = '1.0-RC5'
-        fegen_kotlin_interservice_runtime_version = '1.0-RC5'
-        fegen_kotlin_maven_version = '1.0-RC5'
-        fegen_spring_util_version = '1.0-RC5'
-        fegen_web_version = '1.0-RC5'
-        fegen_web_gradle_version = '1.0-RC5'
-        fegen_web_maven_version = '1.0-RC5'
+        fegen_core_version = '1.0-RC6'
+        fegen_gradle_version = '1.0-RC6'
+        fegen_maven_version = '1.0-RC6'
+        fegen_kotlin_version = '1.0-RC6'
+        fegen_kotlin_gradle_version = '1.0-RC6'
+        fegen_kotlin_interservice_runtime_version = '1.0-RC6'
+        fegen_kotlin_maven_version = '1.0-RC6'
+        fegen_spring_util_version = '1.0-RC6'
+        fegen_web_version = '1.0-RC6'
+        fegen_web_gradle_version = '1.0-RC6'
+        fegen_web_maven_version = '1.0-RC6'
         // Version of web runtime needs to be set in package.json
 
         queryPassword = { title, text ->
@@ -88,15 +88,17 @@ buildscript {
                         def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
                         def snapshotRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots"
                         url = data.artifactProject.fegen_snapshot ? snapshotRepoUrl : releasesRepoUrl
-                        credentials {
-                            // The username should be stored in "$HOME/.gradle/gradle.properties"
-                            username = project.ext.get("mavenCentral.username")
-                            password = project.ext.getProperty("mavenCentral.password")
+                        if (project.ext.has("mavenCentral.username") && project.ext.has("mavenCentral.password")) {
+                            credentials {
+                                // The username should be stored in "$HOME/.gradle/gradle.properties"
+                                username = project.ext.get("mavenCentral.username")
+                                password = project.ext.getProperty("mavenCentral.password")
+                            }
                         }
                     }
                 }
             }
-            if (!data.artifactProject.fegen_snapshot) {
+            if (project.hasProperty("signing.keyId") && project.hasProperty("signing.secretKeyRingFile")) {
                 data.artifactProject.signing {
                     sign data.artifactProject.publishing.publications.mavenKotlin
                 }
@@ -112,11 +114,12 @@ buildscript {
                 // let the following task generate a pom.xml
                 dependsOn "generatePomFileForMavenKotlinPublication"
 
+                def pomDestination = new File("${project.projectDir}/pom.xml")
+
                 // Temporarily copy the pom.xml to the project dir to make the project look like a maven project
                 doFirst {
                     def pomSource = new File("${project.buildDir}/publications/mavenKotlin/pom-default.xml")
                     def pomParts = pomSource.text.split("</artifactId>")
-                    def pomDestination = new File("${project.projectDir}/pom.xml")
                     pomDestination.withWriter { writer ->
                         writer.append pomParts.head() + "</artifactId>\n"
                         writer.append "  <packaging>maven-plugin</packaging>\n"
@@ -134,6 +137,10 @@ buildscript {
                 def mvnw = isWindows ? "mvnw.cmd" : "mvnw"
                 // Let maven generate the plugin.xml
                 commandLine "${project.projectDir}/$mvnw", "-e", "-B", "org.apache.maven.plugins:maven-plugin-plugin:3.6.0:descriptor"
+
+                doLast {
+                    pomDestination.delete()
+                }
             }
 
             // plugin.xml must be added to compiled files before jar is built
@@ -184,19 +191,36 @@ license {
 }
 
 gradle.taskGraph.whenReady { taskGraph ->
-    if (taskGraph.allTasks.any { it instanceof Sign }) {
+    def missingConfig = false
+    if (taskGraph.allTasks.any { it instanceof PublishToMavenRepository }) {
+        if (!project.ext.has("mavenCentral.username")) {
+            logger.error("Please specify the property mavenCentral.username")
+            logger.error("in your \"\$HOME/.gradle/gradle.properties\" file")
+            missingConfig = true
+        }
+        if (!project.ext.has("mavenCentral.password")) {
+            logger.error("Please specify the property mavenCentral.password")
+            logger.error("in your \"\$HOME/.gradle/gradle.properties\" file")
+            missingConfig = true
+        }
+    }
+    if (taskGraph.allTasks.any { it instanceof Sign || (it instanceof PublishToMavenRepository && !project.ext.fegen_snapshot) }) {
         if (!project.hasProperty("signing.keyId") || !project.hasProperty("signing.secretKeyRingFile")) {
             logger.error("Please add the following properties in your \"\$HOME/.gradle/gradle.properties\" file:")
             logger.error("signing.keyId=0123ABCD")
             logger.error("signing.secretKeyRingFile=path/to/secring.gpg")
-            throw new GradleException("No key specified although artifacts must be signed")
-        }
-        def id = project.getProperties().get("signing.keyId")
-        if (!project.hasProperty("signing.password")) {
-            def password = queryPassword("Gradle artifact signing", "To publish artifacts they must be signed. Please enter the password for the key with ID $id")
-            allprojects {
-                ext."signing.password" = password
+            missingConfig = true
+        } else {
+            def id = project.getProperties().get("signing.keyId")
+            if (!project.hasProperty("signing.password")) {
+                def password = queryPassword("Gradle artifact signing", "To publish artifacts they must be signed. Please enter the password for the key with ID $id")
+                allprojects {
+                    ext."signing.password" = password
+                }
             }
         }
+    }
+    if (missingConfig) {
+        throw new GradleException("The gradle.properties file in your home directory is missing properties. Refer to the previous log output to see which ones.")
     }
 }

@@ -221,7 +221,7 @@ private fun searchEntityTemplate(entityType: EntityType) = """
     public async search${name.capitalize()}<T extends ${returnType.name}>(${parameters.paramDecl}${if (parameters.isNotEmpty()) ", " else ""}$pagingParameters): Promise<$returnDeclaration> {
         const request = this._requestAdapter.getRequest();
         
-        const parameters: {[key: string]: string} = {${parameters.join(separator = ", ") { name }}};
+        const parameters: {[key: string]: string | number | boolean | undefined} = {${parameters.join(separator = ", ") { name }}};
         ${if (paging) configurePagingParameters else ""}    
         const url = stringHelper.appendParams("$restBasePath/$path", parameters);
     
