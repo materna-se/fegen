@@ -57,6 +57,7 @@ private fun EntityType.toDeclaration() = """
     export interface $nameBase extends ApiBase {
         ${nonComplexFields.filter { it.name != "id" }.join(indent = 2) { toDeclaration() }}
         ${entityFields.join(indent = 2) { toDeclaration() }}
+        ${embeddedFields.join(indent = 2) { toDeclaration() }}
         _links?: {
             self: ApiNavigationLink
             ${entityFields.join(indent = 3) { "$name: ApiNavigationLink" }}

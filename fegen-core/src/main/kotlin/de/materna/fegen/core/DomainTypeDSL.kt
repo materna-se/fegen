@@ -45,6 +45,10 @@ sealed class ComplexType: DomainType() {
         fields.filterIsInstance(DTREntity::class.java)
     }
 
+    open val embeddedFields by lazy {
+        fields.filterIsInstance(DTREmbeddable::class.java)
+    }
+
     open val enumFields by lazy {
         fields.filterIsInstance(DTREnum::class.java)
     }
