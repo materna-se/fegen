@@ -21,12 +21,7 @@
  */
 package de.materna.fegen.web.templates
 
-import de.materna.fegen.core.DTReference
-import de.materna.fegen.core.DomainType
-import de.materna.fegen.core.EntityType
-import de.materna.fegen.core.EnumType
-import de.materna.fegen.core.ProjectionType
-import de.materna.fegen.core.join
+import de.materna.fegen.core.*
 import de.materna.fegen.web.FeGenWeb
 import de.materna.fegen.web.declaration
 import de.materna.fegen.web.nameBase
@@ -49,6 +44,7 @@ fun FeGenWeb.toEntitiesTS() = """
 
 private fun DomainType.toDeclaration() = when (this) {
     is EntityType -> toDeclaration()
+    is EmbeddableType -> toDeclaration()
     is ProjectionType -> toDeclaration()
     is EnumType -> toDeclaration()
 }
@@ -84,6 +80,12 @@ private fun EntityType.toDeclaration() = """
      */
     export interface $name extends $nameDto {
         id: number
+    }
+""".trimIndent()
+
+private fun EmbeddableType.toDeclaration() = """
+    export interface $name {
+        ${fields.join(indent = 2) { toDeclaration() }}
     }
 """.trimIndent()
 

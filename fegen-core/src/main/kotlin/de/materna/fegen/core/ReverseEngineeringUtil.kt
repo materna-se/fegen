@@ -131,6 +131,9 @@ val Class<*>.getters
 val Class<*>.isEntity
     get() = getAnnotation(Entity::class.java) != null
 
+val Class<*>.isEmbeddable
+    get() = getAnnotation(Embeddable::class.java) != null
+
 val Class<*>.isProjection
     get() = getAnnotation(Projection::class.java) != null
 

@@ -21,20 +21,8 @@
  */
 package de.materna.fegen.web
 
-import de.materna.fegen.core.ComplexType
-import de.materna.fegen.core.DTRComplex
-import de.materna.fegen.core.DTREntity
-import de.materna.fegen.core.DTREnum
-import de.materna.fegen.core.DTRProjection
-import de.materna.fegen.core.DTRSimple
-import de.materna.fegen.core.DTReference
-import de.materna.fegen.core.EntityType
-import de.materna.fegen.core.EnumType
-import de.materna.fegen.core.ProjectionType
-import de.materna.fegen.core.Search
-import de.materna.fegen.core.SimpleType
+import de.materna.fegen.core.*
 import de.materna.fegen.core.SimpleType.*
-import de.materna.fegen.core.join
 
 internal val EntityType.nameBase
     get() = "${name}Base"
@@ -65,6 +53,7 @@ internal val DTReference.baseDeclaration
         is DTRProjection -> type.declaration
         is DTREntity -> type.nameBase
         is DTREnum -> type.declaration
+        is DTREmbeddable -> type.declaration
     }}${if (list) "[]" else ""}"
 
 internal val SimpleType.declaration
@@ -139,6 +128,7 @@ val ComplexType.allSimpleFields
     get() = when(this){
         is ProjectionType -> (simpleFields + parentType.simpleFields)
         is EntityType     -> simpleFields
+        is EmbeddableType -> simpleFields
     }
 
 internal val ComplexType.allSortableFields

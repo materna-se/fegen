@@ -41,6 +41,7 @@ import java.time.LocalDateTime
 import java.time.OffsetDateTime
 import java.time.ZonedDateTime
 import java.util.*
+import javax.persistence.Embeddable
 import javax.persistence.Entity
 
 class FeGenUtil(
@@ -99,8 +100,9 @@ class FeGenUtil(
         } else {
             logger.info("Entity classes found: ${entityClasses.size}")
         }
+        val embeddedClasses = searchForComponentClassesByAnnotation(Embeddable::class.java)
 
-        return entityClasses + projectionClasses
+        return entityClasses + embeddedClasses + projectionClasses
     }
 
 
@@ -111,21 +113,25 @@ class FeGenUtil(
 
     private fun initDomainTypes(classes: List<Class<*>>): LinkedHashMap<Class<*>, ComplexType> {
         // create a domain type instance for each entity and associate each class to the respective domain type (for cyclic dependencies)
-        val class2ET = classes.asSequence().filter {
-            it.isEntity
-        }.associateWith { ec -> EntityType(name = ec.simpleName) }.toMap()
+        val class2Entity = classes.asSequence()
+                .filter { it.isEntity }
+                .associateWith { ec -> EntityType(name = ec.simpleName) }
+
+        val class2Embeddable = classes.asSequence()
+                .filter { it.isEmbeddable }
+                .associateWith { ec -> EmbeddableType(name = ec.simpleName) }
 
         for (repoClass in searchForRepositoryClasses()) {
             val customPath = repoClass.getAnnotation(RepositoryRestResource::class.java).path
             if (customPath.isNotBlank()) {
-                val entity = class2ET[repoClass.repositoryType]
+                val entity = class2Entity[repoClass.repositoryType]
                         ?: error("Repository ${repoClass.canonicalName} refers to unknown entity ${repoClass.repositoryType}")
                 entity.nameRestOverride = customPath.removePrefix("/")
             }
         }
 
         // create a domain type instance for each projection and associate each class to the respective domain type (for cyclic dependencies)
-        val class2PT = classes.asSequence().filter {
+        val class2Projection = classes.asSequence().filter {
             it.isProjection
         }.associateWith { pc ->
             val parentType = pc.projectionType!!
@@ -133,16 +139,16 @@ class FeGenUtil(
                     name = pc.simpleName,
                     projectionName = pc.projectionName!!,
                     baseProjection = pc.simpleName == "BaseProjection",
-                    parentType = class2ET[parentType]
+                    parentType = class2Entity[parentType]
                             ?: error("Parent ${parentType.simpleName} of projection ${pc.simpleName} is not an entity. " +
                                     "Entities: ${classes.joinToString("\n") { it.simpleName }}")
             )
         }.toMap()
 
         // use linked hash map, so that the field creation is executed on entities first (see below)
-        val class2CT = LinkedHashMap<Class<*>, ComplexType>(class2ET)
-
-        class2CT.putAll(class2PT)
+        val class2CT = LinkedHashMap<Class<*>, ComplexType>(class2Entity)
+        class2CT.putAll(class2Embeddable)
+        class2CT.putAll(class2Projection)
         return class2CT
     }
 
@@ -154,7 +160,7 @@ class FeGenUtil(
         // iterate all complex types (entities and projections) and add fields. This is done in a second iteration, because
         // there can be cyclic dependencies between complex types.
         class2CT.forEach { (clazz, complexType) ->
-            complexType.fields = clazz.getters.filter { m ->
+            complexType.fields = clazz.getters.asSequence().filter { m ->
                 // we are interested in non-ignored fields only, i.e., fields that are either notIgnored or writable.
                 m.field?.run { (notIgnored && m.notIgnored) || (setter?.writable ?: false) } ?: true
             }.filter { m ->
@@ -165,6 +171,7 @@ class FeGenUtil(
                         it is DTRComplex
                     } ?: true
                     is EntityType -> true
+                    is EmbeddableType -> true
                 }
             }.filter { it.fieldName != "version" }.filter { it.fieldType.typeName != "byte[]" }.sortedBy {
                 if (it.fieldName == "id") "" else it
@@ -183,13 +190,16 @@ class FeGenUtil(
                             logger.error("Please use a projection of \"${type.simpleName}\" instead")
                         }
                         if (field != null) {
-                            implicitNullable.check(logger, { !field.required && !field.explicitOptional }) { print ->
+                            val isEmbeddable = (type as? Class<*>)?.isEmbeddable ?: false
+                            val isImplicitlyNullable = { !field.required && !field.explicitOptional && !isEmbeddable }
+                            implicitNullable.check(logger, isImplicitlyNullable) { print ->
                                 print("Field \"$name\" in entity \"${clazz.canonicalName}\" is implicitly nullable.")
-                                print("  Please add a @Nullable annotation if this is intentional")
+                                print("    Please add a @Nullable annotation if this is intentional")
+                                print("    or add a @NotNull annotation to forbid null values")
                                 if (implicitNullable == DiagnosticsLevel.WARN) {
-                                    print("  Set implicitNullable to ALLOW in FeGen's build configuration to hide this warning")
+                                    print("    Set implicitNullable to ALLOW in FeGen's build configuration to hide this warning")
                                 } else {
-                                    print("  Set implicitNullable to WARN to continue the build despite missing @Nullable annotations")
+                                    print("    Set implicitNullable to WARN to continue the build despite missing @Nullable annotations")
                                 }
                             }
                         }
@@ -207,7 +217,7 @@ class FeGenUtil(
                                 justSettable = !(m.notIgnored && field?.notIgnored ?: false) && (field?.setter?.writable
                                         ?: false)
                         )
-                    }
+                    }.toList()
         }
         return class2DT
     }
@@ -341,6 +351,12 @@ class FeGenUtil(
                                 justSettable = justSettable,
                                 type = class2DT[type] as? EntityType
                                         ?: EntityType("UNKNOWN")
+                        )
+                        type.isEmbeddable -> DTREmbeddable(
+                                name = name,
+                                justSettable = justSettable,
+                                type = class2DT[type] as? EmbeddableType
+                                        ?: EmbeddableType("UNKNOWN")
                         )
                         type.isProjection -> DTRProjection(
                                 name = name,

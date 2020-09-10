@@ -36,6 +36,23 @@ sealed class DomainType {
 
 sealed class ComplexType: DomainType() {
     abstract var fields: List<DTReference>
+
+    open val simpleFields by lazy {
+        fields.filterIsInstance(DTRSimple::class.java)
+    }
+
+    open val entityFields by lazy {
+        fields.filterIsInstance(DTREntity::class.java)
+    }
+
+    open val enumFields by lazy {
+        fields.filterIsInstance(DTREnum::class.java)
+    }
+
+    open val nonComplexFields by lazy {
+        simpleFields + enumFields
+    }
+
 }
 
 data class EntityType(
@@ -43,24 +60,12 @@ data class EntityType(
     override var fields: List<DTReference> = emptyList(),
     var searches: List<Search> = emptyList(),
     var customEndpoints: List<CustomEndpoint> = emptyList()
-): ComplexType() {
+): ComplexType()
 
-    val simpleFields by lazy {
-        fields.filterIsInstance(DTRSimple::class.java)
-    }
-
-    val entityFields by lazy {
-        fields.filterIsInstance(DTREntity::class.java)
-    }
-
-    val enumFields by lazy {
-        fields.filterIsInstance(DTREnum::class.java)
-    }
-
-    val nonComplexFields by lazy {
-        simpleFields + enumFields
-    }
-}
+data class EmbeddableType(
+        override var name: String,
+        override var fields: List<DTReference> = emptyList()
+): ComplexType()
 
 data class ProjectionType(
     override var name: String,
@@ -77,7 +82,7 @@ data class ProjectionType(
      * This is for spEL fueled fields in projections. It does not contain
      * the fields of the returnType type.
      */
-    val simpleFields by lazy {
+    override val simpleFields by lazy {
         fields.filterIsInstance(DTRSimple::class.java)
     }
 
@@ -85,7 +90,7 @@ data class ProjectionType(
      * This is for spEL fueled fields in projections. It does not contain
      * the fields of the returnType type.
      */
-    val entityFields by lazy {
+    override val entityFields by lazy {
         fields.filterIsInstance(DTREntity::class.java)
     }
 
@@ -93,7 +98,7 @@ data class ProjectionType(
      * This is for spEL fueled fields in projections. It does not contain
      * the fields of the returnType type.
      */
-    val enumFields by lazy {
+    override val enumFields by lazy {
         fields.filterIsInstance(DTREnum::class.java)
     }
 
@@ -113,7 +118,7 @@ data class ProjectionType(
      * This is for spEL fueled fields in projections. It does not contain
      * the fields of the returnType type.
      */
-    val nonComplexFields by lazy {
+    override val nonComplexFields by lazy {
         simpleFields + enumFields
     }
 }
@@ -236,6 +241,19 @@ data class DTREntity(
     override fun toString(): String {
         return "DTREntity(name=$name, list=$list, justSettable=$justSettable, type=${type.name})"
     }
+}
+
+data class DTREmbeddable(
+        override val name: String,
+        override val justSettable: Boolean = false,
+        override val type: EmbeddableType
+): DTRComplex() {
+
+    override val list get() = false
+
+    // If every field of an embeddable is null,
+    // the embeddable itself may always be null
+    override val optional get() = true
 }
 
 data class DTRProjection(

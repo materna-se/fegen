@@ -21,12 +21,7 @@
  */
 package de.materna.fegen.kotlin
 
-import de.materna.fegen.core.DTReference
-import de.materna.fegen.core.DomainType
-import de.materna.fegen.core.EntityType
-import de.materna.fegen.core.EnumType
-import de.materna.fegen.core.ProjectionType
-import de.materna.fegen.core.join
+import de.materna.fegen.core.*
 
 fun FeGenKotlin.toEntitiesKt() = """
     package $frontendPkg
@@ -51,7 +46,8 @@ fun FeGenKotlin.toEntitiesKt() = """
 
 private fun DomainType.toDeclaration() = when (this) {
     is EntityType     -> toDeclaration()
-    is ProjectionType -> if(baseProjection) "" else toDeclaration()
+    is EmbeddableType -> TODO()
+    is ProjectionType -> if (baseProjection) "" else toDeclaration()
     is EnumType       -> toDeclaration()
 }
 
@@ -85,6 +81,7 @@ private fun ProjectionType.toDeclaration() = """
             )
     }
 """.trimIndent()
+
 private fun EntityType.toDeclaration() = """
 
     /**

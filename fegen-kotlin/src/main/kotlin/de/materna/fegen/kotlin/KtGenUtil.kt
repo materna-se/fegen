@@ -21,23 +21,7 @@
  */
 package de.materna.fegen.kotlin
 
-import de.materna.fegen.core.ComplexType
-import de.materna.fegen.core.CustomEndpoint
-import de.materna.fegen.core.DTRComplex
-import de.materna.fegen.core.DTREntity
-import de.materna.fegen.core.DTREnum
-import de.materna.fegen.core.DTRProjection
-import de.materna.fegen.core.DTRSimple
-import de.materna.fegen.core.DTReference
-import de.materna.fegen.core.DomainType
-import de.materna.fegen.core.EntityType
-import de.materna.fegen.core.EnumType
-import de.materna.fegen.core.ProjectionType
-import de.materna.fegen.core.Search
-import de.materna.fegen.core.SimpleType
-import de.materna.fegen.core.handleDatesAsString
-import de.materna.fegen.core.join
-import de.materna.fegen.core.restBasePath
+import de.materna.fegen.core.*
 
 
 internal val EntityType.nameBase
@@ -82,6 +66,7 @@ internal val DTReference.declaration
         is DTRSimple -> type.declaration
         is DTRProjection -> type.declaration
         is DTREntity -> type.declaration
+        is DTREmbeddable -> type.declaration
         is DTREnum -> type.declaration
     }}${if (list) ">" else ""}"
 
@@ -90,6 +75,7 @@ internal val DTReference.baseDeclaration
         is DTRSimple -> type.declaration
         is DTRProjection -> type.declaration
         is DTREntity -> type.nameBase
+        is DTREmbeddable -> type.name
         is DTREnum -> type.declaration
     }}${if (list) ">" else ""}"
 
@@ -115,11 +101,15 @@ internal val EnumType.declaration
 internal val ComplexType.declaration
     get() = when (this) {
         is EntityType -> declaration
+        is EmbeddableType -> declaration
         is ProjectionType -> declaration
     }
 
 
 internal val EntityType.declaration
+    get() = name
+
+internal val EmbeddableType.declaration
     get() = name
 
 internal val ProjectionType.declaration
@@ -204,6 +194,7 @@ internal val ComplexType.allSimpleFields
     get() = when (this) {
         is ProjectionType -> (simpleFields + parentType.simpleFields)
         is EntityType -> simpleFields
+        is EmbeddableType -> simpleFields
     }
 
 internal val ComplexType.allSortableFields
