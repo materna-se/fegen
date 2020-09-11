@@ -46,11 +46,18 @@ fun FeGenKotlin.toEntitiesKt() = """
 
 private fun DomainType.toDeclaration() = when (this) {
     is EntityType     -> toDeclaration()
-    is EmbeddableType -> TODO()
+    is EmbeddableType -> toDeclaration()
     is ProjectionType -> if (baseProjection) "" else toDeclaration()
     is EnumType       -> toDeclaration()
 }
 
+private fun EmbeddableType.toDeclaration() = """
+    data class $name (
+        ${fields.join(indent = 2, separator = ",\n") {
+            "${toDeclaration(optionalID = true)} = ${if (list) "listOf()" else initialization}"
+        }}
+    )
+""".trimIndent()
 
 private fun ProjectionType.toDeclaration() = """
     data class ${projectionTypeInterfaceName}Dto(
@@ -62,9 +69,7 @@ private fun ProjectionType.toDeclaration() = """
 
         override fun toObj() = $projectionTypeInterfaceName(
                 ${parentType.nonComplexFields.join(indent = 4, separator = ", \n", postfix = ",") { toAssignment(unwrapID = true) }}
-                ${fields.join(indent = 4, separator = ", \n", postfix = ",") {
-                    "${toAssignment()}${if (optional) "?" else ""}.${if (list) "map { it.toObj() }" else "toObj()"}"
-}}
+                ${fields.join(indent = 4, separator = ", \n", postfix = ",") { toObjAssignment() }}
                 _links = _links
             )
     }
@@ -201,3 +206,13 @@ private fun DTReference.toDeclaration(optional: Boolean = justSettable || this.o
 private fun DTReference.toAssignment(unwrapID: Boolean = false) = """
     $name = ${if(name == "id" && unwrapID) "objId" else name}
 """.trimIndent()
+
+private fun DTReference.toObjAssignment(): String {
+    val assignment = toAssignment()
+    if (this is DTREmbeddable) {
+        return assignment
+    }
+    val optionalQuestionMark = if (optional) "?" else ""
+    val objConversion = if (list) ".map { it.toObj() }" else ".toObj()"
+    return assignment + optionalQuestionMark + objConversion
+}

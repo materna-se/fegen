@@ -54,6 +54,7 @@ internal val ProjectionType.projectionTypeInterfaceName
 internal val DTReference.declarationDto
     get() = when (this) {
         is DTRSimple -> declaration
+        is DTREmbeddable -> declaration
         is DTRComplex -> declarationDto
         is DTREnum -> declaration
     }
