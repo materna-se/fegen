@@ -58,7 +58,7 @@ export class $nameClient extends BaseClient<ApiClient, $nameBase> {
 
 private fun buildEntityTemplate(entityType: EntityType): String {
     val requiredEntities = entityType.entityFields.filter { !it.optional && !it.list }
-    val fields = entityType.nonComplexFields.filter { it.name != "id" } + entityType.entityFields + entityType.embeddedFields
+    val fields = entityType.nonComplexFields.filter { it.name != "id" } + entityType.entityFields
     val baseType = "Partial<${entityType.nameBase}>" + if (requiredEntities.isNotEmpty()) {
         " & {${requiredEntities.join(separator = ",") { "$name: $declaration" }}}"
     } else {
@@ -113,7 +113,6 @@ else """
         return {
             ${entityType.nonComplexFields.filter { it.name != "id" }.join(indent = 3, separator = "\n") { "${name}: obj.${name}," }}
             ${entityType.entityFields.join(indent = 3, separator = "\n") { "${name}: obj.${name}," }}
-            ${entityType.embeddedFields.join(indent = 3, separator = "\n") { "${name}: obj.${name}," }}
         };
     }"""
 

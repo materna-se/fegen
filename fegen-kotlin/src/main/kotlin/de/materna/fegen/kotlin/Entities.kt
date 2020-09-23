@@ -62,20 +62,20 @@ private fun EmbeddableType.toDeclaration() = """
 private fun ProjectionType.toDeclaration() = """
     data class ${projectionTypeInterfaceName}Dto(
         ${parentType.nonComplexFields.join(indent = 2, separator = ",\n", postfix = ",") { toDeclaration(optionalID = true) }}
-        ${fields.join(indent = 2, separator = ",\n", postfix = ",") { toDeclaration(dto = true) }}
+        ${projectionSpecificFields.join(indent = 2, separator = ",\n", postfix = ",") { toDeclaration(dto = true) }}
 
         override val _links: ${parentType.nameLinks}
     ): ApiDto<$projectionTypeInterfaceName> {
 
         override fun toObj() = $projectionTypeInterfaceName(
                 ${parentType.nonComplexFields.join(indent = 4, separator = ", \n", postfix = ",") { toAssignment(unwrapID = true) }}
-                ${fields.join(indent = 4, separator = ", \n", postfix = ",") { toObjAssignment() }}
+                ${projectionSpecificFields.join(indent = 4, separator = ", \n", postfix = ",") { toObjAssignment() }}
                 _links = _links
             )
     }
 
     data class $projectionTypeInterfaceName(
-        ${(parentType.nonComplexFields + fields).join(indent = 2, separator = ",\n", postfix = ",") { toDeclaration() }}
+        ${(parentType.nonComplexFields + projectionSpecificFields).join(indent = 2, separator = ",\n", postfix = ",") { toDeclaration() }}
 
         override val _links: ${parentType.nameLinks}
     ): ApiProjection<${projectionTypeInterfaceName}Dto, $parentTypeName> {
@@ -95,32 +95,31 @@ private fun EntityType.toDeclaration() = """
      */
     data class $nameBase(
 
-        ${nonComplexFields.join(indent = 2, separator = ",\n", postfix = ",") { 
-            "${toDeclaration(optionalID = true)} = ${if (list) "listOf()" else initialization}" 
+        ${fields.sortedBy { it.optional }.join(indent = 2, separator = ",\n", postfix = ",") { 
+            "${toDeclaration(optionalID = true)}${optionalInitialization}" 
         }}
-
         override val _links: $nameLinks? = null
     ): ApiBase<$name, $nameDto> {
 
         data class Builder(
-            ${nonComplexFields.join(indent = 3, separator = ",\n") { "private var $name: $declaration${if(optional || name == "id") "?" else ""} = ${if(list) "listOf()" else initialization}" }},
+            ${fields.join(indent = 3, separator = ",\n") { "private var $name: $declaration${if(optional || name == "id") "?" else ""}${optionalInitialization}" }},
             private var _links: $nameLinks? = null
         ) {
 
-            constructor(base: $nameBase): this() {
-                ${nonComplexFields.join(indent = 4, separator = "\n") { "this.$name = base.$name" }}
-                this._links = base._links
-            }
+            constructor(base: $nameBase): this(
+                ${fields.join(indent = 4, separator = ",\n", postfix = ",") { "base.$name" }}
+                base._links
+            )
 
-            ${nonComplexFields.join(indent = 3, separator = "\n") { "fun $name($name: $declaration${if(optional || name == "id") "?" else ""}) = apply { this.$name = $name }" }}
+            ${fields.join(indent = 3, separator = "\n") { "fun $name($name: $declaration${if(optional || name == "id") "?" else ""}) = apply { this.$name = $name }" }}
             fun _links(_links: $nameLinks) = apply { this._links = _links }
-            fun build() = $nameBase(${nonComplexFields.join(separator = ", ", postfix = ", ") { name }}_links)
+            fun build() = $nameBase(${fields.sortedBy { it.optional }.join(separator = ", ", postfix = ", ") { name }}_links)
         }
 
         fun toBuilder() = Builder(this)
 
         companion object {
-            @JvmStatic fun builder() = Builder()
+            @JvmStatic fun builder(${nonDefaultFields.join(indent = 4, separator = ",\n", prefix = "\n                ", postfix = "\n            ") { "$name: $declaration" }}) = Builder(${nonDefaultFields.join(indent = 4, separator = ",\n", prefix = "\n                ", postfix = "\n            ") { "$name = $name" }})
         }
 
         /**
@@ -184,8 +183,10 @@ private fun EntityType.toDeclaration() = """
 
         override val _links: $nameLinks
     ): ApiObj<$nameDto> {
-            fun toBuilder() = $nameBase.Builder(
-                ${nonComplexFields.join(indent = 4, separator = ", \n") { toAssignment() }},
+            fun toBuilder(
+                ${entityFields.join(indent = 4, separator = ",\n") { "$name: ${defaultDeclaration()}" }}
+            ) = $nameBase.Builder(
+                ${fields.join(indent = 4, separator = ",\n") { toAssignment() }},
                 _links = _links
             )
     }

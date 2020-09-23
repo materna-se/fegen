@@ -62,6 +62,12 @@ internal val DTReference.declarationDto
 internal val DTRComplex.declarationDto
     get() = "${if (list) "List<" else ""}${type.nameDto}${if (list) ">" else ""}"
 
+fun DTReference.defaultDeclaration() =
+        optDeclaration() + optionalInitialization
+
+fun DTReference.optDeclaration() =
+        declaration + if (optional) "?" else ""
+
 internal val DTReference.declaration
     get() = "${if (list) "List<" else ""}${when (this) {
         is DTRSimple -> type.declaration
@@ -116,11 +122,20 @@ internal val EmbeddableType.declaration
 internal val ProjectionType.declaration
     get() = if (baseProjection) parentType.name else projectionTypeInterfaceName
 
+internal val DTReference.optionalInitialization
+    get() = when {
+        optional -> "null"
+        list -> "listOf()"
+        this is DTREntity -> null
+        else -> initialization
+    }.let { if (it != null) " = $it" else "" }
+
 internal val DTReference.initialization
     get() = if (name == "id") "-1L" else when (this) {
         is DTRSimple -> type.initialization
         is DTREnum -> type.initialization
-        is DTRComplex -> type.initialization
+        is DTREmbeddable -> type.initialization
+        is DTRComplex -> throw RuntimeException("An initialization expression for the complex type ${type.name} was requested for field $name")
     }
 
 private val SimpleType.initialization
@@ -142,9 +157,11 @@ private val SimpleType.initialization
 private val EnumType.initialization
     get() = "$name.${constants.first()}"
 
-
-private val ComplexType.initialization
-    get() = "nil"
+private val EmbeddableType.initialization: String
+    get() {
+        val args = fields.joinToString(separator = ",\n") { "${it.name} = ${it.initialization}" }
+        return "$name(\n$args\n)"
+    }
 
 internal val List<DTReference>.paramDecl
     get() = join(separator = ", ") { parameter() }

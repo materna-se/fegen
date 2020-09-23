@@ -80,12 +80,6 @@ fun FeGenKotlin.toApiClientKt() = """
                 createURI = "${uriREST}"
             )
 
-            @Deprecated(message = "from now on an empty constructor is available in base types (as well as a builder)")
-            fun build() = $nameBase(
-                    ${nonComplexFields.join(indent = 5, separator = ",\n") { "$name = ${if (list) "listOf()" else initialization}" }},
-                    _links = null
-                )
-
             suspend fun readAll(page: Int? = null, size: Int? = null${if (mayHaveSortParameter) ", sort: String? = null" else ""}) =
                 readProjections<$name, $nameDto>(
                     projectionName = null,

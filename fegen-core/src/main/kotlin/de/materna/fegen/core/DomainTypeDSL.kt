@@ -54,7 +54,15 @@ sealed class ComplexType: DomainType() {
     }
 
     open val nonComplexFields by lazy {
-        simpleFields + enumFields
+        simpleFields + enumFields + embeddedFields
+    }
+
+    /**
+     * Fields for which no reasonable default values exist.
+     * Default values exist for simple types, enums, lists and optional values.
+     */
+    open val nonDefaultFields by lazy {
+        entityFields.filter { !it.list && !it.optional }
     }
 
 }
@@ -124,6 +132,15 @@ data class ProjectionType(
      */
     override val nonComplexFields by lazy {
         simpleFields + enumFields
+    }
+
+    /**
+     * Fields that are not part of the parent type
+     */
+    val projectionSpecificFields by lazy {
+        fields.filter { ownField ->
+            !parentType.nonComplexFields.any { parentField -> ownField.name == parentField.name }
+        }
     }
 }
 
