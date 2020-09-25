@@ -133,7 +133,7 @@ buildscript {
                     pomDestination.deleteOnExit()
                 }
 
-                def isWindows = System.lineSeparator() != "/"
+                def isWindows = File.separator != "/"
                 def mvnw = isWindows ? "mvnw.cmd" : "mvnw"
                 // Let maven generate the plugin.xml
                 commandLine "${project.projectDir}/$mvnw", "-e", "-B", "org.apache.maven.plugins:maven-plugin-plugin:3.6.0:descriptor"
