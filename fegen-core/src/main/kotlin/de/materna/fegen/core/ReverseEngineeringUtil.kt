@@ -335,7 +335,7 @@ fun FeGenUtil.searchForComponentClassesByAnnotation(annotationClass: Class<out A
     scanner.addIncludeFilter(AnnotationTypeFilter(annotationClass))
 
     // load the entities
-    return scanner.findCandidateComponents(scanPkg).map {
+    return scanner.findCandidateComponents(feGenConfig.scanPkg).map {
         classLoader.loadClass(it.beanClassName)
     }
 }
@@ -343,13 +343,13 @@ fun FeGenUtil.searchForComponentClassesByAnnotation(annotationClass: Class<out A
 /**
  * Since projections are no Spring components, they have to be looked up separately.
  */
-fun FeGenUtil.searchForProjectionClasses(): List<Class<*>> = searchForClasses(entityPkg, Projection::class.java)
+fun FeGenUtil.searchForProjectionClasses(): List<Class<*>> = searchForClasses(feGenConfig.entityPkg, Projection::class.java)
 
-fun FeGenUtil.searchForRepositoryClasses(): List<Class<*>> = searchForClasses(repositoryPkg, RepositoryRestResource::class.java)
+fun FeGenUtil.searchForRepositoryClasses(): List<Class<*>> = searchForClasses(feGenConfig.repositoryPkg, RepositoryRestResource::class.java)
 
 private fun FeGenUtil.searchForClasses(customPkg: String, annotationClass: Class<out Annotation>): List<Class<*>> {
     val resultClassList: MutableList<Class<*>> = mutableListOf()
-    classesDirArray.forEach {
+    feGenConfig.classesDirArray.forEach {
         resultClassList.addAll(
                 File("${it.normalize().absolutePath}/${customPkg.replace('.', '/')}").walkTopDown().filter {
                     it.name.endsWith("class")

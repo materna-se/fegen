@@ -21,62 +21,37 @@
  */
 package de.materna.fegen.kotlin
 
-import de.materna.fegen.core.log.DiagnosticsLevel
 import de.materna.fegen.core.domain.DomainType
 import de.materna.fegen.core.FeGen
+import de.materna.fegen.core.FeGenConfig
 import de.materna.fegen.core.log.FeGenLogger
 import java.io.File
 
 class FeGenKotlin(
+        feGenConfig: FeGenConfig,
         projectDir: File,
-        classesDirArray: List<File>,
-        resourcesDir: File,
-        override val classpath: List<File>,
-        scanPkg: String?,
-        entityPkg: String?,
-        repositoryPkg: String?,
         frontendPath: String?,
         frontendPkg: String?,
-        datesAsString: Boolean?,
-        implicitNullable: DiagnosticsLevel,
         logger: FeGenLogger
-) : FeGen(classesDirArray, resourcesDir, datesAsString, implicitNullable, logger) {
+) : FeGen(feGenConfig, logger) {
 
-    override val scanPkg: String
+    private val frontendPath = frontendPath ?: throw IllegalStateException("frontendPath must be specified")
 
-    override val entityPkg: String
+    private val frontendDir: File = projectDir.resolve(this.frontendPath)
 
-    override val repositoryPkg: String
+    val frontendPkg = frontendPkg ?: throw IllegalStateException("frontendPkg must be specified")
 
-    val frontendPkg: String
-
-    override val frontendDir: File
-
-    private val frontendGenDir: File
+    private val frontendGenDir: File = frontendDir.resolve(this.frontendPkg.replace('.', '/'))
 
     public override val types: List<DomainType>
 
     init {
-        if (scanPkg == null) {
-            throw IllegalStateException("scanPkg must be specified")
-        }
-        this.scanPkg = scanPkg
-        this.entityPkg = entityPkg ?: "$scanPkg.entity"
-        this.repositoryPkg = repositoryPkg ?: "$scanPkg.repository"
-        if (frontendPath == null) {
-            throw IllegalStateException("frontendPath must be specified")
-        } else if (frontendPath.contains("\\")) {
+        if (this.frontendPath.contains("\\")) {
             logger.warn("Use \"/\" instead of \"\\\" to maintain platform independence")
         }
-        this.frontendDir = projectDir.resolve(frontendPath)
         if (!frontendDir.isDirectory) {
             throw IllegalStateException("frontendPath \"${frontendDir.absolutePath}\" does not exist")
         }
-        if (frontendPkg == null) {
-            throw IllegalStateException("frontendPkg must be specified")
-        }
-        this.frontendPkg = frontendPkg
-        this.frontendGenDir = frontendDir.resolve(frontendPkg.replace('.', '/'))
         types = initTypes()
     }
 
@@ -87,7 +62,7 @@ class FeGenKotlin(
         logger.info("___END FEGEN KOTLIN CONFIG___")
     }
 
-    fun generateFile(filename: String, text: String) {
+    private fun generateFile(filename: String, text: String) {
         val file = frontendGenDir.resolve(filename)
         file.parentFile.mkdirs()
         file.writeText(text)

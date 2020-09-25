@@ -48,21 +48,16 @@ import javax.persistence.Embeddable
 import javax.persistence.Entity
 
 class FeGenUtil(
-        var classesDirArray: List<File>,
-        var scanPkg: String,
-        private val classpath: List<File>,
-        internal val entityPkg: String,
-        internal val repositoryPkg: String,
-        private val implicitNullable: DiagnosticsLevel,
+        val feGenConfig: FeGenConfig,
         private val logger: FeGenLogger
 ) {
 
     // for loading the isEntity classes add project classpath (so that we have all dependencies of the target project
     // on the classpath)
     val classLoader by lazy {
-        val arrayURL: Array<URL> = classesDirArray.map { it.toURI().toURL() }.toTypedArray()
+        val arrayURL: Array<URL> = feGenConfig.classesDirArray.map { it.toURI().toURL() }.toTypedArray()
         URLClassLoader(
-                arrayURL + classpath.map { it.toURI().toURL() },
+                arrayURL + feGenConfig.classpath.map { it.toURI().toURL() },
                 this.javaClass.classLoader
         )
     }
@@ -90,7 +85,7 @@ class FeGenUtil(
         val projectionClasses = searchForProjectionClasses()
         if (projectionClasses.isEmpty()) {
             logger.info("No projections found")
-            logger.info("Projections must be located in the package ${entityPkg}")
+            logger.info("Projections must be located in the package ${feGenConfig.entityPkg}")
             logger.info("and be annotated with Projection")
         } else {
             logger.info("Projections found: ${projectionClasses.size}")
@@ -98,7 +93,7 @@ class FeGenUtil(
         val entityClasses = searchForComponentClassesByAnnotation(Entity::class.java)
         if (entityClasses.isEmpty()) {
             logger.warn("No entity classes were found")
-            logger.info("Entity classes must be located in the package ${entityPkg}")
+            logger.info("Entity classes must be located in the package ${feGenConfig.entityPkg}")
             logger.info("and have the annotation Entity")
         } else {
             logger.info("Entity classes found: ${entityClasses.size}")
@@ -195,11 +190,11 @@ class FeGenUtil(
                         if (field != null) {
                             val isEmbeddable = (type as? Class<*>)?.isEmbeddable ?: false
                             val isImplicitlyNullable = { !field.required && !field.explicitOptional && !isEmbeddable }
-                            implicitNullable.check(logger, isImplicitlyNullable) { print ->
+                            feGenConfig.implicitNullable.check(logger, isImplicitlyNullable) { print ->
                                 print("Field \"$name\" in entity \"${clazz.canonicalName}\" is implicitly nullable.")
                                 print("    Please add a @Nullable annotation if this is intentional")
                                 print("    or add a @NotNull annotation to forbid null values")
-                                if (implicitNullable == DiagnosticsLevel.WARN) {
+                                if (feGenConfig.implicitNullable == DiagnosticsLevel.WARN) {
                                     print("    Set implicitNullable to ALLOW in FeGen's build configuration to hide this warning")
                                 } else {
                                     print("    Set implicitNullable to WARN to continue the build despite missing @Nullable annotations")
@@ -415,7 +410,7 @@ class FeGenUtil(
         }
         if (repositoryClasses.isEmpty()) {
             logger.info("No repository classes found")
-            logger.info("Repository classes must be located in the package $repositoryPkg")
+            logger.info("Repository classes must be located in the package ${feGenConfig.repositoryPkg}")
             logger.info("and must be annotated with RepositoryRestResource")
         } else {
             logger.info("Repository classes found: ${repositoryClasses.size}")

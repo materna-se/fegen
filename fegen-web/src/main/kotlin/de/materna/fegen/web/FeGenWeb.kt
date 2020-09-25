@@ -24,6 +24,7 @@ package de.materna.fegen.web
 import de.materna.fegen.core.log.DiagnosticsLevel
 import de.materna.fegen.core.domain.DomainType
 import de.materna.fegen.core.FeGen
+import de.materna.fegen.core.FeGenConfig
 import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.web.templates.toApiClientTS
 import de.materna.fegen.web.templates.toEntitiesTS
@@ -31,44 +32,22 @@ import de.materna.fegen.web.templates.toEntityClientTS
 import java.io.File
 
 class FeGenWeb(
+        feGenConfig: FeGenConfig,
         projectDir: File,
-        classesDirArray: List<File>,
-        resourcesDir: File,
-        override val classpath: List<File>,
-        scanPkg: String?,
-        entityPkg: String?,
-        repositoryPkg: String?,
         frontendPath: String?,
-        datesAsString: Boolean?,
-        implicitNullable: DiagnosticsLevel,
         logger: FeGenLogger
-) : FeGen(classesDirArray, resourcesDir, datesAsString, implicitNullable, logger) {
+) : FeGen(feGenConfig, logger) {
 
-    override val scanPkg: String
+    private val frontendPath = frontendPath ?: throw IllegalStateException("frontendPath must be specified")
 
-    override val entityPkg: String
-
-    override val repositoryPkg: String
-
-    override val frontendDir: File
+    private val frontendDir: File = projectDir.resolve(this.frontendPath)
 
     public override val types: List<DomainType>
 
     init {
-        if (scanPkg == null) {
-            throw IllegalStateException("scanPkg must be specified")
-        }
-        if (frontendPath == null) {
-            throw IllegalStateException("frontendPath must be specified")
-        } else if (frontendPath.contains("\\")) {
+        if (this.frontendPath.contains("\\")) {
             logger.warn("Use \"/\" instead of \"\\\" to maintain platform independence")
         }
-
-        this.scanPkg = scanPkg;
-        this.entityPkg = entityPkg ?: "$scanPkg.entity"
-        this.repositoryPkg = repositoryPkg ?: "$scanPkg.repository"
-
-        this.frontendDir = projectDir.resolve(frontendPath)
         if (!frontendDir.isDirectory) {
             throw IllegalStateException("frontendPath \"${frontendDir.absolutePath}\" does not exist")
         }

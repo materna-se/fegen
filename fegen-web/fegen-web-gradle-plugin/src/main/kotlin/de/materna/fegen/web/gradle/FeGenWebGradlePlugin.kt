@@ -21,6 +21,7 @@
  */
 package de.materna.fegen.web.gradle
 
+import de.materna.fegen.core.FeGenConfig
 import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.gradle.FeGenGradlePlugin
 import de.materna.fegen.core.gradle.FeGenGradlePluginExtension
@@ -38,18 +39,23 @@ open class FeGenWebGradlePlugin : FeGenGradlePlugin<FeGenWebGradlePluginExtensio
 
     override val pluginName = "fegenWeb"
 
-    override fun createFegen(project: Project, classesDirArray: List<File>, resourcesDir: File, classpath: List<File>, extension: FeGenWebGradlePluginExtension, logger: FeGenLogger) =
-            FeGenWeb(
-                    project.projectDir,
-                    classesDirArray,
-                    resourcesDir,
-                    classpath,
-                    extension.scanPkg,
-                    extension.entityPkg,
-                    extension.repositoryPkg,
-                    extension.frontendPath,
-                    extension.datesAsString,
-                    extension.implicitNullable,
-                    logger
-            )
+    override fun createFegen(project: Project, classesDirArray: List<File>, resourcesDir: File, classpath: List<File>, extension: FeGenWebGradlePluginExtension, logger: FeGenLogger): FeGenWeb {
+        val feGenConfig = FeGenConfig(
+                classesDirArray,
+                resourcesDir,
+                extension.datesAsString,
+                extension.implicitNullable,
+                classpath,
+                extension.scanPkg,
+                extension.entityPkg,
+                extension.repositoryPkg
+        )
+
+        return FeGenWeb(
+                feGenConfig,
+                project.projectDir,
+                extension.frontendPath,
+                logger
+        )
+    }
 }

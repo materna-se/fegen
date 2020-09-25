@@ -34,22 +34,9 @@ import java.util.*
 var handleDatesAsString: Boolean = false
 
 abstract class FeGen(
-        private val classesDirArray: List<File>,
-        private val resourcesDir: File,
-        private val datesAsString: Boolean?,
-        private val implicitNullable: DiagnosticsLevel,
+        private val feGenConfig: FeGenConfig,
         protected val logger: FeGenLogger
 ) {
-
-    protected abstract val classpath: List<File>
-
-    protected abstract val scanPkg: String
-
-    protected abstract val entityPkg: String
-
-    protected abstract val repositoryPkg: String
-
-    protected abstract val frontendDir: File
 
     protected abstract val types: List<DomainType>
 
@@ -66,13 +53,13 @@ abstract class FeGen(
     }
 
     init {
-        handleDatesAsString = this.datesAsString ?: false
+        handleDatesAsString = feGenConfig.datesAsString
         val properties = Properties()
         try {
-            logger.info("Loading properties from: $resourcesDir")
-            properties.load(FileReader(resourcesDir.resolve("application.properties")))
+            logger.info("Loading properties from: ${feGenConfig.resourcesDir}")
+            properties.load(FileReader(feGenConfig.resourcesDir.resolve("application.properties")))
         } catch (e: Exception) {
-            for (f: File in classesDirArray) {
+            for (f: File in feGenConfig.classesDirArray) {
                 try {
                     logger.info("loading properties: $f")
                     properties.load(FileReader(f.resolve("application.properties")))
@@ -85,18 +72,17 @@ abstract class FeGen(
     }
 
     protected open fun logConfiguration() {
-        logger.debug("classpath: $classpath")
-        logger.info("classesDirArray: $classesDirArray")
-        logger.info("resourcesDir: $resourcesDir")
-        logger.info("scanPkg: $scanPkg")
-        logger.info("entityPkg: $entityPkg")
-        logger.info("repositoryPkg: $repositoryPkg")
-        logger.info("frontendDir: $frontendDir")
-        logger.info("datesAsString: $datesAsString")
+        logger.debug("classpath: ${feGenConfig.classpath}")
+        logger.info("classesDirArray: ${feGenConfig.classesDirArray}")
+        logger.info("resourcesDir: ${feGenConfig.resourcesDir}")
+        logger.info("scanPkg: ${feGenConfig.scanPkg}")
+        logger.info("entityPkg: ${feGenConfig.entityPkg}")
+        logger.info("repositoryPkg: ${feGenConfig.repositoryPkg}")
+        logger.info("datesAsString: ${feGenConfig.datesAsString}")
     }
 
     protected fun initTypes(): List<DomainType> =
-            FeGenUtil(classesDirArray, scanPkg, classpath, this.entityPkg, this.repositoryPkg, implicitNullable, logger).createModelInstanceList()
+            FeGenUtil(feGenConfig, logger).createModelInstanceList()
 
     abstract fun generateEntities()
 

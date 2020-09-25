@@ -21,6 +21,7 @@
  */
 package de.materna.fegen.web.maven
 
+import de.materna.fegen.core.FeGenConfig
 import de.materna.fegen.core.log.DiagnosticsLevel
 import de.materna.fegen.core.gradle.MavenFeGenLogger
 import de.materna.fegen.core.maven.classPath
@@ -64,20 +65,24 @@ class FeGenKotlinMojo: AbstractMojo() {
     private var implicitNullable: String? = null
 
     override fun execute() {
-        val logger = MavenFeGenLogger(getLog())
+        val logger = MavenFeGenLogger(log)
 
-        FeGenKotlin(
-                mavenProject.basedir,
+        val feGenConfig = FeGenConfig(
                 classesDirArray(mavenProject.build.getOutputDirectory()),
                 resourcesDir(mavenProject.compileSourceRoots, logger),
+                datesAsString,
+                DiagnosticsLevel.parse(implicitNullable!!),
                 classPath(scanPath, logger),
                 scanPkg,
                 entityPkg,
-                repositoryPkg,
+                repositoryPkg
+        )
+
+        FeGenKotlin(
+                feGenConfig,
+                mavenProject.basedir,
                 frontendPath,
                 frontendPkg,
-                datesAsString,
-                DiagnosticsLevel.parse(implicitNullable!!),
                 logger
         ).generate()
 

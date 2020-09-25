@@ -24,14 +24,22 @@ package de.materna.fegen.core
 import de.materna.fegen.core.log.DiagnosticsLevel
 import java.io.File
 
-data class FeGenConfig(
+/**
+ * Target language agnostic options for domain type discovery and generating
+ */
+open class FeGenConfig(
         val classesDirArray: List<File>,
         val resourcesDir: File,
-        val datesAsString: Boolean?,
-        val implicitNullable: DiagnosticsLevel,
+        datesAsString: Boolean?,
+        implicitNullable: DiagnosticsLevel?,
         val classpath: List<File>,
-        val scanPkg: String,
-        val entityPkg: String,
-        val repositoryPkg: String,
-        val frontendDir: File
-)
+        scanPkg: String?,
+        entityPkg: String?,
+        repositoryPkg: String?
+) {
+    val datesAsString: Boolean = datesAsString ?: false
+    val implicitNullable: DiagnosticsLevel = implicitNullable ?: DiagnosticsLevel.ERROR
+    val scanPkg = scanPkg ?: throw IllegalStateException("scanPkg must be specified")
+    val entityPkg = entityPkg ?: "$scanPkg.entity"
+    val repositoryPkg = repositoryPkg ?: "$scanPkg.repository"
+}
