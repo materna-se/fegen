@@ -29,6 +29,8 @@ import com.fasterxml.classmate.members.ResolvedMember
 import com.fasterxml.classmate.members.ResolvedMethod
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
+import de.materna.fegen.core.domain.EndpointMethod
+import de.materna.fegen.core.domain.DTField
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver
 import org.springframework.core.type.filter.AnnotationTypeFilter

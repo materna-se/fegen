@@ -19,11 +19,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.materna.fegen.core
+package de.materna.fegen.core.log
 
-interface IDomain {
-    fun init(types: List<DomainType>)
-    fun toEntities(pkgName: String?): String
-    fun toApiClient(pkgName: String?): String
-    fun getFileExtension(): String
+/**
+ * For logging within FeGen.
+ * This is an abstraction for the different logging methods of maven and gradle
+ */
+abstract class FeGenLogger {
+
+  var errorsEncountered: Boolean = false
+    private set
+
+  abstract fun debug(msg: String)
+
+  abstract fun info(msg: String)
+
+  abstract fun warn(msg: String)
+
+  protected abstract fun printError(msg: String);
+
+  fun error(msg: String) {
+    this.errorsEncountered = true
+    printError(msg)
+  }
 }

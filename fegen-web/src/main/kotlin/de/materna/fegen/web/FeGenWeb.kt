@@ -21,10 +21,10 @@
  */
 package de.materna.fegen.web
 
-import de.materna.fegen.core.DiagnosticsLevel
-import de.materna.fegen.core.DomainType
+import de.materna.fegen.core.log.DiagnosticsLevel
+import de.materna.fegen.core.domain.DomainType
 import de.materna.fegen.core.FeGen
-import de.materna.fegen.core.FeGenLogger
+import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.web.templates.toApiClientTS
 import de.materna.fegen.web.templates.toEntitiesTS
 import de.materna.fegen.web.templates.toEntityClientTS

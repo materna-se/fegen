@@ -21,6 +21,12 @@
  */
 package de.materna.fegen.core
 
+import de.materna.fegen.core.log.DiagnosticsLevel
+import de.materna.fegen.core.log.FeGenLogger
+import de.materna.fegen.core.domain.DomainType
+import de.materna.fegen.core.domain.EntityType
+import de.materna.fegen.core.domain.EnumType
+import de.materna.fegen.core.domain.ProjectionType
 import java.io.File
 import java.io.FileReader
 import java.util.*

@@ -22,6 +22,9 @@
 package de.materna.fegen.web.templates
 
 import de.materna.fegen.core.*
+import de.materna.fegen.core.domain.EntityType
+import de.materna.fegen.core.domain.DTField
+import de.materna.fegen.core.domain.ProjectionType
 import de.materna.fegen.web.*
 import de.materna.fegen.web.declaration
 import de.materna.fegen.web.initialization
@@ -64,7 +67,7 @@ private fun buildEntityTemplate(entityType: EntityType): String {
     } else {
         " = {}"
     }
-    val fieldDecl: DTReference.() -> String = {
+    val fieldDecl: DTField.() -> String = {
         if (requiredEntities.contains(this)) {
             "$name: base.$name"
         } else {

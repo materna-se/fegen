@@ -22,6 +22,7 @@
 package de.materna.fegen.web.templates
 
 import de.materna.fegen.core.*
+import de.materna.fegen.core.domain.*
 import de.materna.fegen.web.FeGenWeb
 import de.materna.fegen.web.declaration
 import de.materna.fegen.web.nameBase
@@ -101,6 +102,6 @@ private fun EnumType.toDeclaration() = """
     }
 """.trimIndent()
 
-private fun DTReference.toDeclaration(optional: Boolean = false) = """
+private fun DTField.toDeclaration(optional: Boolean = false) = """
     $name${if (optional) "?" else ""}: $declaration${if (justSettable || this.optional) " | null" else ""}
 """.trimIndent()

@@ -21,7 +21,7 @@
  */
 package de.materna.fegen.web.gradle
 
-import de.materna.fegen.core.FeGenLogger
+import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.gradle.FeGenGradlePlugin
 import de.materna.fegen.core.gradle.FeGenGradlePluginExtension
 import de.materna.fegen.web.FeGenWeb

@@ -19,28 +19,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.materna.fegen.core.gradle
+package de.materna.fegen.core
 
-import de.materna.fegen.core.log.FeGenLogger
-import org.gradle.api.logging.Logger
+import de.materna.fegen.core.log.DiagnosticsLevel
+import java.io.File
 
-class GradleFeGenLogger(
-        private val logger: Logger
-): FeGenLogger() {
-
-    override fun debug(msg: String) {
-        logger.debug(msg)
-    }
-
-    override fun info(msg: String) {
-        logger.info(msg)
-    }
-
-    override fun  warn(msg: String) {
-        logger.warn(msg)
-    }
-
-    override fun printError(msg: String) {
-        logger.error(msg)
-    }
-}
+data class FeGenConfig(
+        val classesDirArray: List<File>,
+        val resourcesDir: File,
+        val datesAsString: Boolean?,
+        val implicitNullable: DiagnosticsLevel,
+        val classpath: List<File>,
+        val scanPkg: String,
+        val entityPkg: String,
+        val repositoryPkg: String,
+        val frontendDir: File
+)

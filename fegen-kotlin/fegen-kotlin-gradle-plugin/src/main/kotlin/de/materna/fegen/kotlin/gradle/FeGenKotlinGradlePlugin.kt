@@ -22,7 +22,7 @@
 package de.materna.fegen.kotlin.gradle
 
 import de.materna.fegen.kotlin.FeGenKotlin
-import de.materna.fegen.core.FeGenLogger
+import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.gradle.FeGenGradlePlugin
 import de.materna.fegen.core.gradle.FeGenGradlePluginExtension
 import org.gradle.api.Project

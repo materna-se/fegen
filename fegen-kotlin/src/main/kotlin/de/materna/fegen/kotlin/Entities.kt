@@ -22,6 +22,7 @@
 package de.materna.fegen.kotlin
 
 import de.materna.fegen.core.*
+import de.materna.fegen.core.domain.*
 
 fun FeGenKotlin.toEntitiesKt() = """
     package $frontendPkg
@@ -45,10 +46,10 @@ fun FeGenKotlin.toEntitiesKt() = """
 """.trimIndent()
 
 private fun DomainType.toDeclaration() = when (this) {
-    is EntityType     -> toDeclaration()
+    is EntityType -> toDeclaration()
     is EmbeddableType -> toDeclaration()
     is ProjectionType -> if (baseProjection) "" else toDeclaration()
-    is EnumType       -> toDeclaration()
+    is EnumType -> toDeclaration()
 }
 
 private fun EmbeddableType.toDeclaration() = """
@@ -199,18 +200,18 @@ private fun EnumType.toDeclaration() = """
 """.trimIndent()
 
 //TODO can this be done better (optionalID, unwrapID)?
-private fun DTReference.toDeclaration(optional: Boolean = justSettable || this.optional, optionalID: Boolean = false, dto: Boolean = false) = """
+private fun DTField.toDeclaration(optional: Boolean = justSettable || this.optional, optionalID: Boolean = false, dto: Boolean = false) = """
     ${if(name == "id") "override" else ""} val $name: ${if(dto) declarationDto else declaration}${if(optional || (name == "id" && optionalID)) "?" else ""}
 """.trimIndent()
 
 //TODO can this be done better (optionalID, unwrapID)?
-private fun DTReference.toAssignment(unwrapID: Boolean = false) = """
+private fun DTField.toAssignment(unwrapID: Boolean = false) = """
     $name = ${if(name == "id" && unwrapID) "objId" else name}
 """.trimIndent()
 
-private fun DTReference.toObjAssignment(): String {
+private fun DTField.toObjAssignment(): String {
     val assignment = toAssignment()
-    if (this is DTREmbeddable) {
+    if (this is EmbeddableDTField) {
         return assignment
     }
     val optionalQuestionMark = if (optional) "?" else ""

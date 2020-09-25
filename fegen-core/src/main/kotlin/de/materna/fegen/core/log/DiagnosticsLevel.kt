@@ -19,23 +19,31 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.materna.fegen.core
+package de.materna.fegen.core.log
 
-abstract class FeGenLogger {
+enum class DiagnosticsLevel {
+    ALLOW, WARN, ERROR;
 
-  var errorsEncountered: Boolean = false
-    private set
+    companion object {
+        fun parse(strValue: String): DiagnosticsLevel =
+                when (strValue.toLowerCase()) {
+                    "allow" -> ALLOW
+                    "warn" -> WARN
+                    "error" -> ERROR
+                    else -> throw IllegalStateException("DiagnosticsLevel must be allow, warn or error")
+                }
+    }
 
-  abstract fun debug(msg: String)
-
-  abstract fun info(msg: String)
-
-  abstract fun warn(msg: String)
-
-  protected abstract fun printError(msg: String);
-
-  fun error(msg: String) {
-    this.errorsEncountered = true
-    printError(msg)
-  }
+    fun check(logger: FeGenLogger, condition: () -> Boolean, msg: ((String) -> Unit) -> Unit) {
+        if (this == ALLOW) {
+            return
+        }
+        if (condition()) {
+            when (this) {
+                WARN -> msg { logger.warn(it) }
+                ERROR -> msg { logger.error(it) }
+                ALLOW -> throw IllegalStateException()
+            }
+        }
+    }
 }

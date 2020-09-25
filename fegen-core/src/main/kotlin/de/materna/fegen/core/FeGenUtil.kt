@@ -21,6 +21,9 @@
  */
 package de.materna.fegen.core
 
+import de.materna.fegen.core.log.DiagnosticsLevel
+import de.materna.fegen.core.log.FeGenLogger
+import de.materna.fegen.core.domain.*
 import org.springframework.data.domain.Pageable
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import org.springframework.data.rest.core.annotation.RestResource
@@ -168,7 +171,7 @@ class FeGenUtil(
                 when (complexType) {
                     // TODO omit fields that are complex but represented with same type on returnType type, too.
                     is ProjectionType -> complexType.parentType.fields.firstOrNull { it.name == m.fieldName }?.let {
-                        it is DTRComplex
+                        it is ComplexDTField
                     } ?: true
                     is EntityType -> true
                     is EmbeddableType -> true
@@ -209,7 +212,7 @@ class FeGenUtil(
                             null
                         }
 
-                        typeToDTReference(
+                        dtFieldFromType(
                                 clazz.canonicalName,
                                 name, type, class2DT,
                                 list = false,
@@ -234,7 +237,7 @@ class FeGenUtil(
         }
     }
 
-    private fun typeToDTReference(
+    private fun dtFieldFromType(
             className: String = "",
             name: String = "",
             type: Type,
@@ -242,87 +245,87 @@ class FeGenUtil(
             list: Boolean = false,
             optional: Boolean = false,
             justSettable: Boolean = false
-    ): DTReference {
+    ): DTField {
         return when (type) {
             is Class<*> -> when (type) {
-                Boolean::class.java -> DTRSimple(
+                Boolean::class.java -> SimpleDTField(
                         name = name,
                         list = list,
                         optional = optional,
                         justSettable = justSettable,
                         type = SimpleType.BOOLEAN
                 )
-                java.lang.Long::class.java, 1L.javaClass -> DTRSimple(
+                java.lang.Long::class.java, 1L.javaClass -> SimpleDTField(
                         name = name,
                         list = list,
                         optional = optional,
                         justSettable = justSettable,
                         type = SimpleType.LONG
                 )
-                java.lang.Integer::class.java, 1.javaClass -> DTRSimple(
+                java.lang.Integer::class.java, 1.javaClass -> SimpleDTField(
                         name = name,
                         list = list,
                         optional = optional,
                         justSettable = justSettable,
                         type = SimpleType.INTEGER
                 )
-                java.lang.Double::class.java, 1.0.javaClass -> DTRSimple(
+                java.lang.Double::class.java, 1.0.javaClass -> SimpleDTField(
                         name = name,
                         list = list,
                         optional = optional,
                         justSettable = justSettable,
                         type = SimpleType.DOUBLE
                 )
-                BigDecimal::class.java -> DTRSimple(
+                BigDecimal::class.java -> SimpleDTField(
                         name = name,
                         list = list,
                         optional = optional,
                         justSettable = justSettable,
                         type = SimpleType.BIGDECIMAL
                 )
-                UUID::class.java -> DTRSimple(
+                UUID::class.java -> SimpleDTField(
                         name = name,
                         list = list,
                         optional = optional,
                         justSettable = justSettable,
                         type = SimpleType.UUID
                 )
-                LocalDate::class.java -> DTRSimple(
+                LocalDate::class.java -> SimpleDTField(
                         name = name,
                         list = list,
                         optional = optional,
                         justSettable = justSettable,
                         type = SimpleType.DATE
                 )
-                LocalDateTime::class.java -> DTRSimple(
+                LocalDateTime::class.java -> SimpleDTField(
                         name = name,
                         list = list,
                         optional = optional,
                         justSettable = justSettable,
                         type = SimpleType.DATETIME
                 )
-                ZonedDateTime::class.java -> DTRSimple(
+                ZonedDateTime::class.java -> SimpleDTField(
                         name = name,
                         list = list,
                         optional = optional,
                         justSettable = justSettable,
                         type = SimpleType.ZONED_DATETIME
                 )
-                OffsetDateTime::class.java -> DTRSimple(
+                OffsetDateTime::class.java -> SimpleDTField(
                         name = name,
                         list = list,
                         optional = optional,
                         justSettable = justSettable,
                         type = SimpleType.OFFSET_DATETIME
                 )
-                Duration::class.java -> DTRSimple(
+                Duration::class.java -> SimpleDTField(
                         name = name,
                         list = list,
                         optional = optional,
                         justSettable = justSettable,
                         type = SimpleType.DURATION
                 )
-                String::class.java, URI::class.java -> DTRSimple(
+                String::class.java, URI::class.java -> SimpleDTField(
                         name = name,
                         list = list,
                         optional = optional,
@@ -331,7 +334,7 @@ class FeGenUtil(
                 )
                 else -> {
                     when {
-                        type.isEnum -> DTREnum(
+                        type.isEnum -> EnumDTField(
                                 name = name,
                                 list = list,
                                 optional = optional,
@@ -344,7 +347,7 @@ class FeGenUtil(
                                 ) as EnumType
                         )
                         !class2DT.containsKey(type) -> throw IllegalStateException("UNKNOWN class ${type.typeName} : ${type::class.java.name} for field '${name}' in entity $className")
-                        type.isEntity -> DTREntity(
+                        type.isEntity -> EntityDTField(
                                 name = name,
                                 list = list,
                                 optional = optional,
@@ -352,13 +355,13 @@ class FeGenUtil(
                                 type = class2DT[type] as? EntityType
                                         ?: EntityType("UNKNOWN")
                         )
-                        type.isEmbeddable -> DTREmbeddable(
+                        type.isEmbeddable -> EmbeddableDTField(
                                 name = name,
                                 justSettable = justSettable,
                                 type = class2DT[type] as? EmbeddableType
                                         ?: EmbeddableType("UNKNOWN")
                         )
-                        type.isProjection -> DTRProjection(
+                        type.isProjection -> ProjectionDTField(
                                 name = name,
                                 list = list,
                                 optional = optional,
@@ -379,7 +382,7 @@ class FeGenUtil(
             is ParameterizedType -> {
                 if (!java.lang.Iterable::class.java.isAssignableFrom(type.rawType as Class<*>)) throw IllegalStateException("Cannot handle ${type}.")
                 // recursive call for list types (with boolean parameter 'list' set to true)
-                typeToDTReference(
+                dtFieldFromType(
                         className,
                         name,
                         type.actualTypeArguments.first(),
@@ -451,12 +454,12 @@ class FeGenUtil(
                             parameters = search.parameters
                                     .filter { p -> !Pageable::class.java.isAssignableFrom(p.type) }
                                     .map { p ->
-                                        typeToDTReference(
+                                        dtFieldFromType(
                                                 className = clazz.canonicalName,
                                                 name = p.nameREST,
                                                 type = p.type,
                                                 class2DT = class2DT
-                                        ) as DTRValue
+                                        ) as ValueDTField
                                     }.toList(),
                             returnType = domainType,
                             inRepo = true
@@ -521,13 +524,13 @@ class FeGenUtil(
                             list = search.list,
                             parameters = search.requestParams.map { p ->
                                 val requestParam = p.getAnnotation(RequestParam::class.java)
-                                typeToDTReference(
+                                dtFieldFromType(
                                         className = clazz.canonicalName,
                                         name = p.nameREST,
                                         type = p.type,
                                         optional = !requestParam.required,
                                         class2DT = class2DT
-                                ) as DTRValue // TODO split typeToDTReference into two parts in order to omit cast...
+                                ) as ValueDTField // TODO split typeToDTReference into two parts in order to omit cast...
                             }.toList(),
                             returnType = domainType,
                             inRepo = false
@@ -596,30 +599,30 @@ class FeGenUtil(
                         parentType = domainType,
                         method = endpointMethod,
                         pathVariables = m.pathVariables.map {
-                            typeToDTReference(
+                            dtFieldFromType(
                                     className = c.canonicalName,
                                     name = it.nameREST,
                                     type = it.parameterizedType,
                                     class2DT = class2DT
-                            ) as DTRValue
+                            ) as ValueDTField
                         },
                         requestParams = m.requestParams.map {
                             val req = it.getAnnotation(RequestParam::class.java)
-                            typeToDTReference(
+                            dtFieldFromType(
                                     className = c.canonicalName,
                                     name = it.nameREST,
                                     type = it.parameterizedType,
                                     optional = !req.required,
                                     class2DT = class2DT
-                            ) as DTRValue
+                            ) as ValueDTField
                         },
                         body = m.requestBody?.let {
-                            typeToDTReference(
+                            dtFieldFromType(
                                     className = c.canonicalName,
                                     name = "body",
                                     type = it.parameterizedType,
                                     class2DT = class2DT
-                            ) as? DTREntity
+                            ) as? EntityDTField
                         },
                         returnType = returnDomainType,
                         paging = returnType?.paging ?: false,

@@ -21,10 +21,10 @@
  */
 package de.materna.fegen.kotlin
 
-import de.materna.fegen.core.DiagnosticsLevel
-import de.materna.fegen.core.DomainType
+import de.materna.fegen.core.log.DiagnosticsLevel
+import de.materna.fegen.core.domain.DomainType
 import de.materna.fegen.core.FeGen
-import de.materna.fegen.core.FeGenLogger
+import de.materna.fegen.core.log.FeGenLogger
 import java.io.File
 
 class FeGenKotlin(

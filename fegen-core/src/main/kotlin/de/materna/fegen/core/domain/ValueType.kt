@@ -19,31 +19,10 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.materna.fegen.core
+package de.materna.fegen.core.domain
 
-enum class DiagnosticsLevel {
-    ALLOW, WARN, ERROR;
+interface ValueType
 
-    companion object {
-        fun parse(strValue: String): DiagnosticsLevel =
-                when (strValue.toLowerCase()) {
-                    "allow" -> ALLOW
-                    "warn" -> WARN
-                    "error" -> ERROR
-                    else -> throw IllegalStateException("DiagnosticsLevel must be allow, warn or error")
-                }
-    }
-
-    fun check(logger: FeGenLogger, condition: () -> Boolean, msg: ((String) -> Unit) -> Unit) {
-        if (this == ALLOW) {
-            return
-        }
-        if (condition()) {
-            when (this) {
-                WARN -> msg { logger.warn(it) }
-                ERROR -> msg { logger.error(it) }
-                ALLOW -> throw IllegalStateException()
-            }
-        }
-    }
+enum class SimpleType: ValueType {
+    STRING, INTEGER, LONG, DOUBLE, UUID, BIGDECIMAL, BOOLEAN, DATE, DATETIME, ZONED_DATETIME, OFFSET_DATETIME, DURATION
 }

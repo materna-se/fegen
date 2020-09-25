@@ -22,6 +22,7 @@
 package de.materna.fegen.kotlin
 
 import de.materna.fegen.core.*
+import de.materna.fegen.core.domain.*
 
 /**
  * Generates the ApiClient class which helps to navigate to the different clients as well as the client classes itself.
@@ -466,19 +467,19 @@ val CustomEndpoint.uriPatternString
 private val Search.path
     get() = "${if (inRepo) returnType.searchResourceName else "search"}/$name"
 
-private val DTReference.readAssociation
+private val DTField.readAssociation
     get() = "read${name.capitalize()}"
 
-private val DTReference.setAssociation
+private val DTField.setAssociation
     get() = "set${name.capitalize()}"
 
-private val DTReference.deleteFromAssociation
+private val DTField.deleteFromAssociation
     get() = "deleteFrom${name.capitalize()}"
 
-private val DTReference.addToAssociation
+private val DTField.addToAssociation
     get() = "addTo${name.capitalize()}"
 
-private val DTReference.parameterDeclaration
+private val DTField.parameterDeclaration
     get() = "$declaration${if (optional) "?" else ""}"
 
 

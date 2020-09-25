@@ -21,7 +21,7 @@
  */
 package de.materna.fegen.web.maven
 
-import de.materna.fegen.core.DiagnosticsLevel
+import de.materna.fegen.core.log.DiagnosticsLevel
 import de.materna.fegen.core.gradle.MavenFeGenLogger
 import de.materna.fegen.core.maven.classPath
 import de.materna.fegen.core.maven.classesDirArray
