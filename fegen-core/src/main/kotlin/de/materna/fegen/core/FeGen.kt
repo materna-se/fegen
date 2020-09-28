@@ -21,12 +21,9 @@
  */
 package de.materna.fegen.core
 
-import de.materna.fegen.core.log.DiagnosticsLevel
-import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.domain.DomainType
-import de.materna.fegen.core.domain.EntityType
-import de.materna.fegen.core.domain.EnumType
-import de.materna.fegen.core.domain.ProjectionType
+import de.materna.fegen.core.log.FeGenLogger
+import de.materna.fegen.core.generator.DomainMgr
 import java.io.File
 import java.io.FileReader
 import java.util.*
@@ -34,22 +31,26 @@ import java.util.*
 var handleDatesAsString: Boolean = false
 
 abstract class FeGen(
-        private val feGenConfig: FeGenConfig,
-        protected val logger: FeGenLogger
+        val feGenConfig: FeGenConfig,
+        val logger: FeGenLogger
 ) {
 
-    protected abstract val types: List<DomainType>
+    private val domainMgr = initDomainMgr()
 
-    val entityTypes by lazy {
-        types.filterIsInstance(EntityType::class.java).sortedBy { it.name }
-    }
+    val entityTypes
+        get() = domainMgr.entityMgr.entities
 
-    val projectionTypes by lazy {
-        types.filterIsInstance(ProjectionType::class.java).sortedBy { it.name }
-    }
+    val embeddableTypes
+        get() = domainMgr.embeddableMgr.embeddables
 
-    val enumTypes by lazy {
-        types.filterIsInstance(EnumType::class.java).sortedBy { it.name }
+    val projectionTypes
+        get() = domainMgr.projectionMgr.projections
+
+    val enumTypes
+        get() = domainMgr.enumMgr.enums
+
+    val types: List<DomainType> by lazy {
+        (entityTypes + projectionTypes + embeddableTypes + enumTypes).sortedBy { it.name }
     }
 
     init {
@@ -81,8 +82,11 @@ abstract class FeGen(
         logger.info("datesAsString: ${feGenConfig.datesAsString}")
     }
 
-    protected fun initTypes(): List<DomainType> =
-            FeGenUtil(feGenConfig, logger).createModelInstanceList()
+    private fun initDomainMgr(): DomainMgr {
+        val result = DomainMgr(feGenConfig, logger)
+        result.validate()
+        return result
+    }
 
     abstract fun generateEntities()
 

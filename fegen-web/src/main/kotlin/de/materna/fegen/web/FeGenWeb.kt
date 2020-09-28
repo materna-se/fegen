@@ -21,8 +21,6 @@
  */
 package de.materna.fegen.web
 
-import de.materna.fegen.core.log.DiagnosticsLevel
-import de.materna.fegen.core.domain.DomainType
 import de.materna.fegen.core.FeGen
 import de.materna.fegen.core.FeGenConfig
 import de.materna.fegen.core.log.FeGenLogger
@@ -42,8 +40,6 @@ class FeGenWeb(
 
     private val frontendDir: File = projectDir.resolve(this.frontendPath)
 
-    public override val types: List<DomainType>
-
     init {
         if (this.frontendPath.contains("\\")) {
             logger.warn("Use \"/\" instead of \"\\\" to maintain platform independence")
@@ -51,7 +47,6 @@ class FeGenWeb(
         if (!frontendDir.isDirectory) {
             throw IllegalStateException("frontendPath \"${frontendDir.absolutePath}\" does not exist")
         }
-        types = initTypes()
     }
 
     override fun logConfiguration() {

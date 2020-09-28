@@ -44,7 +44,7 @@ fun FeGenKotlin.toApiClientKt() = """
     import java.net.URLEncoder
     import de.materna.fegen.runtime.*
     import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-    ${if (!handleDatesAsString) """
+    ${if (!feGenConfig.datesAsString) """
         import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
         import com.fasterxml.jackson.databind.SerializationFeature
     """.trimIndent() else ""}
@@ -53,7 +53,7 @@ fun FeGenKotlin.toApiClientKt() = """
         val adapter: RequestAdapter
         
         init {
-            ${if (!handleDatesAsString) """
+            ${if (!feGenConfig.datesAsString) """
                 request.mapper.registerModule(JavaTimeModule())
                 request.mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             """.doIndent(3) else ""}

@@ -30,13 +30,8 @@ import com.fasterxml.classmate.members.ResolvedMethod
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import de.materna.fegen.core.domain.EndpointMethod
-import de.materna.fegen.core.domain.DTField
-import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider
-import org.springframework.core.io.support.PathMatchingResourcePatternResolver
-import org.springframework.core.type.filter.AnnotationTypeFilter
 import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.query.Param
-import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import org.springframework.data.rest.core.config.Projection
 import org.springframework.data.web.PageableDefault
 import org.springframework.data.web.SortDefault
@@ -46,7 +41,6 @@ import org.springframework.hateoas.EntityModel
 import org.springframework.http.ResponseEntity
 import org.springframework.lang.Nullable
 import org.springframework.web.bind.annotation.*
-import java.io.File
 import java.lang.reflect.*
 import java.lang.reflect.Parameter
 import javax.persistence.*
@@ -324,43 +318,6 @@ val Method.canReceiveProjection
         val annotation = it.getAnnotation(RequestParam::class.java)
         annotation != null && annotation.value == "projection"
     }
-
-fun FeGenUtil.searchForComponentClassesByAnnotation(annotationClass: Class<out Annotation>): List<Class<*>> {
-    val scanner = ClassPathScanningCandidateComponentProvider(false)
-    // for scanning, add only the classes dir
-    scanner.resourceLoader = PathMatchingResourcePatternResolver(classLoader)//URLClassLoader(classesdirArray.map { it.toURI().toURL() }.toTypedArray
-    // ()))
-
-    // scan for annotation type
-    scanner.addIncludeFilter(AnnotationTypeFilter(annotationClass))
-
-    // load the entities
-    return scanner.findCandidateComponents(feGenConfig.scanPkg).map {
-        classLoader.loadClass(it.beanClassName)
-    }
-}
-
-/**
- * Since projections are no Spring components, they have to be looked up separately.
- */
-fun FeGenUtil.searchForProjectionClasses(): List<Class<*>> = searchForClasses(feGenConfig.entityPkg, Projection::class.java)
-
-fun FeGenUtil.searchForRepositoryClasses(): List<Class<*>> = searchForClasses(feGenConfig.repositoryPkg, RepositoryRestResource::class.java)
-
-private fun FeGenUtil.searchForClasses(customPkg: String, annotationClass: Class<out Annotation>): List<Class<*>> {
-    val resultClassList: MutableList<Class<*>> = mutableListOf()
-    feGenConfig.classesDirArray.forEach {
-        resultClassList.addAll(
-                File("${it.normalize().absolutePath}/${customPkg.replace('.', '/')}").walkTopDown().filter {
-                    it.name.endsWith("class")
-                }.map {
-                    classLoader.loadClass("$customPkg.${it.nameWithoutExtension}")
-                }.filter { c ->
-                    c.getAnnotation(annotationClass) != null
-                }.toList())
-    }
-    return resultClassList
-}
 
 val Parameter.nameREST: String
     get() {

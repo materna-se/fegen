@@ -19,35 +19,35 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.materna.fegen.core.domain
+package de.materna.fegen.core.generator.api
 
+import de.materna.fegen.core.FeGenConfig
+import de.materna.fegen.core.generator.BaseMgr
+import de.materna.fegen.core.generator.DomainMgr
+import de.materna.fegen.core.isEntity
+import de.materna.fegen.core.isProjection
+import java.lang.reflect.Method
+import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
-import java.math.BigDecimal
-import java.net.URI
-import java.time.*
-import java.util.*
 
-interface ValueType
+abstract class ApiMgr(
+        feGenConfig: FeGenConfig,
+        domainMgr: DomainMgr
+) : BaseMgr(feGenConfig, domainMgr) {
 
-enum class SimpleType : ValueType {
-    STRING, INTEGER, LONG, DOUBLE, UUID, BIGDECIMAL, BOOLEAN, DATE, DATETIME, ZONED_DATETIME, OFFSET_DATETIME, DURATION;
-
-    companion object {
-        fun fromType(type: Type): SimpleType? =
-            when (type) {
-                Boolean::class.java -> BOOLEAN
-                java.lang.Long::class.java, 1L.javaClass -> LONG
-                java.lang.Integer::class.java, 1.javaClass -> INTEGER
-                java.lang.Double::class.java, 1.0.javaClass -> DOUBLE
-                BigDecimal::class.java -> BIGDECIMAL
-                java.util.UUID::class.java -> UUID
-                LocalDate::class.java -> DATE
-                LocalDateTime::class.java -> DATETIME
-                ZonedDateTime::class.java -> ZONED_DATETIME
-                OffsetDateTime::class.java -> OFFSET_DATETIME
-                Duration::class.java -> DURATION
-                String::class.java, URI::class.java -> STRING
-                else -> null
+    private fun isSupportedAsParameter(type: Type): Boolean {
+        return when (type) {
+            is Class<*> -> !type.isEntity && !type.isProjection
+            is ParameterizedType -> {
+                if (!java.lang.Iterable::class.java.isAssignableFrom(type.rawType as Class<*>)) return false
+                // recursive call for list types (with boolean parameter 'list' set to true)
+                isSupportedAsParameter(type.actualTypeArguments.first())
             }
+            else -> false
+        }
     }
+
+    protected fun unsupportedParameters(method: Method) =
+            method.parameters.filter { !isSupportedAsParameter(it.type) }
+
 }
