@@ -21,23 +21,8 @@
  */
 package de.materna.fegen.kotlin
 
-import de.materna.fegen.core.ComplexType
-import de.materna.fegen.core.CustomEndpoint
-import de.materna.fegen.core.DTRComplex
-import de.materna.fegen.core.DTREntity
-import de.materna.fegen.core.DTREnum
-import de.materna.fegen.core.DTRProjection
-import de.materna.fegen.core.DTRSimple
-import de.materna.fegen.core.DTReference
-import de.materna.fegen.core.DomainType
-import de.materna.fegen.core.EntityType
-import de.materna.fegen.core.EnumType
-import de.materna.fegen.core.ProjectionType
-import de.materna.fegen.core.Search
-import de.materna.fegen.core.SimpleType
-import de.materna.fegen.core.handleDatesAsString
-import de.materna.fegen.core.join
-import de.materna.fegen.core.restBasePath
+import de.materna.fegen.core.*
+import de.materna.fegen.core.domain.*
 
 
 internal val EntityType.nameBase
@@ -67,30 +52,39 @@ internal val ProjectionType.parentTypeName
 internal val ProjectionType.projectionTypeInterfaceName
     get() = if (baseProjection) "$parentTypeName$name" else name
 
-internal val DTReference.declarationDto
+internal val DTField.declarationDto
     get() = when (this) {
-        is DTRSimple -> declaration
-        is DTRComplex -> declarationDto
-        is DTREnum -> declaration
+        is SimpleDTField -> declaration
+        is EmbeddableDTField -> declaration
+        is ComplexDTField -> declarationDto
+        is EnumDTField -> declaration
     }
 
-internal val DTRComplex.declarationDto
+internal val ComplexDTField.declarationDto
     get() = "${if (list) "List<" else ""}${type.nameDto}${if (list) ">" else ""}"
 
-internal val DTReference.declaration
+fun DTField.defaultDeclaration() =
+        optDeclaration() + optionalInitialization
+
+fun DTField.optDeclaration() =
+        declaration + if (optional) "?" else ""
+
+internal val DTField.declaration
     get() = "${if (list) "List<" else ""}${when (this) {
-        is DTRSimple -> type.declaration
-        is DTRProjection -> type.declaration
-        is DTREntity -> type.declaration
-        is DTREnum -> type.declaration
+        is SimpleDTField -> type.declaration
+        is ProjectionDTField -> type.declaration
+        is EntityDTField -> type.declaration
+        is EmbeddableDTField -> type.declaration
+        is EnumDTField -> type.declaration
     }}${if (list) ">" else ""}"
 
-internal val DTReference.baseDeclaration
+internal val DTField.baseDeclaration
     get() = "${if (list) "List<" else ""}${when (this) {
-        is DTRSimple -> type.declaration
-        is DTRProjection -> type.declaration
-        is DTREntity -> type.nameBase
-        is DTREnum -> type.declaration
+        is SimpleDTField -> type.declaration
+        is ProjectionDTField -> type.declaration
+        is EntityDTField -> type.nameBase
+        is EmbeddableDTField -> type.name
+        is EnumDTField -> type.declaration
     }}${if (list) ">" else ""}"
 
 internal val SimpleType.declaration
@@ -115,6 +109,7 @@ internal val EnumType.declaration
 internal val ComplexType.declaration
     get() = when (this) {
         is EntityType -> declaration
+        is EmbeddableType -> declaration
         is ProjectionType -> declaration
     }
 
@@ -122,14 +117,26 @@ internal val ComplexType.declaration
 internal val EntityType.declaration
     get() = name
 
+internal val EmbeddableType.declaration
+    get() = name
+
 internal val ProjectionType.declaration
     get() = if (baseProjection) parentType.name else projectionTypeInterfaceName
 
-internal val DTReference.initialization
+internal val DTField.optionalInitialization
+    get() = when {
+        optional -> "null"
+        list -> "listOf()"
+        this is EntityDTField -> null
+        else -> initialization
+    }.let { if (it != null) " = $it" else "" }
+
+internal val DTField.initialization
     get() = if (name == "id") "-1L" else when (this) {
-        is DTRSimple -> type.initialization
-        is DTREnum -> type.initialization
-        is DTRComplex -> type.initialization
+        is SimpleDTField -> type.initialization
+        is EnumDTField -> type.initialization
+        is EmbeddableDTField -> type.initialization
+        is ComplexDTField -> throw RuntimeException("An initialization expression for the complex type ${type.name} was requested for field $name")
     }
 
 private val SimpleType.initialization
@@ -151,20 +158,22 @@ private val SimpleType.initialization
 private val EnumType.initialization
     get() = "$name.${constants.first()}"
 
+private val EmbeddableType.initialization: String
+    get() {
+        val args = fields.joinToString(separator = ",\n") { "${it.name} = ${it.initialization}" }
+        return "$name(\n$args\n)"
+    }
 
-private val ComplexType.initialization
-    get() = "nil"
-
-internal val List<DTReference>.paramDecl
+internal val List<DTField>.paramDecl
     get() = join(separator = ", ") { parameter() }
 
-internal val List<DTReference>.paramNames
+internal val List<DTField>.paramNames
     get() = join(separator = ", ") { parameterNames }
 
-internal fun DTReference.parameter(base: Boolean = false) =
+internal fun DTField.parameter(base: Boolean = false) =
         "$name: ${if (base) baseDeclaration else declaration}${if (optional) "?" else ""}"
 
-internal val DTReference.parameterNames
+internal val DTField.parameterNames
     get() = name
 
 internal val Search.returnDeclaration
@@ -204,6 +213,7 @@ internal val ComplexType.allSimpleFields
     get() = when (this) {
         is ProjectionType -> (simpleFields + parentType.simpleFields)
         is EntityType -> simpleFields
+        is EmbeddableType -> simpleFields
     }
 
 internal val ComplexType.allSortableFields

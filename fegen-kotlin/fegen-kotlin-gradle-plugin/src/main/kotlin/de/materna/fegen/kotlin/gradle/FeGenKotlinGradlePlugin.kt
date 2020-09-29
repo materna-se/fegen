@@ -21,8 +21,9 @@
  */
 package de.materna.fegen.kotlin.gradle
 
+import de.materna.fegen.core.FeGenConfig
 import de.materna.fegen.kotlin.FeGenKotlin
-import de.materna.fegen.core.FeGenLogger
+import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.gradle.FeGenGradlePlugin
 import de.materna.fegen.core.gradle.FeGenGradlePluginExtension
 import org.gradle.api.Project
@@ -39,19 +40,24 @@ open class FeGenKotlinGradlePlugin : FeGenGradlePlugin<FeGenKotlinGradlePluginEx
 
     override val pluginName = "fegenKotlin"
 
-    override fun createFegen(project: Project, classesDirArray: List<File>, resourcesDir: File, classpath: List<File>, extension: FeGenKotlinGradlePluginExtension, logger: FeGenLogger) =
-            FeGenKotlin(
-                    project.projectDir,
-                    classesDirArray,
-                    resourcesDir,
-                    classpath,
-                    extension.scanPkg,
-                    extension.entityPkg,
-                    extension.repositoryPkg,
-                    extension.frontendPath,
-                    extension.frontendPkg,
-                    extension.datesAsString,
-                    extension.implicitNullable,
-                    logger
-            )
+    override fun createFegen(project: Project, classesDirArray: List<File>, resourcesDir: File, classpath: List<File>, extension: FeGenKotlinGradlePluginExtension, logger: FeGenLogger): FeGenKotlin {
+        val feGenConfig = FeGenConfig(
+                classesDirArray,
+                resourcesDir,
+                extension.datesAsString,
+                extension.implicitNullable,
+                classpath,
+                extension.scanPkg,
+                extension.entityPkg,
+                extension.repositoryPkg
+        )
+
+        return FeGenKotlin(
+                feGenConfig,
+                project.projectDir,
+                extension.frontendPath,
+                extension.frontendPkg,
+                logger
+        )
+    }
 }

@@ -22,6 +22,7 @@
 package de.materna.fegen.kotlin
 
 import de.materna.fegen.core.*
+import de.materna.fegen.core.domain.*
 
 /**
  * Generates the ApiClient class which helps to navigate to the different clients as well as the client classes itself.
@@ -43,7 +44,7 @@ fun FeGenKotlin.toApiClientKt() = """
     import java.net.URLEncoder
     import de.materna.fegen.runtime.*
     import com.fasterxml.jackson.module.kotlin.registerKotlinModule
-    ${if (!handleDatesAsString) """
+    ${if (!feGenConfig.datesAsString) """
         import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
         import com.fasterxml.jackson.databind.SerializationFeature
     """.trimIndent() else ""}
@@ -52,7 +53,7 @@ fun FeGenKotlin.toApiClientKt() = """
         val adapter: RequestAdapter
         
         init {
-            ${if (!handleDatesAsString) """
+            ${if (!feGenConfig.datesAsString) """
                 request.mapper.registerModule(JavaTimeModule())
                 request.mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             """.doIndent(3) else ""}
@@ -79,12 +80,6 @@ fun FeGenKotlin.toApiClientKt() = """
                 newObject = obj,
                 createURI = "${uriREST}"
             )
-
-            @Deprecated(message = "from now on an empty constructor is available in base types (as well as a builder)")
-            fun build() = $nameBase(
-                    ${nonComplexFields.join(indent = 5, separator = ",\n") { "$name = ${if (list) "listOf()" else initialization}" }},
-                    _links = null
-                )
 
             suspend fun readAll(page: Int? = null, size: Int? = null${if (mayHaveSortParameter) ", sort: String? = null" else ""}) =
                 readProjections<$name, $nameDto>(
@@ -472,19 +467,19 @@ val CustomEndpoint.uriPatternString
 private val Search.path
     get() = "${if (inRepo) returnType.searchResourceName else "search"}/$name"
 
-private val DTReference.readAssociation
+private val DTField.readAssociation
     get() = "read${name.capitalize()}"
 
-private val DTReference.setAssociation
+private val DTField.setAssociation
     get() = "set${name.capitalize()}"
 
-private val DTReference.deleteFromAssociation
+private val DTField.deleteFromAssociation
     get() = "deleteFrom${name.capitalize()}"
 
-private val DTReference.addToAssociation
+private val DTField.addToAssociation
     get() = "addTo${name.capitalize()}"
 
-private val DTReference.parameterDeclaration
+private val DTField.parameterDeclaration
     get() = "$declaration${if (optional) "?" else ""}"
 
 

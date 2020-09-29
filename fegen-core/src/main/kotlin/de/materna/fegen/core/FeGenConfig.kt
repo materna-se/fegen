@@ -21,29 +21,25 @@
  */
 package de.materna.fegen.core
 
-enum class DiagnosticsLevel {
-    ALLOW, WARN, ERROR;
+import de.materna.fegen.core.log.DiagnosticsLevel
+import java.io.File
 
-    companion object {
-        fun parse(strValue: String): DiagnosticsLevel =
-                when (strValue.toLowerCase()) {
-                    "allow" -> ALLOW
-                    "warn" -> WARN
-                    "error" -> ERROR
-                    else -> throw IllegalStateException("DiagnosticsLevel must be allow, warn or error")
-                }
-    }
-
-    fun check(logger: FeGenLogger, condition: () -> Boolean, msg: ((String) -> Unit) -> Unit) {
-        if (this == ALLOW) {
-            return
-        }
-        if (condition()) {
-            when (this) {
-                WARN -> msg { logger.warn(it) }
-                ERROR -> msg { logger.error(it) }
-                ALLOW -> throw IllegalStateException()
-            }
-        }
-    }
+/**
+ * Target language agnostic options for domain type discovery and generating
+ */
+open class FeGenConfig(
+        val classesDirArray: List<File>,
+        val resourcesDir: File,
+        datesAsString: Boolean?,
+        implicitNullable: DiagnosticsLevel?,
+        val classpath: List<File>,
+        scanPkg: String?,
+        entityPkg: String?,
+        repositoryPkg: String?
+) {
+    val datesAsString: Boolean = datesAsString ?: false
+    val implicitNullable: DiagnosticsLevel = implicitNullable ?: DiagnosticsLevel.ERROR
+    val scanPkg = scanPkg ?: throw IllegalStateException("scanPkg must be specified")
+    val entityPkg = entityPkg ?: "$scanPkg.entity"
+    val repositoryPkg = repositoryPkg ?: "$scanPkg.repository"
 }

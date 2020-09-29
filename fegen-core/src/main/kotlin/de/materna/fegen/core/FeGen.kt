@@ -21,6 +21,9 @@
  */
 package de.materna.fegen.core
 
+import de.materna.fegen.core.domain.DomainType
+import de.materna.fegen.core.log.FeGenLogger
+import de.materna.fegen.core.generator.DomainMgr
 import java.io.File
 import java.io.FileReader
 import java.util.*
@@ -28,45 +31,36 @@ import java.util.*
 var handleDatesAsString: Boolean = false
 
 abstract class FeGen(
-        private val classesDirArray: List<File>,
-        private val resourcesDir: File,
-        private val datesAsString: Boolean?,
-        private val implicitNullable: DiagnosticsLevel,
-        protected val logger: FeGenLogger
+        val feGenConfig: FeGenConfig,
+        val logger: FeGenLogger
 ) {
 
-    protected abstract val classpath: List<File>
+    private val domainMgr = initDomainMgr()
 
-    protected abstract val scanPkg: String
+    val entityTypes
+        get() = domainMgr.entityMgr.entities
 
-    protected abstract val entityPkg: String
+    val embeddableTypes
+        get() = domainMgr.embeddableMgr.embeddables
 
-    protected abstract val repositoryPkg: String
+    val projectionTypes
+        get() = domainMgr.projectionMgr.projections
 
-    protected abstract val frontendDir: File
+    val enumTypes
+        get() = domainMgr.enumMgr.enums
 
-    protected abstract val types: List<DomainType>
-
-    val entityTypes by lazy {
-        types.filterIsInstance(EntityType::class.java).sortedBy { it.name }
-    }
-
-    val projectionTypes by lazy {
-        types.filterIsInstance(ProjectionType::class.java).sortedBy { it.name }
-    }
-
-    val enumTypes by lazy {
-        types.filterIsInstance(EnumType::class.java).sortedBy { it.name }
+    val types: List<DomainType> by lazy {
+        (entityTypes + projectionTypes + embeddableTypes + enumTypes).sortedBy { it.name }
     }
 
     init {
-        handleDatesAsString = this.datesAsString ?: false
+        handleDatesAsString = feGenConfig.datesAsString
         val properties = Properties()
         try {
-            logger.info("Loading properties from: $resourcesDir")
-            properties.load(FileReader(resourcesDir.resolve("application.properties")))
+            logger.info("Loading properties from: ${feGenConfig.resourcesDir}")
+            properties.load(FileReader(feGenConfig.resourcesDir.resolve("application.properties")))
         } catch (e: Exception) {
-            for (f: File in classesDirArray) {
+            for (f: File in feGenConfig.classesDirArray) {
                 try {
                     logger.info("loading properties: $f")
                     properties.load(FileReader(f.resolve("application.properties")))
@@ -79,18 +73,20 @@ abstract class FeGen(
     }
 
     protected open fun logConfiguration() {
-        logger.debug("classpath: $classpath")
-        logger.info("classesDirArray: $classesDirArray")
-        logger.info("resourcesDir: $resourcesDir")
-        logger.info("scanPkg: $scanPkg")
-        logger.info("entityPkg: $entityPkg")
-        logger.info("repositoryPkg: $repositoryPkg")
-        logger.info("frontendDir: $frontendDir")
-        logger.info("datesAsString: $datesAsString")
+        logger.debug("classpath: ${feGenConfig.classpath}")
+        logger.info("classesDirArray: ${feGenConfig.classesDirArray}")
+        logger.info("resourcesDir: ${feGenConfig.resourcesDir}")
+        logger.info("scanPkg: ${feGenConfig.scanPkg}")
+        logger.info("entityPkg: ${feGenConfig.entityPkg}")
+        logger.info("repositoryPkg: ${feGenConfig.repositoryPkg}")
+        logger.info("datesAsString: ${feGenConfig.datesAsString}")
     }
 
-    protected fun initTypes(): List<DomainType> =
-            FeGenUtil(classesDirArray, scanPkg, classpath, this.entityPkg, this.repositoryPkg, implicitNullable, logger).createModelInstanceList()
+    private fun initDomainMgr(): DomainMgr {
+        val result = DomainMgr(feGenConfig, logger)
+        result.validate()
+        return result
+    }
 
     abstract fun generateEntities()
 

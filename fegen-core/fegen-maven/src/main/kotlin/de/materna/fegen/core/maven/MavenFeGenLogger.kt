@@ -21,7 +21,7 @@
  */
 package de.materna.fegen.core.gradle
 
-import de.materna.fegen.core.FeGenLogger
+import de.materna.fegen.core.log.FeGenLogger
 import org.apache.maven.plugin.logging.Log
 
 class MavenFeGenLogger(

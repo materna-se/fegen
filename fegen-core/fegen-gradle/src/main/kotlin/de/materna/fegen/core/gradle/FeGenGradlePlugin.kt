@@ -21,9 +21,9 @@
  */
 package de.materna.fegen.core.gradle
 
-import de.materna.fegen.core.DiagnosticsLevel
+import de.materna.fegen.core.log.DiagnosticsLevel
 import de.materna.fegen.core.FeGen
-import de.materna.fegen.core.FeGenLogger
+import de.materna.fegen.core.log.FeGenLogger
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.plugins.JavaPluginConvention

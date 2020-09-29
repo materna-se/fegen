@@ -19,8 +19,12 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.materna.fegen.core
+package de.materna.fegen.core.log
 
+/**
+ * For logging within FeGen.
+ * This is an abstraction for the different logging methods of maven and gradle
+ */
 abstract class FeGenLogger {
 
   var errorsEncountered: Boolean = false

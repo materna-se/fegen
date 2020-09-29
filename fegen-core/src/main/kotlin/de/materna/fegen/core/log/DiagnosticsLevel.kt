@@ -19,44 +19,31 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import stringHelper from "./helpers/stringHelper";
-import apiHelper from "./api/ApiHelper";
-import {
-    ApiNavigationLinks,
-    ApiNavigationLink,
-    ApiHateoasObjectBase,
-    ApiHateoasObjectReadMultiple,
-    PageData,
-    PagedItems,
-    PageLinks,
-    Items,
-    Entity,
-    Dto,
-} from "./api/ApiTypes";
-import {BaseClient} from "./api/BaseClient";
-import {FetchRequest} from "./api/FetchAdapter";
-import {FetchRequestWrapperReact} from "./api/FetchRequestWrapperReact"
-import {FetchRequestWrapper} from "./api/FetchRequestWrapperReactNative"
-import ITokenAuthenticationHelper from "./api/ITokenAuthenticationHelper";
-import RequestAdapter from "./api/RequestAdapter";
+package de.materna.fegen.core.log
 
-export {
-    stringHelper,
-    apiHelper,
-    ApiNavigationLinks,
-    ApiNavigationLink,
-    ApiHateoasObjectBase,
-    ApiHateoasObjectReadMultiple,
-    PageData,
-    PagedItems,
-    PageLinks,
-    Items,
-    BaseClient,
-    FetchRequest,
-    FetchRequestWrapperReact,
-    FetchRequestWrapper,
-    ITokenAuthenticationHelper,
-    RequestAdapter,
-    Dto,
-    Entity
-};
+enum class DiagnosticsLevel {
+    ALLOW, WARN, ERROR;
+
+    companion object {
+        fun parse(strValue: String): DiagnosticsLevel =
+                when (strValue.toLowerCase()) {
+                    "allow" -> ALLOW
+                    "warn" -> WARN
+                    "error" -> ERROR
+                    else -> throw IllegalStateException("DiagnosticsLevel must be allow, warn or error")
+                }
+    }
+
+    fun check(logger: FeGenLogger, condition: () -> Boolean, msg: ((String) -> Unit) -> Unit) {
+        if (this == ALLOW) {
+            return
+        }
+        if (condition()) {
+            when (this) {
+                WARN -> msg { logger.warn(it) }
+                ERROR -> msg { logger.error(it) }
+                ALLOW -> throw IllegalStateException()
+            }
+        }
+    }
+}

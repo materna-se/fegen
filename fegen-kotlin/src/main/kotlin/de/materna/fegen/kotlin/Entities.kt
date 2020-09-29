@@ -21,12 +21,8 @@
  */
 package de.materna.fegen.kotlin
 
-import de.materna.fegen.core.DTReference
-import de.materna.fegen.core.DomainType
-import de.materna.fegen.core.EntityType
-import de.materna.fegen.core.EnumType
-import de.materna.fegen.core.ProjectionType
-import de.materna.fegen.core.join
+import de.materna.fegen.core.*
+import de.materna.fegen.core.domain.*
 
 fun FeGenKotlin.toEntitiesKt() = """
     package $frontendPkg
@@ -50,31 +46,37 @@ fun FeGenKotlin.toEntitiesKt() = """
 """.trimIndent()
 
 private fun DomainType.toDeclaration() = when (this) {
-    is EntityType     -> toDeclaration()
-    is ProjectionType -> if(baseProjection) "" else toDeclaration()
-    is EnumType       -> toDeclaration()
+    is EntityType -> toDeclaration()
+    is EmbeddableType -> toDeclaration()
+    is ProjectionType -> if (baseProjection) "" else toDeclaration()
+    is EnumType -> toDeclaration()
 }
 
+private fun EmbeddableType.toDeclaration() = """
+    data class $name (
+        ${fields.join(indent = 2, separator = ",\n") {
+            "${toDeclaration(optionalID = true)} = ${if (list) "listOf()" else initialization}"
+        }}
+    )
+""".trimIndent()
 
 private fun ProjectionType.toDeclaration() = """
     data class ${projectionTypeInterfaceName}Dto(
         ${parentType.nonComplexFields.join(indent = 2, separator = ",\n", postfix = ",") { toDeclaration(optionalID = true) }}
-        ${fields.join(indent = 2, separator = ",\n", postfix = ",") { toDeclaration(dto = true) }}
+        ${projectionSpecificFields.join(indent = 2, separator = ",\n", postfix = ",") { toDeclaration(dto = true) }}
 
         override val _links: ${parentType.nameLinks}
     ): ApiDto<$projectionTypeInterfaceName> {
 
         override fun toObj() = $projectionTypeInterfaceName(
                 ${parentType.nonComplexFields.join(indent = 4, separator = ", \n", postfix = ",") { toAssignment(unwrapID = true) }}
-                ${fields.join(indent = 4, separator = ", \n", postfix = ",") {
-                    "${toAssignment()}${if (optional) "?" else ""}.${if (list) "map { it.toObj() }" else "toObj()"}"
-}}
+                ${projectionSpecificFields.join(indent = 4, separator = ", \n", postfix = ",") { toObjAssignment() }}
                 _links = _links
             )
     }
 
     data class $projectionTypeInterfaceName(
-        ${(parentType.nonComplexFields + fields).join(indent = 2, separator = ",\n", postfix = ",") { toDeclaration() }}
+        ${(parentType.nonComplexFields + projectionSpecificFields).join(indent = 2, separator = ",\n", postfix = ",") { toDeclaration() }}
 
         override val _links: ${parentType.nameLinks}
     ): ApiProjection<${projectionTypeInterfaceName}Dto, $parentTypeName> {
@@ -85,6 +87,7 @@ private fun ProjectionType.toDeclaration() = """
             )
     }
 """.trimIndent()
+
 private fun EntityType.toDeclaration() = """
 
     /**
@@ -93,32 +96,31 @@ private fun EntityType.toDeclaration() = """
      */
     data class $nameBase(
 
-        ${nonComplexFields.join(indent = 2, separator = ",\n", postfix = ",") { 
-            "${toDeclaration(optionalID = true)} = ${if (list) "listOf()" else initialization}" 
+        ${fields.sortedBy { it.optional }.join(indent = 2, separator = ",\n", postfix = ",") { 
+            "${toDeclaration(optionalID = true)}${optionalInitialization}" 
         }}
-
         override val _links: $nameLinks? = null
     ): ApiBase<$name, $nameDto> {
 
         data class Builder(
-            ${nonComplexFields.join(indent = 3, separator = ",\n") { "private var $name: $declaration${if(optional || name == "id") "?" else ""} = ${if(list) "listOf()" else initialization}" }},
+            ${fields.join(indent = 3, separator = ",\n") { "private var $name: $declaration${if(optional || name == "id") "?" else ""}${optionalInitialization}" }},
             private var _links: $nameLinks? = null
         ) {
 
-            constructor(base: $nameBase): this() {
-                ${nonComplexFields.join(indent = 4, separator = "\n") { "this.$name = base.$name" }}
-                this._links = base._links
-            }
+            constructor(base: $nameBase): this(
+                ${fields.join(indent = 4, separator = ",\n", postfix = ",") { "base.$name" }}
+                base._links
+            )
 
-            ${nonComplexFields.join(indent = 3, separator = "\n") { "fun $name($name: $declaration${if(optional || name == "id") "?" else ""}) = apply { this.$name = $name }" }}
+            ${fields.join(indent = 3, separator = "\n") { "fun $name($name: $declaration${if(optional || name == "id") "?" else ""}) = apply { this.$name = $name }" }}
             fun _links(_links: $nameLinks) = apply { this._links = _links }
-            fun build() = $nameBase(${nonComplexFields.join(separator = ", ", postfix = ", ") { name }}_links)
+            fun build() = $nameBase(${fields.sortedBy { it.optional }.join(separator = ", ", postfix = ", ") { name }}_links)
         }
 
         fun toBuilder() = Builder(this)
 
         companion object {
-            @JvmStatic fun builder() = Builder()
+            @JvmStatic fun builder(${nonDefaultFields.join(indent = 4, separator = ",\n", prefix = "\n                ", postfix = "\n            ") { "$name: $declaration" }}) = Builder(${nonDefaultFields.join(indent = 4, separator = ",\n", prefix = "\n                ", postfix = "\n            ") { "$name = $name" }})
         }
 
         /**
@@ -182,8 +184,10 @@ private fun EntityType.toDeclaration() = """
 
         override val _links: $nameLinks
     ): ApiObj<$nameDto> {
-            fun toBuilder() = $nameBase.Builder(
-                ${nonComplexFields.join(indent = 4, separator = ", \n") { toAssignment() }},
+            fun toBuilder(
+                ${entityFields.join(indent = 4, separator = ",\n") { "$name: ${defaultDeclaration()}" }}
+            ) = $nameBase.Builder(
+                ${fields.join(indent = 4, separator = ",\n") { toAssignment() }},
                 _links = _links
             )
     }
@@ -196,11 +200,21 @@ private fun EnumType.toDeclaration() = """
 """.trimIndent()
 
 //TODO can this be done better (optionalID, unwrapID)?
-private fun DTReference.toDeclaration(optional: Boolean = justSettable || this.optional, optionalID: Boolean = false, dto: Boolean = false) = """
+private fun DTField.toDeclaration(optional: Boolean = justSettable || this.optional, optionalID: Boolean = false, dto: Boolean = false) = """
     ${if(name == "id") "override" else ""} val $name: ${if(dto) declarationDto else declaration}${if(optional || (name == "id" && optionalID)) "?" else ""}
 """.trimIndent()
 
 //TODO can this be done better (optionalID, unwrapID)?
-private fun DTReference.toAssignment(unwrapID: Boolean = false) = """
+private fun DTField.toAssignment(unwrapID: Boolean = false) = """
     $name = ${if(name == "id" && unwrapID) "objId" else name}
 """.trimIndent()
+
+private fun DTField.toObjAssignment(): String {
+    val assignment = toAssignment()
+    if (this is EmbeddableDTField) {
+        return assignment
+    }
+    val optionalQuestionMark = if (optional) "?" else ""
+    val objConversion = if (list) ".map { it.toObj() }" else ".toObj()"
+    return assignment + optionalQuestionMark + objConversion
+}

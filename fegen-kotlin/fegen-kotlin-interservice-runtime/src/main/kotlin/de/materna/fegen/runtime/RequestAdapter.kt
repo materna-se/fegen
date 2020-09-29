@@ -21,9 +21,29 @@
  */
 package de.materna.fegen.runtime
 
+import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.type.TypeReference
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializerProvider
+import com.fasterxml.jackson.databind.module.SimpleModule
+import com.fasterxml.jackson.databind.ser.std.StdSerializer
 
 open class RequestAdapter(val request: FetchRequest) {
+
+    val creatingMapper = createCreatingMapper()
+
+    private fun createCreatingMapper(): ObjectMapper {
+        val mapper = request.mapper.copy()
+        val module = SimpleModule()
+        module.addSerializer(ApiObj::class.java, object: StdSerializer<ApiObj<*>>(ApiObj::class.java) {
+            override fun serialize(value: ApiObj<*>, gen: JsonGenerator, provider: SerializerProvider) {
+                gen.writeString(value._links.self.href)
+            }
+
+        })
+        mapper.registerModule(module)
+        return mapper
+    }
 
     suspend inline fun <reified T : ApiObj<U>, reified U : ApiDto<T>, V : ApiObj<*>> doPageRequest(
             url: String,
@@ -247,11 +267,11 @@ open class RequestAdapter(val request: FetchRequest) {
 
     suspend inline fun <reified TNew : ApiBase<T, U>, reified T : ApiObj<U>, reified U : ApiDto<T>> createObject(
             newObject: TNew, createURI: String
-    ) = doSingleRequest<T, U>(
-            url = createURI,
-            method = "POST",
-            bodyContent = request.mapper.writeValueAsString(newObject)
-    )
+    ): T = doSingleRequest<T, U>(
+                url = createURI,
+                method = "POST",
+                bodyContent = creatingMapper.writeValueAsString(newObject)
+        )
 
     suspend inline fun <reified T : ApiObj<U>, reified U : ApiDto<T>> updateObject(obj: T) =
             doSingleRequest<T, U>(

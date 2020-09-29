@@ -21,7 +21,7 @@
  */
 package de.materna.fegen.core.maven
 
-import de.materna.fegen.core.FeGenLogger
+import de.materna.fegen.core.log.FeGenLogger
 import java.io.*
 import java.util.*
 

@@ -19,16 +19,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-// tslint:disable:interface-name
 
-export interface ApiBase {
-    id?: number
-    _links?: ApiNavigationLinks
+export interface Dto {
+    _links: ApiNavigationLinks
 }
 
-export type Dto<B> = B & { _links: ApiNavigationLinks };
+export interface Entity extends Dto {
+    id: number
+}
 
-export type WithId<B> = B & { id: number, _links: ApiNavigationLinks };
+export type WithId<D> = D & { id: number };
 
 export interface ApiNavigationLinks {
     self: ApiNavigationLink

@@ -60,8 +60,8 @@ buildscript {
     }
     dependencies {
         ...
-        classpath "com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0" // For Typescript
-        classpath "com.github.materna-se.fegen:fegen-kotlin-gradle-plugin:1.0" // For Kotlin
+        classpath "com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC7" // For Typescript
+        classpath "com.github.materna-se.fegen:fegen-kotlin-gradle-plugin:1.0-RC7" // For Kotlin
     }
 }
 ```
@@ -96,7 +96,7 @@ This ensures that links required by FeGen will be added to the return values of 
 ```
 dependencies {
     ...
-    implementation "com.github.materna-se.fegen:fegen-spring-util:1.0"
+    implementation "com.github.materna-se.fegen:fegen-spring-util:1.0-RC7"
 }
 ```
 
@@ -106,7 +106,7 @@ If you are using maven, add a configuration like the following to the `build/plu
 <plugin>
     <groupId>com.github.materna-se.fegen</groupId>
     <artifactId>fegen-web-maven-plugin</artifactId>
-    <version>1.0</version>
+    <version>1.0-RC7</version>
     <configuration>
         <scanPkg>com.example.your.main.package</scanPkg>
         <entityPkg>com.example.your.main.package.entity</entityPkg>
@@ -122,7 +122,7 @@ To use custom endpoints with `spring-hateoas >= 1.0`, you should also add the fo
 <dependency>
     <groupId>com.github.materna-se.fegen</groupId>
     <artifactId>fegen-spring-util</artifactId>
-    <version>1.0</version>
+    <version>1.0-RC7</version>
 </dependency>
 ```
 
@@ -221,7 +221,7 @@ The other option is to create an Android library to use the Spring API in an And
 
 To make your Spring API available to other Spring applications, create a gradle project to contain the generated code and add the following dependencies to your `build.gradle`:
 
-- `com.github.materna-se.fegen:fegen-kotlin-interservice-runtime:1.0`
+- `com.github.materna-se.fegen:fegen-kotlin-interservice-runtime:1.0-RC7`
 - `org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.3`
 - `com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1`
 

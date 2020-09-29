@@ -19,44 +19,30 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import stringHelper from "./helpers/stringHelper";
-import apiHelper from "./api/ApiHelper";
-import {
-    ApiNavigationLinks,
-    ApiNavigationLink,
-    ApiHateoasObjectBase,
-    ApiHateoasObjectReadMultiple,
-    PageData,
-    PagedItems,
-    PageLinks,
-    Items,
-    Entity,
-    Dto,
-} from "./api/ApiTypes";
-import {BaseClient} from "./api/BaseClient";
-import {FetchRequest} from "./api/FetchAdapter";
-import {FetchRequestWrapperReact} from "./api/FetchRequestWrapperReact"
-import {FetchRequestWrapper} from "./api/FetchRequestWrapperReactNative"
-import ITokenAuthenticationHelper from "./api/ITokenAuthenticationHelper";
-import RequestAdapter from "./api/RequestAdapter";
+package de.materna.fegen.core.generator.types
 
-export {
-    stringHelper,
-    apiHelper,
-    ApiNavigationLinks,
-    ApiNavigationLink,
-    ApiHateoasObjectBase,
-    ApiHateoasObjectReadMultiple,
-    PageData,
-    PagedItems,
-    PageLinks,
-    Items,
-    BaseClient,
-    FetchRequest,
-    FetchRequestWrapperReact,
-    FetchRequestWrapper,
-    ITokenAuthenticationHelper,
-    RequestAdapter,
-    Dto,
-    Entity
-};
+import de.materna.fegen.core.FeGenConfig
+import de.materna.fegen.core.domain.EmbeddableType
+import de.materna.fegen.core.generator.DomainMgr
+import de.materna.fegen.core.log.FeGenLogger
+import javax.persistence.Embeddable
+
+class EmbeddableMgr(
+        feGenConfig: FeGenConfig,
+        logger: FeGenLogger,
+        domainMgr: DomainMgr
+): ComplexTypeMgr(feGenConfig, logger, domainMgr) {
+
+    val class2Embeddable by lazy {
+        searchForClasses(feGenConfig.entityPkg, Embeddable::class.java)
+                .associateWith { EmbeddableType(name = it.simpleName) }
+    }
+
+    val embeddables by lazy {
+        class2Embeddable.values.sortedBy { it.name }
+    }
+
+    fun addFields() {
+        class2Embeddable.forEach { addFields(it.key, it.value) }
+    }
+}

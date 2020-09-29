@@ -22,11 +22,14 @@
 package de.materna.fegen.web.templates
 
 import de.materna.fegen.core.*
+import de.materna.fegen.core.domain.EntityType
+import de.materna.fegen.core.domain.DTField
+import de.materna.fegen.core.domain.ProjectionType
 import de.materna.fegen.web.*
 import de.materna.fegen.web.declaration
 import de.materna.fegen.web.initialization
 import de.materna.fegen.web.mayHaveSortParameter
-import de.materna.fegen.web.nameBase
+import de.materna.fegen.web.nameNew
 import de.materna.fegen.web.nameClient
 import de.materna.fegen.web.nameDto
 import de.materna.fegen.web.paramDecl
@@ -36,7 +39,7 @@ import de.materna.fegen.web.returnDeclaration
 
 fun FeGenWeb.toEntityClientTS() = entityTypes.join(separator = "\n\n") domainType@{
     """
-export class $nameClient extends BaseClient<ApiClient, $nameBase> {
+export class $nameClient extends BaseClient<ApiClient, $nameNew, $name> {
 
     constructor(apiClient: ApiClient, requestAdapter?: RequestAdapter){
         super("$uriREST", "$nameRest", apiClient, requestAdapter);
@@ -48,7 +51,6 @@ export class $nameClient extends BaseClient<ApiClient, $nameBase> {
     }
   ${buildEntityTemplate(this)}
   ${readEntityTemplate(this, projectionTypes)}
-  ${updateEntityTemplate(this)}
   ${deleteEntityTemplate(this)}
   ${associationEntityTemplate(this, projectionTypes)}
   ${searchEntityTemplate(this)}
@@ -59,12 +61,12 @@ export class $nameClient extends BaseClient<ApiClient, $nameBase> {
 private fun buildEntityTemplate(entityType: EntityType): String {
     val requiredEntities = entityType.entityFields.filter { !it.optional && !it.list }
     val fields = entityType.nonComplexFields.filter { it.name != "id" } + entityType.entityFields
-    val baseType = "Partial<${entityType.nameBase}>" + if (requiredEntities.isNotEmpty()) {
+    val baseType = "Partial<${entityType.nameNew}>" + if (requiredEntities.isNotEmpty()) {
         " & {${requiredEntities.join(separator = ",") { "$name: $declaration" }}}"
     } else {
         " = {}"
     }
-    val fieldDecl: DTReference.() -> String = {
+    val fieldDecl: DTField.() -> String = {
         if (requiredEntities.contains(this)) {
             "$name: base.$name"
         } else {
@@ -72,7 +74,7 @@ private fun buildEntityTemplate(entityType: EntityType): String {
         }
     }
     return """
-    public static build(base: $baseType): ${entityType.nameBase} {
+    public static build(base: $baseType): ${entityType.nameNew} {
         return {
             ${fields.join(indent = 3, separator = ",\n") { fieldDecl(this) }}
         }
@@ -109,7 +111,7 @@ else """
   """.doIndent(4)}
     }
 
-    public toBase<T extends ${entityType.nameBase}>(obj: T): ${entityType.nameBase} {
+    public toBase<T extends ${entityType.nameNew}>(obj: T): ${entityType.nameNew} {
         return {
             ${entityType.nonComplexFields.filter { it.name != "id" }.join(indent = 3, separator = "\n") { "${name}: obj.${name}," }}
             ${entityType.entityFields.join(indent = 3, separator = "\n") { "${name}: obj.${name}," }}
@@ -139,8 +141,8 @@ private fun associationEntityTemplate(entityType: EntityType, projectionTypes: L
     """
     }}
 
-    public async ${readAssociation}Projection<T extends ApiBase & { _links: ApiNavigationLinks }>(obj: ${entityType.nameDto}, projection?: string): Promise<${if (list) "T[]" else "T | undefined"}> {
-        const hasProjection = (!!projection);
+    public async ${readAssociation}Projection<T extends Dto>(obj: ${entityType.nameDto}, projection?: string): Promise<${if (list) "T[]" else "T | undefined"}> {
+        const hasProjection = !!projection;
         let fullUrl = apiHelper.removeParamsFromNavigationHref(obj._links.${name});
         fullUrl = hasProjection ? `${'$'}{fullUrl}?projection=${'$'}{projection}` : fullUrl;
     

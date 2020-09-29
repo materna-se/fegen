@@ -22,6 +22,7 @@
 package de.materna.fegen.web.templates
 
 import de.materna.fegen.core.*
+import de.materna.fegen.core.domain.*
 import de.materna.fegen.web.declaration
 import de.materna.fegen.web.projectionTypeInterfaceName
 import de.materna.fegen.web.readOrderByParameter
@@ -39,19 +40,19 @@ internal val DomainType.searchResourceName
 internal val Search.path
   get() = if (inRepo) "${returnType.searchResourceName}/$name" else "search/$name"
 
-internal val DTReference.readAssociation
+internal val DTField.readAssociation
   get() = "read${name.capitalize()}"
 
-internal val DTReference.setAssociation
+internal val DTField.setAssociation
   get() = "set${name.capitalize()}"
 
-internal val DTReference.deleteFromAssociation
+internal val DTField.deleteFromAssociation
   get() = "deleteFrom${name.capitalize()}"
 
-internal val DTReference.addToAssociation
+internal val DTField.addToAssociation
   get() = "addTo${name.capitalize()}"
 
-internal val DTREntity.parameterDeclaration
+internal val EntityDTField.parameterDeclaration
   get() = "${if (optional) "?" else ""}: ${if (optional) "$declaration | undefined" else declaration}"
 
 internal val CustomEndpoint.clientMethodName

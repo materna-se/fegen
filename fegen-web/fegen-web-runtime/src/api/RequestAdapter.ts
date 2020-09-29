@@ -21,7 +21,12 @@
  */
 import {StringHelper} from '../helpers/stringHelper';
 import apiHelper from './ApiHelper';
-import {ApiBase, ApiHateoasObjectBase, ApiHateoasObjectReadMultiple, ApiNavigationLinks, PagedItems} from './ApiTypes';
+import {
+    ApiHateoasObjectBase,
+    ApiHateoasObjectReadMultiple,
+    ApiNavigationLinks, Dto, Entity,
+    PagedItems, WithId
+} from './ApiTypes';
 import FetchRequestWrapperReact from './FetchRequestWrapperReact';
 import ITokenAuthenticationHelper from './ITokenAuthenticationHelper';
 
@@ -55,7 +60,7 @@ export default class RequestAdapter {
         return new FetchRequestWrapperReact(this.baseUrl, this.authHelper);
     }
 
-    public async getPage<T extends ApiBase & { _links: ApiNavigationLinks }>(url: string, embeddedPropName: string, projectionName?: string, page?: number, size?: number, sort?: string): Promise<PagedItems<T>> {
+    public async getPage<T extends Dto>(url: string, embeddedPropName: string, projectionName?: string, page?: number, size?: number, sort?: string): Promise<PagedItems<T>> {
         const hasProjection = (!!projectionName);
         const hasPage = (!!page || page === 0);
         const hasSize = (!!size || size === 0);
@@ -84,35 +89,32 @@ export default class RequestAdapter {
         };
     }
 
-    public async postJsonData(url: string, bodyContent: string) {
-        const createResponse = await this.getRequest().post(url, {
+    public postJsonData(url: string, bodyContent: string): Promise<Response> {
+        return this.getRequest().post(url, {
             headers: {
                 "content-type": "application/json"
             },
             body: bodyContent
         });
-
-        return createResponse;
     }
 
-    public async createObject<TNew extends ApiBase>(newObject: TNew, createURI: string): Promise<TNew & { id: number, _links: ApiNavigationLinks }> {
+    public async createObject<D extends Dto>(newObject: {}, createURI: string): Promise<WithId<D>> {
         const createResponse = await this.postJsonData(createURI, JSON.stringify(newObject));
 
         if (!createResponse.ok) {
             throw createResponse;
         }
 
-        const storedEntity: TNew & { _links: ApiNavigationLinks } = (await createResponse.json() as TNew & { _links: ApiNavigationLinks });
+        const storedEntity: D = (await createResponse.json() as D);
         return apiHelper.injectIds(storedEntity);
     }
 
-    public async updateObject<T extends ApiBase & { _links: ApiNavigationLinks }>(obj: T): Promise<T & { id: number }> {
-        const objWithLink = apiHelper.ensureObjectHasLinks(obj);
-        const response = await this.getRequest().put(apiHelper.removeParamsFromNavigationHref(objWithLink._links.self), {
+    public async updateObject<T extends Dto>(obj: T): Promise<T & Entity> {
+        const response = await this.getRequest().put(apiHelper.removeParamsFromNavigationHref(obj._links.self), {
             headers: {
                 "content-type": "application/json"
             },
-            body: JSON.stringify(objWithLink)
+            body: JSON.stringify(obj)
         });
         if (!response.ok) {
             throw response;
@@ -122,9 +124,8 @@ export default class RequestAdapter {
         return apiHelper.injectIds(storedEntity);
     }
 
-    public async deleteObject<T extends ApiBase>(existingObject: T): Promise<void> {
-        const objWithLink = apiHelper.ensureObjectHasLinks(existingObject);
-        const response = await this.getRequest().delete(apiHelper.removeParamsFromNavigationHref(objWithLink._links.self));
+    public async deleteObject<T extends Entity>(existingObject: T): Promise<void> {
+        const response = await this.getRequest().delete(apiHelper.removeParamsFromNavigationHref(existingObject._links.self));
         if (!response.ok) {
             throw response;
         }
@@ -149,7 +150,7 @@ export default class RequestAdapter {
         return await this.adaptAnyToMany(baseURL, [uri])
     }
 
-    public async removeObjectFromCollection<TRemove extends ApiBase, T extends ApiBase, K extends keyof T>(objToBeRemoved: TRemove, objectWithCollection: T, collectionPropertyName: K): Promise<void> {
+    public async removeObjectFromCollection<TRemove extends Entity, T extends Entity, K extends keyof T>(objToBeRemoved: TRemove, objectWithCollection: T, collectionPropertyName: K): Promise<void> {
         const href = objectWithCollection._links ? apiHelper.removeParamsFromNavigationHref(objectWithCollection._links.self) : "";
         const hrefRemove = objToBeRemoved._links ? apiHelper.removeParamsFromNavigationHref(objToBeRemoved._links.self) : "";
 
@@ -163,7 +164,7 @@ export default class RequestAdapter {
 
         const assocUrl = stringHelper.getStringWitoutTrailingSlash(href) + "/" + collectionPropertyName;
 
-        const uris: string[] = ((objectWithCollection[collectionPropertyName] as any) as ApiBase[])
+        const uris: string[] = ((objectWithCollection[collectionPropertyName] as unknown) as Entity[])
             .filter(o => !!o._links && apiHelper.removeParamsFromNavigationHref(o._links.self) !== hrefRemove)
             .map(o => !!o._links && apiHelper.removeParamsFromNavigationHref(o._links.self)) as string[];
 
@@ -178,7 +179,7 @@ export default class RequestAdapter {
         }
     }
 
-    public async addToObj<TAdd extends ApiBase, T extends ApiBase, K extends keyof T["_links"]>(objToBeAdd: TAdd, objectWithCollection: T, property: K): Promise<void> {
+    public async addToObj<TAdd extends Dto, T extends Entity, K extends keyof T["_links"]>(objToBeAdd: TAdd, objectWithCollection: T, property: K): Promise<void> {
 
         const href = objectWithCollection._links ? apiHelper.removeParamsFromNavigationHref(objectWithCollection._links.self) : "";
         const hrefAdd = objToBeAdd._links ? apiHelper.removeParamsFromNavigationHref(objToBeAdd._links.self) : "";
@@ -204,7 +205,7 @@ export default class RequestAdapter {
         }
     }
 
-    public async updateObjectCollection<TInner extends ApiBase, T extends ApiBase, K extends keyof T = keyof T>(nextCollection: TInner[], objectWithCollection: T, property: K): Promise<void> {
+    public async updateObjectCollection<TInner extends Entity, T extends Entity, K extends keyof T = keyof T>(nextCollection: TInner[], objectWithCollection: T, property: K): Promise<void> {
 
         const href = objectWithCollection._links ? apiHelper.removeParamsFromNavigationHref(objectWithCollection._links.self) : "";
 
@@ -223,7 +224,7 @@ export default class RequestAdapter {
         }
     }
 
-    public async moveObjectUp<T extends ApiBase, TMove extends ApiBase>(objToBeMovedUp: TMove, objectWithCollection: T, collectionPropertyName: keyof T): Promise<void> {
+    public async moveObjectUp<T extends Entity, TMove extends Entity>(objToBeMovedUp: TMove, objectWithCollection: T, collectionPropertyName: keyof T): Promise<void> {
 
         const href = objectWithCollection._links ? apiHelper.removeParamsFromNavigationHref(objectWithCollection._links.self) : "";
         const hrefMoveUp = objToBeMovedUp._links ? apiHelper.removeParamsFromNavigationHref(objToBeMovedUp._links.self) : "";
@@ -239,7 +240,7 @@ export default class RequestAdapter {
         const assocUrl = stringHelper.getStringWitoutTrailingSlash(href) + "/" + collectionPropertyName;
 
         let index = -1;
-        const uris: string[] = ((objectWithCollection[collectionPropertyName] as any) as ApiBase[])
+        const uris: string[] = ((objectWithCollection[collectionPropertyName] as any) as Entity[])
             .map((o, i) => {
                 if (o.id === objToBeMovedUp.id) {
                     index = i
@@ -254,7 +255,7 @@ export default class RequestAdapter {
         this.adaptAnyToMany(assocUrl, uris)
     }
 
-    public async moveObjectDown<T extends ApiBase, TMove extends ApiBase>(objToBeMovedUp: TMove, objectWithCollection: T, collectionPropertyName: keyof T): Promise<void> {
+    public async moveObjectDown<T extends Entity, TMove extends Entity>(objToBeMovedUp: TMove, objectWithCollection: T, collectionPropertyName: keyof T): Promise<void> {
 
         const href = objectWithCollection._links ? apiHelper.removeParamsFromNavigationHref(objectWithCollection._links.self) : "";
         const hrefMoveDown = objToBeMovedUp._links ? apiHelper.removeParamsFromNavigationHref(objToBeMovedUp._links.self) : "";
@@ -270,7 +271,7 @@ export default class RequestAdapter {
         const assocUrl = stringHelper.getStringWitoutTrailingSlash(href) + "/" + collectionPropertyName;
 
         let index = -1;
-        const uris: string[] = ((objectWithCollection[collectionPropertyName] as any) as ApiBase[])
+        const uris: string[] = ((objectWithCollection[collectionPropertyName] as any) as Entity[])
             .map((o, i) => {
                 if (o.id === objToBeMovedUp.id) {
                     index = i
@@ -286,7 +287,7 @@ export default class RequestAdapter {
     }
 
     // TODO: we might get better results by even more generic parameters
-    public async getObjectsCollection<T extends ApiBase, K extends keyof T & keyof ApiNavigationLinks>(obj: T, collectionPropertyName: K, embeddedName: string): Promise<T[K]> {
+    public async getObjectsCollection<T extends Entity, K extends keyof T & keyof ApiNavigationLinks>(obj: T, collectionPropertyName: K, embeddedName: string): Promise<T[K]> {
         if (!obj._links) {
             throw new Error("No links in object");
         }
@@ -302,11 +303,10 @@ export default class RequestAdapter {
             throw response;
         }
 
-        const result: T[K] = ((await response.json()) as ApiHateoasObjectBase<T[K]>)._embedded[embeddedName];
-        return result;
+        return ((await response.json()) as ApiHateoasObjectBase<T[K]>)._embedded[embeddedName];
     }
 
-    public async getObjectsReference<T extends ApiBase, K extends keyof T & keyof ApiNavigationLinks>(obj: T, collectionPropertyName: K, embeddedName: string | undefined): Promise<T[K]> {
+    public async getObjectsReference<T extends Entity, K extends keyof T & keyof ApiNavigationLinks>(obj: T, collectionPropertyName: K, embeddedName: string | undefined): Promise<T[K]> {
         if (!obj._links) {
             throw new Error("No links in object");
         }
@@ -322,27 +322,26 @@ export default class RequestAdapter {
             throw response;
         }
 
-        const result: T[K] = embeddedName ? ((await response.json()) as ApiHateoasObjectBase<T[K]>)._embedded[embeddedName] : ((await response.json()) as T[K]);
-        return result;
+        return embeddedName ? ((await response.json()) as ApiHateoasObjectBase<T[K]>)._embedded[embeddedName] : ((await response.json()) as T[K]);
     }
 
-    public async createObjectAndAddWithAssociation<TNew extends ApiBase, T extends ApiBase, K extends keyof T["_links"]>
-    (newObject: TNew, objectWithCollection: T, collectionPropertyName: K, createURI: string): Promise<TNew> {
+    public async createObjectAndAddWithAssociation<C extends Entity, CNew, P extends Entity, K extends keyof P["_links"]>
+    (newObject: CNew, objectWithCollection: P, collectionPropertyName: K, createURI: string): Promise<C> {
 
-        const href = apiHelper.removeParamsFromNavigationHref((apiHelper.ensureObjectHasLinks(objectWithCollection))._links.self);
+        const href = apiHelper.removeParamsFromNavigationHref((objectWithCollection)._links.self);
         if (!href) {
             throw new Error("No self-href found for object");
         }
 
-        const storedEntity: TNew & { _links: ApiNavigationLinks } = await this.createObject(newObject, createURI);
+        const storedEntity: C = await this.createObject<C>(newObject, createURI);
         await this.addToObj(storedEntity, objectWithCollection, collectionPropertyName);
         return apiHelper.injectIds(storedEntity);
     }
 
-    public async deleteObjectAndAssociation<TDelete extends ApiBase, T extends ApiBase, K extends keyof T>
+    public async deleteObjectAndAssociation<TDelete extends Entity, T extends Entity, K extends keyof T>
     (objectToDelete: TDelete, objectWithCollection: T, collectionPropertyName: K): Promise<void> {
 
-        const href = apiHelper.removeParamsFromNavigationHref((apiHelper.ensureObjectHasLinks(objectWithCollection))._links.self);
+        const href = apiHelper.removeParamsFromNavigationHref((objectWithCollection)._links.self);
         if (!href) {
             throw new Error("No self-href found for object");
         }

@@ -19,11 +19,23 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.materna.fegen.core
+package de.materna.fegen.core.generator.types
 
-interface IDomain {
-    fun init(types: List<DomainType>)
-    fun toEntities(pkgName: String?): String
-    fun toApiClient(pkgName: String?): String
-    fun getFileExtension(): String
+import de.materna.fegen.core.domain.EnumType
+
+class EnumMgr {
+
+    private val class2EnumType = HashMap<Class<*>, EnumType>()
+
+    val enums by lazy {
+        class2EnumType.values.sortedBy { it.name }
+    }
+
+    fun resolveEnum(type: Class<*>): EnumType =
+        class2EnumType.computeIfAbsent(type) {
+            EnumType(
+                    name = it.simpleName,
+                    constants = it.enumConstants.map { c -> c.toString() }
+            )
+        }
 }
