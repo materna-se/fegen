@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import { ApiBase, ApiNavigationLink, ApiNavigationLinks } from './ApiTypes';
+import {ApiNavigationLink, Dto, WithId} from './ApiTypes';
 
 class ApiHelper {
 
@@ -28,8 +28,6 @@ class ApiHelper {
         this.getObjectId = this.getObjectId.bind(this);
         this.getIdFromHref = this.getIdFromHref.bind(this);
         this.getSelfLink = this.getSelfLink.bind(this);
-        this.ensureObjectHasLinks = this.ensureObjectHasLinks.bind(this);
-        this.isEqualApiObject = this.isEqualApiObject.bind(this);
         this.injectIdsInObjectAndProperties = this.injectIdsInObjectAndProperties.bind(this);
         this.injectIds = this.injectIds.bind(this);
         this.objectHasSelfLink = this.objectHasSelfLink.bind(this);
@@ -48,7 +46,7 @@ class ApiHelper {
     }
 
 
-    public getObjectId(obj: { _links?: ApiNavigationLinks }) { return (this.getIdFromHref(this.getSelfLink(obj)) || -1) };
+    public getObjectId(obj: Dto) { return (this.getIdFromHref(this.getSelfLink(obj)) || -1) };
 
     public getIdFromHref(href: string | undefined) {
         // TODO work with {projection} (templated uris)
@@ -63,23 +61,6 @@ class ApiHelper {
             undefined);
     }
 
-    public ensureObjectHasLinks<T extends ApiBase>(obj: T): T & { _links: ApiNavigationLinks & T["_links"] } {
-        if (!obj._links) {
-            throw new Error("No links in object");
-        }
-
-        // Todo: Check whether we can remove any here?
-        const result: T & { _links: ApiNavigationLinks & T["_links"] } = { ...(obj as any) };
-        return result;
-    }
-
-    public isEqualApiObject<T extends ApiBase>(obj1: T): (o: T) => boolean {
-        const href = obj1._links ? this.removeParamsFromNavigationHref(obj1._links.self) : undefined;
-        return (obj2: T) => {
-            return !!(href && obj2 && obj2._links && this.removeParamsFromNavigationHref(obj2._links.self) === href)
-        };
-    }
-
     public injectIdsInObjectAndProperties<T extends object>(obj: T): T {
         const result: T = {
             // Any due to cast of generic is forbidden in 3.1.4
@@ -87,14 +68,13 @@ class ApiHelper {
         };
 
         for (const prop in obj) {
-            if((obj as any).hasOwnProperty(prop)){
+            if(obj.hasOwnProperty(prop)){
                 const value = obj[prop];
                 if (this.objectHasSelfLink(value)) {
-                    result[prop] = this.injectIds(value as typeof value & ApiBase & { _links: ApiNavigationLinks });
+                    result[prop] = this.injectIds(value as typeof value & Dto);
                 } else if (!!value && value instanceof Array) {
                     result[prop] = value.map(v => {
-                        const r = this.injectIdsInObjectAndProperties(v as ApiBase & { _links: ApiNavigationLinks });
-                        return r;
+                        return this.injectIdsInObjectAndProperties(v as Dto);
                     }) as typeof value;
                 } else if (!!value && typeof value === "object") {
                     // TODO: #FIXME
@@ -106,27 +86,26 @@ class ApiHelper {
         return (this.objectHasSelfLink(result)) ?
             {
                 ...(result as any),
-                id: this.getObjectId(obj as T & ApiBase & { _links: ApiNavigationLinks }),
+                id: this.getObjectId(obj as T & Dto),
             } :
             result;
     }
 
-    public injectIds<T extends ApiBase & { _links: ApiNavigationLinks }>(obj: T): T & { id: number } {
-        const result: T = {
+    public injectIds<D extends Dto>(obj: D): WithId<D> {
+        const result: D = {
             // Any due to cast of generic is forbidden in 3.1.4
             ...(obj as any),
         };
 
         for (const prop in obj) {
-            if((obj as any).hasOwnProperty(prop)){
+            if(obj.hasOwnProperty(prop)){
                 const value = obj[prop];
     
                 if (this.objectHasSelfLink(value)) {
-                    result[prop] = this.injectIds(value as typeof value & ApiBase & { _links: ApiNavigationLinks });
+                    result[prop] = this.injectIds(value as typeof value & Dto);
                 } else if (!!value && value instanceof Array) {
                     result[prop] = value.map(v => {
-                        const r = this.injectIdsInObjectAndProperties(v);
-                        return r;
+                        return this.injectIdsInObjectAndProperties(v);
                     }) as typeof value;
                 }
             

@@ -22,7 +22,6 @@
 import stringHelper from "./helpers/stringHelper";
 import apiHelper from "./api/ApiHelper";
 import {
-    ApiBase,
     ApiNavigationLinks,
     ApiNavigationLink,
     ApiHateoasObjectBase,
@@ -31,6 +30,8 @@ import {
     PagedItems,
     PageLinks,
     Items,
+    Entity,
+    Dto,
 } from "./api/ApiTypes";
 import {BaseClient} from "./api/BaseClient";
 import {FetchRequest} from "./api/FetchAdapter";
@@ -42,7 +43,6 @@ import RequestAdapter from "./api/RequestAdapter";
 export {
     stringHelper,
     apiHelper,
-    ApiBase,
     ApiNavigationLinks,
     ApiNavigationLink,
     ApiHateoasObjectBase,
@@ -56,5 +56,7 @@ export {
     FetchRequestWrapperReact,
     FetchRequestWrapper,
     ITokenAuthenticationHelper,
-    RequestAdapter
+    RequestAdapter,
+    Dto,
+    Entity
 };

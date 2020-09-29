@@ -20,10 +20,11 @@
  * SOFTWARE.
  */
 import  RequestAdapter from "./RequestAdapter"
-import {ApiBase, Dto, PagedItems, WithId} from "./ApiTypes";
+import {Dto, PagedItems, WithId} from "./ApiTypes";
 import {apiHelper} from "../index";
 
-export abstract class BaseClient<C, B extends ApiBase> {
+export abstract class BaseClient<C, N, D extends Dto> {
+
     // tslint:disable-next-line:variable-name
     protected _requestAdapter: RequestAdapter = new RequestAdapter();
     // tslint:disable-next-line:variable-name
@@ -33,7 +34,7 @@ export abstract class BaseClient<C, B extends ApiBase> {
     // tslint:disable-next-line:variable-name
     protected _embeddedPropName: string;
 
-    constructor(uri: string, embeddedPropName: string, apiClient: C, requestAdapter?: RequestAdapter) {
+    protected constructor(uri: string, embeddedPropName: string, apiClient: C, requestAdapter?: RequestAdapter) {
         this._requestAdapter = requestAdapter || this._requestAdapter;
         this._apiClient = apiClient;
         this._uri = uri;
@@ -43,6 +44,9 @@ export abstract class BaseClient<C, B extends ApiBase> {
     protected static replaceEntitiesWithLinks<T>(obj: T): {} {
         const result = Object.assign({}, obj);
         for (const prop in result) {
+            if (!result.hasOwnProperty(prop)) {
+                break;
+            }
             if (!result[prop]) {
                 continue;
             }
@@ -62,20 +66,28 @@ export abstract class BaseClient<C, B extends ApiBase> {
         return result;
     }
 
-    public async create(obj: Partial<B>): Promise<WithId<B>> {
+    public async create(obj: N): Promise<WithId<D>> {
+        return this.createWithDefaults(obj);
+    }
+
+    /**
+     * Creates an entity and uses default values for fields that are not included in obj.
+     * Default values do not exist for every field (e.g. not for NotNull entities), so take care when using this method.
+     */
+    public async createWithDefaults(obj: Partial<N>): Promise<WithId<D>> {
         const requestObj = BaseClient.replaceEntitiesWithLinks(obj);
-        return await this._requestAdapter.createObject(requestObj, this._uri) as WithId<B>;
+        return await this._requestAdapter.createObject<D>(requestObj, this._uri);
     }
 
-    public async readProjections<T extends WithId<B>>(projectionName?: string, page?: number, size?: number, sort?: string) : Promise<PagedItems<T>> {
-        return await this._requestAdapter.getPage<T>(this._uri, this._embeddedPropName, projectionName, page, size, sort);
+    public async readProjections<P extends WithId<D>>(projectionName?: string, page?: number, size?: number, sort?: string) : Promise<PagedItems<P>> {
+        return await this._requestAdapter.getPage<P>(this._uri, this._embeddedPropName, projectionName, page, size, sort);
     }
 
-    public async readOne(id: number): Promise<WithId<B> | undefined> {
-        return this.readProjection<WithId<B>>(id);
+    public async readOne(id: number): Promise<WithId<D> | undefined> {
+        return this.readProjection<WithId<D>>(id);
     }
 
-    public async readProjection<T extends WithId<B>>(id: number, projection?: string): Promise<T | undefined> {
+    public async readProjection<P extends WithId<D>>(id: number, projection?: string): Promise<P | undefined> {
         const hasProjection = (!!projection);
         let fullUrl = `${this._uri}/${id}`;
         fullUrl = hasProjection ? `${fullUrl}?projection=${projection}` : fullUrl;
@@ -84,24 +96,15 @@ export abstract class BaseClient<C, B extends ApiBase> {
         if(response.status === 404) return undefined;
         if(!response.ok){ throw response; }
 
-        const obj = (await response.json()) as T;
+        const obj = (await response.json()) as P;
         return apiHelper.injectIds(obj);
     }
 
-    public async update<T extends WithId<B>>(obj: T): Promise<WithId<B>> {
-        const apiItem: WithId<B> = this.toDefaultType(obj);
-        return await this._requestAdapter.updateObject(apiItem)
+    public async update<T extends WithId<D>>(obj: T): Promise<WithId<D>> {
+        return await this._requestAdapter.updateObject(obj);
     }
 
-    public toDefaultType<T extends WithId<B>>(obj: T): WithId<B> {
-        return Object.assign({id: obj.id, _links: obj._links}, this.toBase(obj));
-    }
-
-    public abstract toDto(obj: WithId<B>): Dto<B>;
-
-    public abstract toBase<T extends B>(obj: T): B;
-
-    public async delete(obj: Dto<B>) {
+    public async delete(obj: WithId<D>) {
         return await this._requestAdapter.deleteObject(obj)
     }
 }

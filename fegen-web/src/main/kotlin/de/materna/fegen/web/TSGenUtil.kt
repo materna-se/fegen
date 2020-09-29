@@ -25,8 +25,8 @@ import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.SimpleType.*
 import de.materna.fegen.core.domain.*
 
-internal val EntityType.nameBase
-    get() = "${name}Base"
+internal val EntityType.nameNew
+    get() = "${name}New"
 
 internal val EntityType.nameDto
     get() = "${name}Dto"
@@ -52,7 +52,7 @@ internal val DTField.baseDeclaration
     get() = "${when (this) {
         is SimpleDTField -> type.declaration
         is ProjectionDTField -> type.declaration
-        is EntityDTField -> type.nameBase
+        is EntityDTField -> type.nameNew
         is EnumDTField -> type.declaration
         is EmbeddableDTField -> type.declaration
     }}${if (list) "[]" else ""}"

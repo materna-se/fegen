@@ -23,7 +23,7 @@ package de.materna.fegen.web.templates
 
 import de.materna.fegen.core.join
 import de.materna.fegen.web.FeGenWeb
-import de.materna.fegen.web.nameBase
+import de.materna.fegen.web.nameNew
 import de.materna.fegen.web.nameClient
 import de.materna.fegen.web.nameDto
 import de.materna.fegen.web.projectionTypeInterfaceName
@@ -42,10 +42,10 @@ fun FeGenWeb.toApiClientTS() = """
     
     import {
         BaseClient, RequestAdapter,
-        ApiHateoasObjectBase, ApiHateoasObjectReadMultiple, Items, PagedItems, ApiNavigationLinks, ApiBase,
-        apiHelper, stringHelper
+        ApiHateoasObjectBase, ApiHateoasObjectReadMultiple, Items, PagedItems, ApiNavigationLinks,
+        apiHelper, stringHelper, Dto, Entity
     } from '@materna-se/fegen-runtime';
-    import { ${entityTypes.join(separator = ", ") { "$nameBase, $nameDto, $name" }} } from './Entities'
+    import { ${entityTypes.join(separator = ", ") { "$nameNew, $nameDto, $name" }} } from './Entities'
     import { ${enumTypes.join(separator = ", ") { name }} } from './Entities'
     import { ${projectionTypes.join(separator = ", ") { projectionTypeInterfaceName }} } from './Entities'
 
