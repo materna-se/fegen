@@ -32,6 +32,7 @@ Code can be generated for the following target platforms:
 
 FeGen currently has some limitations such as the following which may be lifted in future versions:
 
+- Embeddables can be used, but they may only contain primitive types since references to other entities are not yet supported
 - A plugin for Swift (to use in iOS apps) exists, but is not yet publicly released
 - Only primitive types and (lists of) entities are supported as API parameters
     - Generating code for API endpoints used to up- or download files is not supported
