@@ -29,6 +29,7 @@ import de.materna.fegen.core.log.DiagnosticsLevel
 import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.generator.BaseMgr
 import de.materna.fegen.core.generator.DomainMgr
+import de.materna.fegen.core.generator.FieldMgr
 
 abstract class ComplexTypeMgr(
         feGenConfig: FeGenConfig,
@@ -104,12 +105,12 @@ abstract class ComplexTypeMgr(
         val justSettable = justSettable(method, field)
 
         return domainMgr.fieldMgr.dtFieldFromType(
-                owningClass.canonicalName,
                 name,
                 type,
                 list = false,
                 optional = field?.optional ?: parentField?.optional ?: false,
-                justSettable = justSettable
+                justSettable = justSettable,
+                context = FieldMgr.FieldContext(owningClass)
         )
     }
 

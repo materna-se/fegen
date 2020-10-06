@@ -24,12 +24,19 @@ package de.materna.fegen.core.generator.api
 import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.*
 import de.materna.fegen.core.generator.DomainMgr
+import de.materna.fegen.core.generator.FieldMgr
 import de.materna.fegen.core.generator.types.EntityMgr
 import de.materna.fegen.core.log.FeGenLogger
+import org.springframework.hateoas.CollectionModel
+import org.springframework.hateoas.EntityModel
+import org.springframework.hateoas.PagedModel
+import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import java.lang.reflect.Method
+import java.lang.reflect.ParameterizedType
+import java.lang.reflect.Type
 
 class CustomEndpointMgr(
         feGenConfig: FeGenConfig,
@@ -38,113 +45,147 @@ class CustomEndpointMgr(
         domainMgr: DomainMgr
 ) : ApiMgr(feGenConfig, domainMgr) {
 
-    private val controller2Entity by lazy {
+    val controllers by lazy {
         searchForComponentClassesByAnnotation(RestController::class.java)
-                .associateWith { entityByController(it) }
-                .mapNotNull { removeNullValues(it) }
-                .toMap()
+                .map { createCustomController(it) }
     }
 
-    private val controller2Methods by lazy {
-        controller2Entity.keys.associateWith { controller ->
-            controller.declaredMethods
-                    .filter { hasRequestMapping(controller, it) }
+    private fun createCustomController(clazz: Class<*>): CustomController {
+        val requestMapping = clazz.getAnnotation(RequestMapping::class.java)
+        val basePath = requestMapping.value.firstOrNull() ?: requestMapping.path.firstOrNull()
+        val result = CustomController(clazz.simpleName, basePath)
+        result.endpoints.addAll(controllerMethods(clazz, result))
+        return result
+    }
+
+    private fun controllerMethods(clazz: Class<*>, controller: CustomController) =
+            clazz.declaredMethods
+                    .filter { hasRequestMapping(clazz, it) }
                     .sortedBy { it.name }
-        }
+                    .mapNotNull { customEndpoint(controller, it) }
+
+    private fun customEndpoint(controller: CustomController, method: Method): CustomEndpoint {
+        val (url, endpointMethod) = method.requestMapping!!
+        return CustomEndpoint(
+                parentController = controller,
+                name = method.name,
+                url = url,
+                method = endpointMethod,
+                pathVariables = method.pathVariables.map {
+                    domainMgr.fieldMgr.dtFieldFromType(
+                            name = it.nameREST,
+                            type = it.parameterizedType,
+                            context = FieldMgr.ParameterContext(method)
+                    ) as ValueDTField
+                },
+                requestParams = method.requestParams.map {
+                    val req = it.getAnnotation(RequestParam::class.java)
+                    domainMgr.fieldMgr.dtFieldFromType(
+                            name = it.nameREST,
+                            type = it.parameterizedType,
+                            optional = !req.required,
+                            context = FieldMgr.ParameterContext(method)
+                    ) as ValueDTField
+                },
+                body = method.requestBody?.let {
+                    domainMgr.fieldMgr.dtFieldFromType(
+                            name = "body",
+                            type = it.parameterizedType,
+                            context = FieldMgr.ParameterContext(method)
+                    ) as? EntityDTField
+                },
+                returnValue = resolveReturnType(method),
+                canReceiveProjection = canReceiveProjection(method)
+        )
     }
 
     private fun hasRequestMapping(controller: Class<*>, method: Method): Boolean =
-        try {
-            method.requestMapping != null
-        } catch (e: Exception) {
-            logger.warn("Method ${controller.canonicalName}::${method.name} will be ignored: ${e.message}")
-            false
-        }
-
-    private fun entityByController(controller: Class<*>) =
-            controller.getAnnotation(RequestMapping::class.java)?.run {
-                (value.firstOrNull() ?: path.firstOrNull())?.let { path ->
-                    entityMgr.class2Entity.values.firstOrNull { dt -> path.endsWith(dt.nameRest) }
-                }
-            }
-
-    private fun <K, V> removeNullValues(entry: Map.Entry<K, V?>): Pair<K, V>? =
-            if (entry.value != null) {
-                entry.key to entry.value!!
-            } else {
-                null
+            try {
+                method.requestMapping != null
+            } catch (e: Exception) {
+                logger.warn("Method ${controller.canonicalName}::${method.name} will be ignored: ${e.message}")
+                false
             }
 
     fun warnIfNoCustomControllers() {
-        if (controller2Entity.isEmpty()) {
+        if (controllers.isEmpty()) {
             logger.info("Found no custom endpoint classes")
             logger.info("Those classes must be annotated with a RestController annotation")
             logger.info("whose value ends with the decapitalized name of an entity")
         } else {
-            logger.info("Custom endpoint classes found: ${controller2Entity.size}")
+            logger.info("Custom endpoint classes found: ${controllers.size}")
         }
     }
 
     fun warnIfNoControllerMethods() {
-        if (controller2Methods.values.all { it.isEmpty() }) {
+        if (controllers.map { it.endpoints }.all { it.isEmpty() }) {
             logger.info("No custom controller search methods were found")
             logger.warn("Custom endpoints must be methods annotated with RequestMapping")
         } else {
-            logger.info("Custom controller methods found: ${controller2Methods.values.sumBy { it.size }}")
+            logger.info("Custom controller methods found: ${controllers.map { it.endpoints }.sumBy { it.size }}")
         }
     }
 
-    fun addCustomEndpointMethodsToEntities() {
-        for ((controller, methods) in controller2Methods) {
-            val baseUri = controller.getAnnotation(RequestMapping::class.java).run { value.firstOrNull() ?: path.first() }
-            for (method in methods) {
-                val returnType = try {
-                    method.customEndpointReturnType
-                } catch (e: CustomEndpointReturnTypeError) {
-                    logger.warn(e.getMessage(controller, method))
-                    logger.warn("This custom endpoint will be ignored")
-                    break
+    private fun resolveReturnType(method: Method): ReturnValue? {
+        return when (val methodReturnType = method.genericReturnType) {
+            Void.TYPE -> null
+            is ParameterizedType -> {
+                if (methodReturnType.rawType != ResponseEntity::class.java) {
+                    throw CustomEndpointReturnTypeError.NoResponseEntity(methodReturnType)
                 }
-                val returnDomainType = returnType?.let { entityMgr.class2Entity[it.clazz] }
-                if (returnType != null && returnDomainType !is EntityType) {
-                    logger.warn("Return type of custom endpoint ${controller.canonicalName}::${method.name} is not an entity")
+                when (val responseEntityType = methodReturnType.actualTypeArguments.first()) {
+                    is Class<*> -> resolveSimpleReturnType(responseEntityType)
+                    is ParameterizedType -> resolveEntityReturnType(responseEntityType)
+                    else -> throw CustomEndpointReturnTypeError.UnknownResponseEntityContent(responseEntityType)
                 }
-                val (name, endpointMethod) = method.requestMapping!!
-                val domainType = controller2Entity[controller] ?: error("Entity not found for controller $controller")
-                domainType.customEndpoints += CustomEndpoint(
-                        baseUri = baseUri,
-                        name = name,
-                        parentType = domainType,
-                        method = endpointMethod,
-                        pathVariables = method.pathVariables.map {
-                            domainMgr.fieldMgr.dtFieldFromType(
-                                    className = controller.canonicalName,
-                                    name = it.nameREST,
-                                    type = it.parameterizedType
-                            ) as ValueDTField
-                        },
-                        requestParams = method.requestParams.map {
-                            val req = it.getAnnotation(RequestParam::class.java)
-                            domainMgr.fieldMgr.dtFieldFromType(
-                                    className = controller.canonicalName,
-                                    name = it.nameREST,
-                                    type = it.parameterizedType,
-                                    optional = !req.required
-                            ) as ValueDTField
-                        },
-                        body = method.requestBody?.let {
-                            domainMgr.fieldMgr.dtFieldFromType(
-                                    className = controller.canonicalName,
-                                    name = "body",
-                                    type = it.parameterizedType
-                            ) as? EntityDTField
-                        },
-                        returnType = returnDomainType,
-                        paging = returnType?.paging ?: false,
-                        list = returnType?.list ?: false,
-                        canReceiveProjection = method.canReceiveProjection
-                )
             }
+            else -> throw CustomEndpointReturnTypeError.NoResponseEntity(methodReturnType)
         }
     }
+
+    private fun resolveSimpleReturnType(type: Class<*>): ReturnValue {
+        val simpleType = SimpleType.fromType(type)
+                ?: throw CustomEndpointReturnTypeError.UnknownResponseEntityContent(type)
+        return ReturnValue(simpleType, RestMultiplicity.SINGLE)
+    }
+
+    private fun resolveEntityReturnType(type: ParameterizedType): ReturnValue {
+        val multiplicity = when (type.rawType) {
+            PagedModel::class.java -> RestMultiplicity.PAGED
+            CollectionModel::class.java -> RestMultiplicity.LIST
+            EntityModel::class.java -> RestMultiplicity.SINGLE
+            else -> throw CustomEndpointReturnTypeError.UnknownResponseEntityContent(type)
+        }
+        val entityClass = type.actualTypeArguments.first()
+        if (entityClass !is Class<*>) {
+            throw CustomEndpointReturnTypeError.NotEntity(entityClass)
+        }
+        val entityType = entityMgr.class2Entity[entityClass]
+                ?: throw CustomEndpointReturnTypeError.NotEntity(entityClass)
+        return ReturnValue(entityType, multiplicity)
+    }
+
+    sealed class CustomEndpointReturnTypeError : Exception() {
+
+        class NoResponseEntity(private val returnType: Type) : CustomEndpointReturnTypeError() {
+            override val message
+                get() = "Only void or ResponseEntity are allowed as return types of custom endpoints. Type ${returnType.typeName} is invalid."
+        }
+
+        class UnknownResponseEntityContent(private val responseContent: Type) : CustomEndpointReturnTypeError() {
+            override val message
+                get() = "ResponseEntity may only be parameterized with EntityModel, CollectionModel and PagedModel or primitive types in return types of custom endpoints. Type ${responseContent.typeName} is invalid"
+        }
+
+        class NotEntity(private val clazz: Type) : CustomEndpointReturnTypeError() {
+            override val message
+                get() = "Only entities may be returned from custom endpoints. ${clazz.typeName} is not an entity"
+        }
+    }
+
+    private fun canReceiveProjection(method: Method) =
+        method.parameters.any {
+            val annotation = it.getAnnotation(RequestParam::class.java)
+            annotation != null && annotation.value == "projection"
+        }
 }

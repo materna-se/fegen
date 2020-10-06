@@ -60,7 +60,7 @@ class DomainMgr(
 
     private val customSearchMgr = CustomSearchMgr(feGenConfig, logger, entityMgr, this)
 
-    private val customEndpointMgr = CustomEndpointMgr(feGenConfig, logger, entityMgr, this)
+    val customEndpointMgr = CustomEndpointMgr(feGenConfig, logger, entityMgr, this)
 
     fun validate() {
         entityMgr.addFields()
@@ -81,7 +81,6 @@ class DomainMgr(
         customSearchMgr.warnIfNoControllerClasses()
         customSearchMgr.warnIfControllerEmpty()
 
-        customEndpointMgr.addCustomEndpointMethodsToEntities()
         customEndpointMgr.warnIfNoCustomControllers()
         customEndpointMgr.warnIfNoControllerMethods()
     }

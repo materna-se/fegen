@@ -24,9 +24,7 @@ package de.materna.fegen.core.domain
 import org.atteo.evo.inflector.English
 import java.util.*
 
-sealed class DomainType {
-    abstract var name: String
-
+sealed class DomainType: Type {
     val nameRest by lazy {
         nameRestOverride ?: English.plural(name.decapitalize())!!
     }
@@ -64,8 +62,7 @@ sealed class ComplexType: DomainType() {
 
 data class EntityType(
         override var name: String,
-        var searches: List<Search> = emptyList(),
-        var customEndpoints: List<CustomEndpoint> = emptyList()
+        var searches: List<Search> = emptyList()
 ): ComplexType()
 
 data class EmbeddableType(

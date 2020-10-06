@@ -53,6 +53,9 @@ abstract class FeGen(
         (entityTypes + projectionTypes + embeddableTypes + enumTypes).sortedBy { it.name }
     }
 
+    val customEndpoints
+        get() = domainMgr.customEndpointMgr.controllers
+
     init {
         handleDatesAsString = feGenConfig.datesAsString
         val properties = Properties()

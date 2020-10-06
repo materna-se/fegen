@@ -25,6 +25,7 @@ import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.Search
 import de.materna.fegen.core.domain.ValueDTField
 import de.materna.fegen.core.generator.DomainMgr
+import de.materna.fegen.core.generator.FieldMgr
 import de.materna.fegen.core.generator.types.EntityMgr
 import de.materna.fegen.core.log.FeGenLogger
 import org.springframework.data.rest.webmvc.BasePathAwareController
@@ -113,10 +114,10 @@ class CustomSearchMgr(
                                 parameters = search.requestParams.map { p ->
                                     val requestParam = p.getAnnotation(RequestParam::class.java)
                                     domainMgr.fieldMgr.dtFieldFromType(
-                                            className = controller.canonicalName,
                                             name = p.nameREST,
                                             type = p.type,
-                                            optional = !requestParam.required
+                                            optional = !requestParam.required,
+                                            context = FieldMgr.FieldContext(controller)
                                     ) as ValueDTField // TODO split typeToDTReference into two parts in order to omit cast...
                                 }.toList(),
                                 returnType = domainType,

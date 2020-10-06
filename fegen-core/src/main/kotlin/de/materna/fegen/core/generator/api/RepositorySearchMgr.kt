@@ -26,6 +26,7 @@ import de.materna.fegen.core.domain.Search
 import de.materna.fegen.core.domain.ValueDTField
 import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.generator.DomainMgr
+import de.materna.fegen.core.generator.FieldMgr
 import de.materna.fegen.core.generator.types.EntityMgr
 import org.springframework.data.domain.Pageable
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
@@ -106,9 +107,9 @@ class RepositorySearchMgr(
                                         .filter { p -> !Pageable::class.java.isAssignableFrom(p.type) }
                                         .map { p ->
                                             domainMgr.fieldMgr.dtFieldFromType(
-                                                    className = repository.canonicalName,
                                                     name = p.nameREST,
-                                                    type = p.type
+                                                    type = p.type,
+                                                    context = FieldMgr.ParameterContext(search)
                                             ) as ValueDTField
                                         }.toList(),
                                 returnType = domainType,

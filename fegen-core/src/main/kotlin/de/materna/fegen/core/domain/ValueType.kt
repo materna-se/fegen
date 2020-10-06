@@ -21,19 +21,21 @@
  */
 package de.materna.fegen.core.domain
 
-import java.lang.reflect.Type
 import java.math.BigDecimal
 import java.net.URI
 import java.time.*
-import java.util.*
 
-interface ValueType
+interface Type {
+    val name: String
+}
 
-enum class SimpleType : ValueType {
+interface ValueType: Type
+
+enum class SimpleType: ValueType {
     STRING, INTEGER, LONG, DOUBLE, UUID, BIGDECIMAL, BOOLEAN, DATE, DATETIME, ZONED_DATETIME, OFFSET_DATETIME, DURATION;
 
     companion object {
-        fun fromType(type: Type): SimpleType? =
+        fun fromType(type: java.lang.reflect.Type): SimpleType? =
             when (type) {
                 Boolean::class.java -> BOOLEAN
                 java.lang.Long::class.java, 1L.javaClass -> LONG
