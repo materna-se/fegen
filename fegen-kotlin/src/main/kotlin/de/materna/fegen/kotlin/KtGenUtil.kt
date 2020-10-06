@@ -183,26 +183,7 @@ internal val Search.returnDeclaration
         else -> "${returnType.name}?"
     }
 
-internal val CustomEndpoint.returnDeclarationSingle
-    get(): String = returnType?.let {
-        if (it is ProjectionType && it.baseProjection) it.parentTypeName else it.name
-    } ?: "Unit"
-
-internal val CustomEndpoint.returnDeclaration
-    get(): String = when {
-        paging -> "PagedItems<$returnDeclarationSingle>"
-        list -> "List<$returnDeclarationSingle>"
-        else -> returnDeclarationSingle
-    }
-
 internal fun Search.projectionReturnDeclaration(projection: ProjectionType) =
-        when {
-            paging -> "PagedItems<${projection.projectionTypeInterfaceName}>"
-            list -> "List<${projection.projectionTypeInterfaceName}>"
-            else -> "${projection.projectionTypeInterfaceName}?"
-        }
-
-internal fun CustomEndpoint.projectionReturnDeclaration(projection: ProjectionType) =
         when {
             paging -> "PagedItems<${projection.projectionTypeInterfaceName}>"
             list -> "List<${projection.projectionTypeInterfaceName}>"

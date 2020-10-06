@@ -1,0 +1,209 @@
+package de.materna.fegen.kotlin
+
+import com.squareup.kotlinpoet.*
+import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
+import de.materna.fegen.core.domain.*
+import de.materna.fegen.core.handleDatesAsString
+import de.materna.fegen.core.joinParameters
+import java.math.BigDecimal
+import java.time.*
+import java.util.*
+
+class CustomControllerGenerator(
+        private val feGenKotlin: FeGenKotlin,
+        private val customController: CustomController
+) {
+
+    private val clientName = "${customController.name}Client"
+
+    fun generate() {
+        val file = FileSpec.builder(feGenKotlin.frontendPkg, clientName)
+        file.addType(controllerClass(customController))
+        file.indent("    ")
+        file.build().writeTo(feGenKotlin.frontendDir)
+    }
+
+    private fun controllerClass(controller: CustomController): TypeSpec {
+        val requestAdapterType = ClassName("de.materna.fegen.runtime", "RequestAdapter")
+        val constructor = FunSpec.constructorBuilder()
+                .addParameter("requestAdapter", requestAdapterType)
+                .build()
+
+        val requestAdapterProperty = PropertySpec.builder("requestAdapter", requestAdapterType)
+                .addModifiers(KModifier.PRIVATE)
+                .initializer("requestAdapter")
+                .build()
+
+        return TypeSpec.classBuilder(clientName)
+                .primaryConstructor(constructor)
+                .addProperty(requestAdapterProperty)
+                .addFunctions(controller.endpoints.map { method(it) })
+                .build()
+    }
+
+    private fun method(endpoint: CustomEndpoint): FunSpec =
+        FunSpec.builder(endpoint.name)
+                .addModifiers(KModifier.SUSPEND)
+                .addParameters(parameters(endpoint))
+                .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "UNUSED").build())
+                .returns(returnDeclaration(endpoint.returnValue))
+                .addCode(defineUrl(endpoint))
+                .addCode(request(endpoint))
+                .build()
+
+    private fun parameters(endpoint: CustomEndpoint): List<ParameterSpec> {
+        val params = mutableListOf<ParameterSpec>()
+        endpoint.body?.let {
+            params += parameter(it)
+        }
+        params += endpoint.pathVariables.map { parameter(it) }
+        params += endpoint.requestParams.map { parameter(it) }
+        if (endpoint.returnValue?.multiplicity == RestMultiplicity.PAGED) {
+            params += ParameterSpec.builder("page", INT.copy(true)).defaultValue("null").build()
+            params += ParameterSpec.builder("size", INT.copy(true)).defaultValue("null").build()
+            params += ParameterSpec.builder("sort", STRING.copy(true)).defaultValue("null").build()
+        }
+        return params
+    }
+
+    private fun parameter(parameter: DTField): ParameterSpec {
+        return ParameterSpec.builder(parameter.name, parameterType(parameter)).build()
+    }
+
+    private fun parameterType(parameter: DTField): TypeName =
+        when {
+            parameter.list -> List::class.asClassName().parameterizedBy(parameterSingleType(parameter))
+            parameter.optional -> parameterSingleType(parameter).copy(true)
+            else -> parameterSingleType(parameter)
+        }
+
+    private fun parameterSingleType(parameter: DTField): TypeName =
+        when (parameter) {
+            is EntityDTField -> ClassName(feGenKotlin.frontendPkg, parameter.type.nameBase)
+            is ValueDTField -> simpleType(parameter.type)
+            else -> error("Unsupported parameter ${parameter.name}")
+        }
+
+    private fun simpleType(type: ValueType): ClassName {
+        return when (type) {
+            SimpleType.STRING -> STRING
+            SimpleType.BOOLEAN -> BOOLEAN
+            SimpleType.DATE -> if (handleDatesAsString) STRING else LocalDate::class.asClassName()
+            SimpleType.DATETIME -> if (handleDatesAsString) STRING else LocalDateTime::class.asClassName()
+            SimpleType.ZONED_DATETIME -> if (handleDatesAsString) STRING else ZonedDateTime::class.asClassName()
+            SimpleType.OFFSET_DATETIME -> if (handleDatesAsString) STRING else OffsetDateTime::class.asClassName()
+            SimpleType.DURATION -> if (handleDatesAsString) STRING else Duration::class.asClassName()
+            SimpleType.LONG -> LONG
+            SimpleType.INTEGER -> INT
+            SimpleType.DOUBLE -> DOUBLE
+            SimpleType.BIGDECIMAL -> BigDecimal::class.asClassName()
+            SimpleType.UUID -> UUID::class.asClassName()
+            else -> error("Called simpleType with another ValueType")
+        }
+    }
+
+    private fun returnDeclaration(returnValue: ReturnValue?): TypeName {
+        if (returnValue == null) {
+            return UNIT
+        }
+        val type = returnValue.type
+        val pagedItems = ClassName("de.materna.fegen.runtime", "PagedItems")
+        return when (returnValue.multiplicity) {
+            RestMultiplicity.SINGLE -> returnDeclarationSingle(type)
+            RestMultiplicity.LIST -> List::class.asClassName().parameterizedBy(returnDeclarationSingle(type))
+            RestMultiplicity.PAGED -> pagedItems.parameterizedBy(returnDeclarationSingle(type))
+        }
+    }
+
+    private fun paramDeclaration(type: Type): TypeName = when (type) {
+        is EntityType -> ClassName(feGenKotlin.frontendPkg, type.nameBase)
+        else -> ClassName(feGenKotlin.frontendPkg, type.name)
+    }
+
+    private fun returnDeclarationSingle(type: Type): TypeName {
+        return if (type is ProjectionType && type.baseProjection) {
+            ClassName(feGenKotlin.frontendPkg, type.parentTypeName)
+        } else {
+            ClassName(feGenKotlin.frontendPkg, type.name)
+        }
+    }
+
+    private fun request(endpoint: CustomEndpoint): CodeBlock {
+        val code = when (endpoint.returnValue?.multiplicity) {
+            RestMultiplicity.PAGED -> pagingRequest(endpoint)
+            RestMultiplicity.LIST -> listRequest(endpoint)
+            RestMultiplicity.SINGLE -> singleRequest(endpoint)
+            null -> voidRequest(endpoint)
+        }
+        return CodeBlock.builder().add(code).build()
+    }
+
+    private fun pagingRequest(endpoint: CustomEndpoint): CodeBlock {
+        val returnType = returnDeclarationSingle(endpoint.returnValue!!.type)
+        val dtoType = ClassName(feGenKotlin.frontendPkg, (endpoint.returnValue!!.type as ComplexType).nameDto)
+        val typeReference = ClassName("com.fasterxml.jackson.core.type", "TypeReference")
+        val apiHateoasPage = ClassName("de.materna.fegen.runtime","ApiHateoasPage")
+        val params = listOfNotNull(
+                CodeBlock.of("url = url"),
+                CodeBlock.of("method = %S", endpoint.method),
+                if (endpoint.body != null) CodeBlock.of("body = body") else null,
+                CodeBlock.of("embeddedPropName = %S", (endpoint.returnValue!!.type as EntityType).nameRest),
+                CodeBlock.of("page = page"),
+                CodeBlock.of("size = size"),
+                CodeBlock.of("sort = sort"),
+                CodeBlock.of("ignoreBasePath = true"),
+                CodeBlock.of("type = object : %T<%T<%T, %T>>() {}", typeReference, apiHateoasPage, dtoType, returnType)
+        )
+        return "return requestAdapter.doPageRequest(%L)".formatCode(params.joinCode())
+    }
+
+    private fun listRequest(endpoint: CustomEndpoint): CodeBlock {
+        val returnType = returnDeclarationSingle(endpoint.returnValue!!.type)
+        val dtoType = ClassName(feGenKotlin.frontendPkg, (endpoint.returnValue!!.type as ComplexType).nameDto)
+        val typeReference = ClassName("com.fasterxml.jackson.core.type", "TypeReference")
+        val apiHateoasList = ClassName("de.materna.fegen.runtime","ApiHateoasList")
+        val params = listOfNotNull(
+                CodeBlock.of("url = url"),
+                CodeBlock.of("method = %S", endpoint.method),
+                if (endpoint.body != null) CodeBlock.of("body = body") else null,
+                CodeBlock.of("embeddedPropName = %S", (endpoint.returnValue!!.type as EntityType).nameRest),
+                CodeBlock.of("ignoreBasePath = true"),
+                CodeBlock.of("type = object : %T<%T<%T, %T>>() {}", typeReference, apiHateoasList, dtoType, returnType)
+        )
+        return "return requestAdapter.doListRequest(%C)".formatCode(params.joinCode())
+    }
+
+    private fun singleRequest(endpoint: CustomEndpoint): CodeBlock {
+        val returnType = returnDeclarationSingle(endpoint.returnValue!!.type)
+        val dtoType = ClassName(feGenKotlin.frontendPkg, (endpoint.returnValue!!.type as ComplexType).nameDto)
+        val bodyType = endpoint.body?.type?.let { paramDeclaration(it) }
+        val typeParams = listOfNotNull(returnType, dtoType, bodyType)
+        val params = listOfNotNull(
+                CodeBlock.of("url = url"),
+                CodeBlock.of("method = %S", endpoint.method),
+                if (endpoint.body != null) CodeBlock.of("body = body") else null,
+                CodeBlock.of("ignoreBasePath = true")
+        )
+        return "return requestAdapter.doSingleRequest<%C>(%C)".formatCode(typeParams.joinToCode(), params.joinCode())
+    }
+
+    private fun voidRequest(endpoint: CustomEndpoint): CodeBlock {
+        val params = listOfNotNull(
+                CodeBlock.of("url = url"),
+                CodeBlock.of("method = %S", endpoint.method),
+                if (endpoint.body != null) CodeBlock.of("body = body") else null,
+                CodeBlock.of("ignoreBasePath = true")
+        )
+        return "return requestAdapter.doVoidRequest(%C)".formatCode(params.joinCode())
+    }
+
+    private fun defineUrl(endpoint: CustomEndpoint): CodeBlock {
+        val appendParams = MemberName("de.materna.fegen.runtime", "appendParams")
+        val path = "${endpoint.parentController.baseUri}/${uriPatternString(endpoint)}"
+        val params = endpoint.requestParams.joinParameters { "\"${it.name}\" to ${it.name}" }
+        return CodeBlock.builder().add("val url = %P.%M(%L)\n", path, appendParams, params).build()
+    }
+
+    private fun uriPatternString(endpoint: CustomEndpoint): String =
+        (endpoint.url.replace(Regex("\\{([^}]+)}")) { "${'$'}${it.groupValues[1]}" }).trim('/')
+}

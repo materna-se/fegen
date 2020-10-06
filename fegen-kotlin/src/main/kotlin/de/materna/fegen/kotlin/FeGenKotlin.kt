@@ -36,7 +36,7 @@ class FeGenKotlin(
 
     private val frontendPath = frontendPath ?: throw IllegalStateException("frontendPath must be specified")
 
-    private val frontendDir: File = projectDir.resolve(this.frontendPath)
+    val frontendDir: File = projectDir.resolve(this.frontendPath)
 
     val frontendPkg = frontendPkg ?: throw IllegalStateException("frontendPkg must be specified")
 
@@ -70,5 +70,8 @@ class FeGenKotlin(
 
     override fun generateApiClient() {
         generateFile("ApiClient.kt", toApiClientKt())
+        for (customEndpoint in customEndpoints) {
+            CustomControllerGenerator(this, customEndpoint).generate()
+        }
     }
 }
