@@ -67,7 +67,7 @@ fun FeGenKotlin.toApiClientKt() = """
             open val ${nameRepository.decapitalize()} by lazy { ${nameRepository}(client = ${nameClient.decapitalize()}) }
         """.trimIndent()
 }}
-        ${customEndpoints.join(indent = 2) {
+        ${customControllers.join(indent = 2) {
     """
             open val ${name.decapitalize()}Client by lazy { ${name}Client(adapter) }
     """.trimIndent()

@@ -70,7 +70,7 @@ class FeGenKotlin(
 
     override fun generateApiClient() {
         generateFile("ApiClient.kt", toApiClientKt())
-        for (customEndpoint in customEndpoints) {
+        for (customEndpoint in customControllers) {
             CustomControllerGenerator(this, customEndpoint).generate()
         }
     }

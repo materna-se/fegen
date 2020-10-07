@@ -24,11 +24,9 @@ package de.materna.fegen.web.templates
 import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.*
 import de.materna.fegen.web.declaration
-import de.materna.fegen.web.projectionTypeInterfaceName
-import de.materna.fegen.web.readOrderByParameter
 
 internal val CustomEndpoint.uriPatternString
-  get() = (name.replace(regex = Regex("\\{([^\\}]+)\\}")) { "${'$'}{${it.groupValues[1]}}" }).trim('/')
+  get() = (url.replace(regex = Regex("\\{([^}]+)}")) { "${'$'}{${it.groupValues[1]}}" }).trim('/')
 
 // TODO use a configurable context path instead of 'rest' (e.g. for supporting api-versions)
 internal val DomainType.uriREST
@@ -55,54 +53,10 @@ internal val DTField.addToAssociation
 internal val EntityDTField.parameterDeclaration
   get() = "${if (optional) "?" else ""}: ${if (optional) "$declaration | undefined" else declaration}"
 
-internal val CustomEndpoint.clientMethodName
-  get() = "${method.name.toLowerCase()}${name.trim('/').split("/").map { s ->
-    s.replace("\\{([^\\}]+)\\}".toRegex()) {
-      "by${it.groupValues[1]
-          .capitalize()}"
-    }.capitalize()
-  }.joinToString(separator = "")}${if (returnType != null) "<T extends ${when (returnType) {
-    is ProjectionType ->
-      (returnType as ProjectionType).projectionTypeInterfaceName
-    else              -> returnType!!.name
-  }}>" else ""}"
-
-internal val CustomEndpoint.clientMethodReturnType
-  get() = when {
-      returnType == null -> "void"
-      list -> "Items<T>"
-      paging -> "PagedItems<T>"
-      else -> "T"
-    }
-
 internal val CustomEndpoint.params
   get() = listOf(pathVariables, listOf(body), requestParams).flatten()
           .filterNotNull()
           .sortedBy { it.optional }
-
-internal val CustomEndpoint.pagingParams get(): String {
-  if (!paging) {
-    return ""
-  }
-  var result = if (params.isNotEmpty()) ", " else ""
-  result += "page?: number, size?: number"
-  (returnType as? ComplexType)?.let {
-    result += it.readOrderByParameter
-  }
-  return result
-}
-
-internal val CustomEndpoint.pagingRequestParams
-  get(): String {
-  if (!paging) {
-    return ""
-  }
-  var result = "page, size"
-  (returnType as? ComplexType)?.let {
-    result += ", sort"
-  }
-  return result
-}
 
 internal val CustomEndpoint.bodyParam
   get() = body?.let { "data${it.parameterDeclaration}" } ?: ""
@@ -113,7 +67,31 @@ internal val CustomEndpoint.clientMethodPathParams
 
 internal val CustomEndpoint.clientMethodRequestParams
   get() = if (requestParams.isNotEmpty()) "${if (clientMethodPathParams.isEmpty() && bodyParam.isEmpty()) "" else ", "}${requestParams.join(
-      separator = ", ") rVariable@{ "$name${if (optional) "?: $declaration" else ": $declaration"}" }}$clientMethodProjectionParams" else "$clientMethodProjectionParams"
+      separator = ", ") rVariable@{ "$name${if (optional) "?: $declaration" else ": $declaration"}" }}$clientMethodProjectionParams" else clientMethodProjectionParams
 
 internal val CustomEndpoint.clientMethodProjectionParams
   get() = if (canReceiveProjection) "${if (clientMethodPathParams.isEmpty() && bodyParam.isEmpty() && requestParams.isEmpty()) "" else ", "}projection?: string" else ""
+
+fun responseType(multiplicity: RestMultiplicity, singleType: String = "T") = when (multiplicity) {
+  RestMultiplicity.PAGED -> "ApiHateoasObjectReadMultiple<$singleType[]>"
+  RestMultiplicity.LIST -> "ApiHateoasObjectBase<$singleType[]>"
+  RestMultiplicity.SINGLE -> singleType
+}
+
+fun responseHandling(multiplicity: RestMultiplicity, nameRest: String): String {
+  val paging = multiplicity == RestMultiplicity.PAGED
+  return if (multiplicity != RestMultiplicity.SINGLE) {
+    """
+            const elements = ((responseObj._embedded && responseObj._embedded.${nameRest}) || []).map(item => (apiHelper.injectIds(item)));
+        
+            return {
+                items: elements,
+                _links: responseObj._links${if (paging) "\n, page: responseObj.page" else ""}
+            };
+        """.doIndent(2)
+  } else {
+    """
+            return responseObj;
+        """.doIndent(2)
+  }
+}
