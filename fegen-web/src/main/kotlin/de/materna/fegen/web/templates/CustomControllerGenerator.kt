@@ -38,7 +38,7 @@ class CustomControllerGenerator(
         val typeImports = collectTypeImports()
         val runtimeImports = collectRuntimeImports()
         val imports = buildImports(listOf(
-                typeImports to "./Entities",
+                typeImports to "../Entities",
                 runtimeImports to "@materna-se/fegen-runtime"
         ))
         return """

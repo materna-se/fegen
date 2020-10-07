@@ -64,6 +64,10 @@ class FeGenKotlin(
         file.writeText(text)
     }
 
+    override fun cleanGenerated() {
+        frontendGenDir.resolve("controller").deleteRecursively()
+    }
+
     override fun generateEntities() {
         generateFile("Entities.kt", toEntitiesKt())
     }

@@ -91,12 +91,18 @@ abstract class FeGen(
         return result
     }
 
+    /**
+     * Delete all generated files that may not be regenerated
+     */
+    abstract fun cleanGenerated()
+
     abstract fun generateEntities()
 
     abstract fun generateApiClient()
 
     fun generate() {
         logConfiguration()
+        cleanGenerated()
         generateEntities()
         generateApiClient()
     }

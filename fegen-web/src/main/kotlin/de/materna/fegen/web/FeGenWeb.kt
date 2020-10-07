@@ -56,6 +56,10 @@ class FeGenWeb(
         logger.info("___END FEGEN WEB CONFIG___")
     }
 
+    override fun cleanGenerated() {
+        frontendDir.resolve("controller").deleteRecursively()
+    }
+
     override fun generateEntities() {
         frontendDir.resolve("Entities.ts").writeText(toEntitiesTS())
     }
@@ -63,9 +67,10 @@ class FeGenWeb(
     override fun generateApiClient() {
         val templates = listOf(toApiClientTS(), toEntityClientTS())
         frontendDir.resolve("ApiClient.ts").writeText(templates.joinToString(separator = "\n\n"))
+        frontendDir.resolve("controller").mkdir()
         for (controller in customControllers) {
             val generator = CustomControllerGenerator(controller)
-            frontendDir.resolve("${generator.clientName}.ts").writeText(generator.generateContent())
+            frontendDir.resolve("controller/${generator.clientName}.ts").writeText(generator.generateContent())
         }
     }
 

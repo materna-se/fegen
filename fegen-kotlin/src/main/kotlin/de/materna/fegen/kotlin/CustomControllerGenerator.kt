@@ -38,7 +38,7 @@ class CustomControllerGenerator(
     private val clientName = "${customController.name}Client"
 
     fun generate() {
-        val file = FileSpec.builder(feGenKotlin.frontendPkg, clientName)
+        val file = FileSpec.builder(feGenKotlin.frontendPkg + ".controller", clientName)
         file.addType(controllerClass(customController))
         file.indent("    ")
         file.build().writeTo(feGenKotlin.frontendDir)

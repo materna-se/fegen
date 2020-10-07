@@ -48,7 +48,7 @@ fun FeGenWeb.toApiClientTS() = """
     import { ${entityTypes.join(separator = ", ") { "$nameNew, $nameDto, $name" }} } from './Entities';
     import { ${enumTypes.join(separator = ", ") { name }} } from './Entities';
     import { ${projectionTypes.join(separator = ", ") { projectionTypeInterfaceName }} } from './Entities';
-    ${customControllers.join { "import { $nameClient } from './$nameClient';" }}
+    ${customControllers.join(indent = 1) { "import { $nameClient } from './controller/$nameClient';" }}
 
     export class ApiClient {
         ${entityTypes.join(indent = 2) { """

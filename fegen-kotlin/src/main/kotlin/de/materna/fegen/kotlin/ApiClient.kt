@@ -48,6 +48,7 @@ fun FeGenKotlin.toApiClientKt() = """
         import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
         import com.fasterxml.jackson.databind.SerializationFeature
     """.trimIndent() else ""}
+    ${customControllers.join(indent = 2) { "import ${frontendPkg}.controller.${name}Client" }}
 
     open class ApiClient(val request: FetchRequest) {
         val adapter: RequestAdapter

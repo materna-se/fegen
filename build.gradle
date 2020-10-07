@@ -183,10 +183,10 @@ license {
             "fegen-examples/fegen-example-gradle/web-frontend/src/**/*.tsx"
     ]
     excludes = [
-            "fegen-examples/fegen-example-gradle/kotlin-api/src/main/kotlin/**/api/*.kt",
+            "fegen-examples/fegen-example-gradle/kotlin-api/src/main/kotlin/**/api/**/*.kt",
             "fegen-examples/fegen-example-gradle/web-frontend/src/*.ts",
             "fegen-examples/fegen-example-gradle/web-frontend/src/*.tsx",
-            "fegen-examples/fegen-example-maven/kotlin-api/src/main/kotlin/**/api/*.kt"
+            "fegen-examples/fegen-example-maven/kotlin-api/src/main/kotlin/**/api/**/*.kt"
     ]
 }
 
