@@ -45,12 +45,17 @@ fun FeGenWeb.toApiClientTS() = """
         ApiHateoasObjectBase, ApiHateoasObjectReadMultiple, Items, PagedItems, ApiNavigationLinks,
         apiHelper, stringHelper, Dto, Entity
     } from '@materna-se/fegen-runtime';
-    import { ${entityTypes.join(separator = ", ") { "$nameNew, $nameDto, $name" }} } from './Entities'
-    import { ${enumTypes.join(separator = ", ") { name }} } from './Entities'
-    import { ${projectionTypes.join(separator = ", ") { projectionTypeInterfaceName }} } from './Entities'
+    import { ${entityTypes.join(separator = ", ") { "$nameNew, $nameDto, $name" }} } from './Entities';
+    import { ${enumTypes.join(separator = ", ") { name }} } from './Entities';
+    import { ${projectionTypes.join(separator = ", ") { projectionTypeInterfaceName }} } from './Entities';
+    ${customControllers.join { "import { $nameClient } from './$nameClient';" }}
 
     export class ApiClient {
         ${entityTypes.join(indent = 2) { """
+            public readonly ${nameClient.decapitalize()}: $nameClient;
+        """.trimIndent()
+        }}
+        ${customControllers.join(indent = 2) { """
             public readonly ${nameClient.decapitalize()}: $nameClient;
         """.trimIndent()
         }}
@@ -64,6 +69,9 @@ fun FeGenWeb.toApiClientTS() = """
                 this.${nameClient.decapitalize()} = new $nameClient(this, adapter);
             """.trimIndent()
             }}
+            ${customControllers.join(indent = 3) {"""
+                this.${nameClient.decapitalize()} = new $nameClient(adapter);
+            """.trimIndent()}}
         }
     }
 """.trimIndent()

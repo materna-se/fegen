@@ -53,7 +53,7 @@ abstract class FeGen(
         (entityTypes + projectionTypes + embeddableTypes + enumTypes).sortedBy { it.name }
     }
 
-    val customEndpoints
+    val customControllers
         get() = domainMgr.customEndpointMgr.controllers
 
     init {

@@ -24,6 +24,7 @@ package de.materna.fegen.web
 import de.materna.fegen.core.FeGen
 import de.materna.fegen.core.FeGenConfig
 import de.materna.fegen.core.log.FeGenLogger
+import de.materna.fegen.web.templates.CustomControllerGenerator
 import de.materna.fegen.web.templates.toApiClientTS
 import de.materna.fegen.web.templates.toEntitiesTS
 import de.materna.fegen.web.templates.toEntityClientTS
@@ -62,6 +63,10 @@ class FeGenWeb(
     override fun generateApiClient() {
         val templates = listOf(toApiClientTS(), toEntityClientTS())
         frontendDir.resolve("ApiClient.ts").writeText(templates.joinToString(separator = "\n\n"))
+        for (controller in customControllers) {
+            val generator = CustomControllerGenerator(controller)
+            frontendDir.resolve("${generator.clientName}.ts").writeText(generator.generateContent())
+        }
     }
 
 

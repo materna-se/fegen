@@ -34,6 +34,9 @@ internal val EntityType.nameDto
 internal val EntityType.nameClient
     get() = "${name}Client"
 
+internal val CustomController.nameClient
+    get() = "${name}Client"
+
 internal val ProjectionType.projectionTypeInterfaceName
     get() = if(baseProjection) "${parentType.name}$name" else name
 
