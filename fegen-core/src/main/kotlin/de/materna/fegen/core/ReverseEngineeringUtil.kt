@@ -43,6 +43,9 @@ import org.springframework.lang.Nullable
 import org.springframework.web.bind.annotation.*
 import java.lang.reflect.*
 import java.lang.reflect.Parameter
+import java.math.BigDecimal
+import java.net.URI
+import java.time.*
 import javax.persistence.*
 import javax.validation.constraints.NotNull
 
@@ -246,3 +249,24 @@ val Parameter.nameREST: String
         getAnnotation(Param::class.java)?.let { if (!it.value.isBlank()) return it.value }
         return name
     }
+
+val Parameter.isEntity
+    get() = type.isAnnotationPresent(Entity::class.java)
+
+val Parameter.isProjection
+    get() = type.isAnnotationPresent(Projection::class.java)
+
+val Parameter.isSimpleType
+    get() = type == String::class.java
+            || type == Boolean::class.java
+            || type ==  java.lang.Long::class.java
+            || type == java.lang.Integer::class.java
+            || type ==  java.lang.Double::class.java
+            || type == BigDecimal::class.java
+            || type == java.util.UUID::class.java
+            || type == LocalDate::class.java
+            || type == LocalDateTime::class.java
+            || type == ZonedDateTime::class.java
+            || type == OffsetDateTime::class.java
+            || type == Duration::class.java
+            || type == URI::class.java

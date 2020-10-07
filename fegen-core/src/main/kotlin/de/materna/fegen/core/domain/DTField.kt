@@ -117,3 +117,8 @@ data class EnumDTField(
         override val justSettable: Boolean,
         override val type: EnumType
 ): ValueDTField()
+
+data class DTPojo(override val name: String,
+                  var simpleFields: List<SimpleDTField> = listOf(),
+                  var enumFields: List<EnumDTField> = listOf()
+): ValueType
