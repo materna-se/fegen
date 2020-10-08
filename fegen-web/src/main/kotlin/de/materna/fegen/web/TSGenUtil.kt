@@ -133,6 +133,7 @@ val ComplexType.allSimpleFields
         is ProjectionType -> (simpleFields + parentType.simpleFields)
         is EntityType -> simpleFields
         is EmbeddableType -> simpleFields
+        is DTPojo -> simpleFields
     }
 
 internal val ComplexType.allSortableFields

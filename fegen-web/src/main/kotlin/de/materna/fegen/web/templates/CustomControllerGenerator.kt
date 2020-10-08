@@ -78,16 +78,20 @@ class CustomControllerGenerator(
         ).toSet()
     }
 
-    private fun collectTypeImports(): Set<String> =
-            customController.endpoints
-                    .map { listOfNotNull(it.returnValue?.type?.name, it.body?.type?.nameNew) }
-                    .flatten()
-                    .toSet()
+    private fun collectTypeImports(): Set<String> {
+        val pojoNames = customController.endpoints.flatMap { it.pojoParams }
+        return customController.endpoints
+                .map { listOfNotNull(it.returnValue?.type?.name, it.body?.type?.nameNew) }
+                .flatten()
+                .toSet()
+                .plus(pojoNames.map { it.name.capitalize() })
+    }
+
 
     private fun method(endpoint: CustomEndpoint): String {
         val returnValue = endpoint.returnValue
         return """
-        public async ${endpoint.name}(${endpoint.params.join(separator = ", ") { parameter(true) }}${pagingParams(endpoint)}): Promise<${clientMethodReturnType(endpoint)}>  {
+        public async ${endpoint.name}(${endpoint.params.join(separator = ", ") { parameter(true) }}${pagingParams(endpoint)}${if(endpoint.pojoParams.isNotEmpty()) """, ${endpoint.pojoParams.join(separator = ", ") {"$name: ${name.capitalize()}"} }""" else ""}): Promise<${clientMethodReturnType(endpoint)}>  {
             const request = this.requestAdapter.getRequest();
     
             const baseUrl = `${endpoint.parentController.baseUri}/${endpoint.uriPatternString}`${if (endpoint.canReceiveProjection) """, projection && `projection=${'$'}{projection}`""" else ""};

@@ -49,8 +49,11 @@ abstract class FeGen(
     val enumTypes
         get() = domainMgr.enumMgr.enums
 
+    val pojos
+        get() = customControllers.flatMap { it.endpoints }.flatMap { it.pojoParams }
+
     val types: List<DomainType> by lazy {
-        (entityTypes + projectionTypes + embeddableTypes + enumTypes).sortedBy { it.name }
+        (entityTypes + projectionTypes + embeddableTypes + enumTypes + pojos).sortedBy { it.name }
     }
 
     val customControllers

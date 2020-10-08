@@ -48,6 +48,7 @@ private fun DomainType.toDeclaration() = when (this) {
     is EmbeddableType -> toDeclaration()
     is ProjectionType -> toDeclaration()
     is EnumType -> toDeclaration()
+    is DTPojo -> toDeclaration()
 }
 
 private fun EntityType.toDeclaration() = """
@@ -101,4 +102,10 @@ private fun EnumType.toDeclaration() = """
 
 private fun DTField.toDeclaration(optional: Boolean = false) = """
     $name${if (optional) "?" else ""}: $declaration${if (justSettable || this.optional) " | null" else ""}
+""".trimIndent()
+
+private fun DTPojo.toDeclaration() = """
+    export interface ${name.capitalize()} {
+        ${fields.join(indent = 2) { toDeclaration() }}
+    }
 """.trimIndent()
