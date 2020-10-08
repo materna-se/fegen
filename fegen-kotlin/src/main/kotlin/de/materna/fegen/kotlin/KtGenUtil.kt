@@ -111,6 +111,7 @@ internal val ComplexType.declaration
         is EntityType -> declaration
         is EmbeddableType -> declaration
         is ProjectionType -> declaration
+        is DTPojo -> declaration
     }
 
 
@@ -195,6 +196,7 @@ internal val ComplexType.allSimpleFields
         is ProjectionType -> (simpleFields + parentType.simpleFields)
         is EntityType -> simpleFields
         is EmbeddableType -> simpleFields
+        is DTPojo -> simpleFields
     }
 
 internal val ComplexType.allSortableFields
@@ -212,3 +214,6 @@ internal val DomainType.uriREST
 
 internal val DomainType.searchResourceName
     get() = "$nameRest/search"
+
+internal val DTPojo.declaration
+    get() = name.capitalize()

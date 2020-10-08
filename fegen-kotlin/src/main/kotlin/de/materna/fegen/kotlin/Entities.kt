@@ -50,6 +50,7 @@ private fun DomainType.toDeclaration() = when (this) {
     is EmbeddableType -> toDeclaration()
     is ProjectionType -> if (baseProjection) "" else toDeclaration()
     is EnumType -> toDeclaration()
+    is DTPojo -> toDeclaration()
 }
 
 private fun EmbeddableType.toDeclaration() = """
@@ -218,3 +219,11 @@ private fun DTField.toObjAssignment(): String {
     val objConversion = if (list) ".map { it.toObj() }" else ".toObj()"
     return assignment + optionalQuestionMark + objConversion
 }
+
+private fun DTPojo.toDeclaration() = """
+    data class ${name.capitalize()} (
+        ${fields.sortedBy { it.optional }.join(indent = 2, separator = ",\n", postfix = ",") {
+    toDeclaration()
+        }}
+    )
+""".trimIndent()
