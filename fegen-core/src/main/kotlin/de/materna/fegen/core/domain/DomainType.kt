@@ -163,3 +163,5 @@ data class Search(
         return "Search(name=$name, list=$list, paging=$paging, returnType=${returnType.name})"
     }
 }
+
+data class DTPojo(override val name: String): ComplexType()

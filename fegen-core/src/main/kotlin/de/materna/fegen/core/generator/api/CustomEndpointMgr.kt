@@ -87,6 +87,11 @@ class CustomEndpointMgr(
                             context = FieldMgr.ParameterContext(method)
                     ) as ValueDTField
                 },
+                pojoParams = method.parameters
+                        .filter { parameter -> !parameter.type.isPrimitive && !parameter.isSimpleType && !parameter.type.isEntity}
+                        .map {
+                            DTPojo(name = it.name).apply { fields = it.type.declaredFields.map { field ->  domainMgr.fieldMgr.dtFieldFromType(name = field.name, type = field.type, context = FieldMgr.FieldContext(field.type)) } }
+                        },
                 body = method.requestBody?.let {
                     domainMgr.fieldMgr.dtFieldFromType(
                             name = "body",

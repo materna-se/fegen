@@ -250,12 +250,6 @@ val Parameter.nameREST: String
         return name
     }
 
-val Parameter.isEntity
-    get() = type.isAnnotationPresent(Entity::class.java)
-
-val Parameter.isProjection
-    get() = type.isAnnotationPresent(Projection::class.java)
-
 val Parameter.isSimpleType
     get() = type == String::class.java
             || type == Boolean::class.java
