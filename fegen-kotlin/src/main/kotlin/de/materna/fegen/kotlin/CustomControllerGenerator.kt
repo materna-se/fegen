@@ -93,7 +93,10 @@ class CustomControllerGenerator(
     }
 
     private fun parameterFromDTPojo(parameter: DTPojo): ParameterSpec {
-        return ParameterSpec.builder(parameter.name, ClassName(feGenKotlin.frontendPkg, parameter.name.capitalize())).build()
+        if(parameter.list) {
+            return ParameterSpec.builder(parameter.name, List::class.asClassName().parameterizedBy(ClassName(feGenKotlin.frontendPkg, parameter.typeName))).build()
+        }
+        return ParameterSpec.builder(parameter.name, ClassName(feGenKotlin.frontendPkg, parameter.typeName)).build()
     }
 
     private fun parameterType(parameter: DTField): TypeName =

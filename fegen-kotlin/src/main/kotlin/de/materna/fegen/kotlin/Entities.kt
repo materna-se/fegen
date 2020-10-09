@@ -221,9 +221,9 @@ private fun DTField.toObjAssignment(): String {
 }
 
 private fun DTPojo.toDeclaration() = """
-    data class ${name.capitalize()} (
-        ${fields.sortedBy { it.optional }.join(indent = 2, separator = ",\n", postfix = ",") {
-    toDeclaration()
+    data class $typeName (
+        ${fields.sortedBy { it.optional }.join(indent = 2, separator = ",\n") {
+            toDeclaration()
         }}
     )
 """.trimIndent()
