@@ -34,6 +34,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import java.awt.print.Pageable
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
@@ -88,9 +89,17 @@ class CustomEndpointMgr(
                     ) as ValueDTField
                 },
                 pojoParams = method.parameters
-                        .filter { parameter -> !parameter.type.isPrimitive && !parameter.isSimpleType && !parameter.type.isEntity}
+                        .filter { parameter -> !parameter.type.isPrimitive && !parameter.isSimpleType && !parameter.type.isEntity && parameter.type != Pageable::class.java}
                         .map {
-                            DTPojo(name = it.name).apply { fields = it.type.declaredFields.map { field ->  domainMgr.fieldMgr.dtFieldFromType(name = field.name, type = field.type, context = FieldMgr.FieldContext(field.type)) } }
+                            when{
+                                java.lang.Iterable::class.java.isAssignableFrom(it.type as Class<*>) -> DTPojo(name = it.name, list = true).apply {
+                                    val type = (it.parameterizedType as ParameterizedType).actualTypeArguments.first() as Class<*>
+                                    fields = type.declaredFields.map { field ->  domainMgr.fieldMgr.dtFieldFromType(name = field.name, type = field.type, context = FieldMgr.FieldContext(field.type))}
+                                }
+                                else -> DTPojo(name = it.name).apply {
+                                    fields = it.type.declaredFields.map { field ->  domainMgr.fieldMgr.dtFieldFromType(name = field.name, type = field.type, context = FieldMgr.FieldContext(field.type)) }
+                                }
+                            }
                         },
                 body = method.requestBody?.let {
                     domainMgr.fieldMgr.dtFieldFromType(
