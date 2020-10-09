@@ -84,7 +84,7 @@ class CustomControllerGenerator(
                 .map { listOfNotNull(it.returnValue?.type?.name, it.body?.type?.nameNew) }
                 .flatten()
                 .toSet()
-                .plus(pojoNames.map { it.name.capitalize() })
+                .plus(pojoNames.map { it.typeName })
     }
 
 
