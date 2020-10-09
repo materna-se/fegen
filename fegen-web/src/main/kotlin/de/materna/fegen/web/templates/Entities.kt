@@ -105,7 +105,7 @@ private fun DTField.toDeclaration(optional: Boolean = false) = """
 """.trimIndent()
 
 private fun DTPojo.toDeclaration() = """
-    export interface ${name.capitalize()} {
+    export interface $typeName {
         ${fields.join(indent = 2) { toDeclaration() }}
     }
 """.trimIndent()

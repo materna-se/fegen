@@ -91,7 +91,7 @@ class CustomControllerGenerator(
     private fun method(endpoint: CustomEndpoint): String {
         val returnValue = endpoint.returnValue
         return """
-        public async ${endpoint.name}(${endpoint.params.join(separator = ", ") { parameter(true) }}${pagingParams(endpoint)}${if(endpoint.pojoParams.isNotEmpty()) """, ${endpoint.pojoParams.join(separator = ", ") {"$name: ${name.capitalize()}"} }""" else ""}): Promise<${clientMethodReturnType(endpoint)}>  {
+        public async ${endpoint.name}(${endpoint.params.join(separator = ", ") { parameter(true) }}${pagingParams(endpoint)}${if(endpoint.pojoParams.isNotEmpty()) """, ${endpoint.pojoParams.join(separator = ", ") { if (list) """ $name: $typeName[]""" else """$name: $typeName""" }}""" else ""}): Promise<${clientMethodReturnType(endpoint)}>  {
             const request = this.requestAdapter.getRequest();
     
             const baseUrl = `${endpoint.parentController.baseUri}/${endpoint.uriPatternString}`${if (endpoint.canReceiveProjection) """, projection && `projection=${'$'}{projection}`""" else ""};

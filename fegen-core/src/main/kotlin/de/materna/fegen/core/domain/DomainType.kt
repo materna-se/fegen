@@ -164,4 +164,4 @@ data class Search(
     }
 }
 
-data class DTPojo(override val name: String, val list: Boolean = false): ComplexType()
+data class DTPojo(override val name: String, val list: Boolean = false, val typeName: String): ComplexType()

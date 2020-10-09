@@ -92,11 +92,12 @@ class CustomEndpointMgr(
                         .filter { parameter -> !parameter.type.isPrimitive && !parameter.isSimpleType && !parameter.type.isEntity && parameter.type != Pageable::class.java}
                         .map {
                             when{
-                                java.lang.Iterable::class.java.isAssignableFrom(it.type as Class<*>) -> DTPojo(name = it.name, list = true).apply {
+                                java.lang.Iterable::class.java.isAssignableFrom(it.type as Class<*>) -> {
                                     val type = (it.parameterizedType as ParameterizedType).actualTypeArguments.first() as Class<*>
+                                    DTPojo(name = it.name, list = true, typeName = type.simpleName).apply {
                                     fields = type.declaredFields.map { field ->  domainMgr.fieldMgr.dtFieldFromType(name = field.name, type = field.type, context = FieldMgr.FieldContext(field.type))}
-                                }
-                                else -> DTPojo(name = it.name).apply {
+                                }}
+                                else -> DTPojo(name = it.name, typeName = it.type.simpleName).apply {
                                     fields = it.type.declaredFields.map { field ->  domainMgr.fieldMgr.dtFieldFromType(name = field.name, type = field.type, context = FieldMgr.FieldContext(field.type)) }
                                 }
                             }
