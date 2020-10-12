@@ -46,11 +46,14 @@ export class $nameClient extends BaseClient<ApiClient, $nameNew, $name> {
         super("$uriREST", "$nameRest", apiClient, requestAdapter);
         this.readOne = this.readOne.bind(this);
         this.readProjection = this.readProjection.bind(this);
-        ${entityFields.join(indent = 3, separator = "\n") {
-        "this.${readAssociation}Projection = this.${readAssociation}Projection.bind(this);"
-    }}
+        ${
+        entityFields.join(indent = 3, separator = "\n") {
+            "this.${readAssociation}Projection = this.${readAssociation}Projection.bind(this);"
+        }
+    }
     }
   ${buildEntityTemplate(this)}
+  ${plainObjTemplate(this)}
   ${readEntityTemplate(this, projectionTypes)}
   ${deleteEntityTemplate(this)}
   ${associationEntityTemplate(this, projectionTypes)}
@@ -82,8 +85,9 @@ private fun buildEntityTemplate(entityType: EntityType): String {
 }
 
 private fun readEntityTemplate(entityType: EntityType, projectionTypes: List<ProjectionType>) = """
-    ${projectionTypes.filter { it.parentType == entityType }.join(separator = "\n\n") {
-    """public async readProjections$projectionTypeInterfaceName(page?: number, size?: number${if (mayHaveSortParameter) readOrderByParameter else ""}) : Promise<PagedItems<$projectionTypeInterfaceName>> {
+    ${
+    projectionTypes.filter { it.parentType == entityType }.join(separator = "\n\n") {
+        """public async readProjections$projectionTypeInterfaceName(page?: number, size?: number${if (mayHaveSortParameter) readOrderByParameter else ""}) : Promise<PagedItems<$projectionTypeInterfaceName>> {
         return this.readProjections<$projectionTypeInterfaceName>("$projectionName", page, size${if (mayHaveSortParameter) ", sort" else ""});
     }
             
@@ -91,34 +95,50 @@ private fun readEntityTemplate(entityType: EntityType, projectionTypes: List<Pro
         return this.readProjection<$projectionTypeInterfaceName>(id, "$projectionName");
     }
     """
-}}
+    }
+}
     
     public async readAll(page?: number, size?: number${if (entityType.mayHaveSortParameter) entityType.readOrderByParameter else ""}) : Promise<PagedItems<${entityType.name}>> {
         return await this.readProjections<${entityType.name}>(undefined, page, size${if (entityType.mayHaveSortParameter) ", sort" else ""});
     }"""
 
+private fun plainObjTemplate(entityType: EntityType): String {
+    val fields = entityType.nonComplexFields.map { it.name } + "_links"
+    return """
+    protected toPlainObj(obj: ${entityType.name}): ${entityType.name} {
+        return {
+            ${fields.join(indent = 3, separator = ",\n") { "$this: obj.$this" }}
+        };
+    }"""
+}
+
 private fun deleteEntityTemplate(entityType: EntityType) = """
-    ${entityType.entityFields.join(indent = 1, separator = "\n\n") dtField@{
-    """
+    ${
+    entityType.entityFields.join(indent = 1, separator = "\n\n") dtField@{
+        """
     public async $deleteFromAssociation(returnType: ${entityType.name}, childToDelete: ${type.name}) {
         await this._requestAdapter.getRequest().delete(`${entityType.uriREST}/${'$'}{returnType.id}/$name/${'$'}{childToDelete.id}`);
     }""".trimIndent()
-}}"""
+    }
+}"""
 
 private fun associationEntityTemplate(entityType: EntityType, projectionTypes: List<ProjectionType>) = """
-    ${entityType.entityFields.join(indent = 1, separator = "\n\n") dtField@{
-    """
+    ${
+    entityType.entityFields.join(indent = 1, separator = "\n\n") dtField@{
+        """
     public async $readAssociation(obj: ${entityType.nameDto}): Promise<${if (list) declaration else "$declaration | undefined"}> {
         return this.${readAssociation}Projection<${type.declaration}>(obj);
     }
 
-    ${projectionTypes.filter { it.parentType == type }.join(indent = 1, separator = "\n\n") {
-        """
+    ${
+            projectionTypes.filter { it.parentType == type }.join(indent = 1, separator = "\n\n") {
+                """
     public async ${this@dtField.readAssociation}Projection$projectionTypeInterfaceName(obj: ${entityType.nameDto}): Promise<${if (this@dtField.list) "$projectionTypeInterfaceName[]" else "$projectionTypeInterfaceName | undefined"}> {
         return this.${this@dtField.readAssociation}Projection<$projectionTypeInterfaceName>(obj, "$projectionName");
     }
     """
-    }}
+            }
+        }
 
     public async ${readAssociation}Projection<T extends Dto>(obj: ${entityType.nameDto}, projection?: string): Promise<${if (list) "T[]" else "T | undefined"}> {
         const hasProjection = !!projection;
@@ -128,14 +148,17 @@ private fun associationEntityTemplate(entityType: EntityType, projectionTypes: L
         const response = await this._requestAdapter.getRequest().get(fullUrl);
         if(response.status === 404) { return ${if (list) "[]" else "undefined"}; }
         if(!response.ok){ throw response; }
-        ${if (list) """
+        ${
+            if (list) """
             return (((await response.json()) as ApiHateoasObjectBase<T[]>)._embedded.${type.nameRest}).map(item => (apiHelper.injectIds(item)));""".doIndent(5)
-    else """
+            else """
         const result = (await response.json()) as T;
-        return apiHelper.injectIds(result);"""}
+        return apiHelper.injectIds(result);"""
+        }
     }
 
-    ${if (list) """
+    ${
+            if (list) """
     public async $setAssociation(returnType: ${entityType.name}, children: $declaration) {
         // eslint-disable-next-line no-throw-literal
         if(!returnType._links) throw `Parent has no _links: ${'$'}{returnType.id}`;
@@ -152,7 +175,7 @@ private fun associationEntityTemplate(entityType: EntityType, projectionTypes: L
     public async $addToAssociation(returnType: ${entityType.name}, childToAdd: ${type.name}) {
         await this._requestAdapter.addToObj(childToAdd, returnType, "$name");
     }""".doIndent(1)
-    else """
+            else """
     public async $setAssociation(returnType: ${entityType.name}, child: $declaration) {
         // eslint-disable-next-line no-throw-literal
         if(!returnType._links) throw `Parent has no _links: ${'$'}{returnType.id}`;
@@ -162,12 +185,15 @@ private fun associationEntityTemplate(entityType: EntityType, projectionTypes: L
             apiHelper.removeParamsFromNavigationHref(returnType._links.$name),
             child._links.self.href
         );
-    }""".doIndent(1)}""".trimIndent()
-}.trimIndent()}"""
+    }""".doIndent(1)
+        }""".trimIndent()
+    }.trimIndent()
+}"""
 
 private fun searchEntityTemplate(entityType: EntityType) = """
-    ${entityType.searches.join(indent = 1, separator = "\n\n") search@{
-    val configurePagingParameters = """
+    ${
+    entityType.searches.join(indent = 1, separator = "\n\n") search@{
+        val configurePagingParameters = """
         if (page !== undefined) {
             parameters["page"] = `${'$'}{page}`;
         }
@@ -178,15 +204,15 @@ private fun searchEntityTemplate(entityType: EntityType) = """
     """.doIndent(2)
 
 
-    val multiplicity = when {
-        paging -> RestMultiplicity.PAGED
-        list -> RestMultiplicity.LIST
-        else -> RestMultiplicity.SINGLE
-    }
-    val responseType = responseType(multiplicity)
-    val responseHandling = responseHandling(multiplicity, entityType.nameRest)
+        val multiplicity = when {
+            paging -> RestMultiplicity.PAGED
+            list -> RestMultiplicity.LIST
+            else -> RestMultiplicity.SINGLE
+        }
+        val responseType = responseType(multiplicity)
+        val responseHandling = responseHandling(multiplicity, entityType.nameRest)
 
-    return@search """
+        return@search """
     public async search${name.capitalize()}<T extends ${returnType.name}>(${parameters.paramDecl}${if (parameters.isNotEmpty()) ", " else ""}$pagingParameters): Promise<$returnDeclaration> {
         const request = this._requestAdapter.getRequest();
         
@@ -199,5 +225,6 @@ private fun searchEntityTemplate(entityType: EntityType) = """
         
         $responseHandling
     }""".trimIndent()
-}.trimIndent()}"""
+    }.trimIndent()
+}"""
 

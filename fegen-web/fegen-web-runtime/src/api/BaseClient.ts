@@ -100,8 +100,16 @@ export abstract class BaseClient<C, N, D extends Dto> {
         return apiHelper.injectIds(obj);
     }
 
+    /**
+     * Returns a new object that only contains the fields of WithId<D>.
+     * This may be necessary when updating an entity using a projection since
+     * sending a PUT request with e.g. relationship fields causes errors.
+     */
+    protected abstract toPlainObj<T extends WithId<D>>(obj: T): WithId<D>;
+
     public async update<T extends WithId<D>>(obj: T): Promise<WithId<D>> {
-        return await this._requestAdapter.updateObject(obj);
+        const request = this.toPlainObj(obj);
+        return await this._requestAdapter.updateObject(request);
     }
 
     public async delete(obj: WithId<D>) {
