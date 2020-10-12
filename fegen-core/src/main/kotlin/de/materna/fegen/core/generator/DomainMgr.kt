@@ -73,6 +73,7 @@ class DomainMgr(
 
         embeddableMgr.addFields()
 
+        repositorySearchMgr.markEntitiesNotExported()
         repositorySearchMgr.addSearchesToEntities()
         repositorySearchMgr.warnIfNoRepositoryClasses()
         repositorySearchMgr.warnIfNoSearchMethods()

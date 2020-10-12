@@ -27,6 +27,7 @@ import de.materna.fegen.core.generator.DomainMgr
 import de.materna.fegen.core.generator.FieldMgr
 import de.materna.fegen.core.generator.types.EntityMgr
 import de.materna.fegen.core.log.FeGenLogger
+import org.springframework.data.domain.Pageable
 import org.springframework.hateoas.CollectionModel
 import org.springframework.hateoas.EntityModel
 import org.springframework.hateoas.PagedModel

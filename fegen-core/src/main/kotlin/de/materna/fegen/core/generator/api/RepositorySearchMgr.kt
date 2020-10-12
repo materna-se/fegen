@@ -40,9 +40,14 @@ class RepositorySearchMgr(
         domainMgr: DomainMgr
 ) : ApiMgr(feGenConfig, domainMgr) {
 
-    private val repository2Searches by lazy {
+    private val entity2Repository by lazy {
         searchForClasses(feGenConfig.repositoryPkg, RepositoryRestResource::class.java)
-                .filter { isRepositorySearchExported(it) }
+                .associateBy { it.repositoryType }
+    }
+
+    private val repository2Searches by lazy {
+        entity2Repository.values
+                .filter { isRepositoryExported(it) }
                 .associateWith { methodsInRepo(it) }
     }
 
@@ -53,8 +58,8 @@ class RepositorySearchMgr(
                     .filter { hasOnlySupportedParameters(repo, it) }
                     .sortedBy { it.name }
 
-    private fun isRepositorySearchExported(projectionClass: Class<*>) =
-            projectionClass.getAnnotation(RepositoryRestResource::class.java).exported
+    private fun isRepositoryExported(repoClass: Class<*>) =
+            repoClass.getAnnotation(RepositoryRestResource::class.java).exported
 
     private fun isMethodExported(method: Method) =
             method.getAnnotation(RestResource::class.java)?.exported ?: true
@@ -115,6 +120,15 @@ class RepositorySearchMgr(
                                 returnType = domainType,
                                 inRepo = true
                         )
+            }
+        }
+    }
+
+    fun markEntitiesNotExported() {
+        for ((entityClass, repository) in entity2Repository) {
+            if (!isRepositoryExported(repository)) {
+                val entity = entityMgr.class2Entity[entityClass]!!
+                entity.exported = false
             }
         }
     }
