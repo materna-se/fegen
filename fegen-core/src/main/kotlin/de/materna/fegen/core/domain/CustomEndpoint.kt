@@ -43,8 +43,7 @@ data class CustomEndpoint(
         val method: EndpointMethod,
         val pathVariables: List<ValueDTField>,
         val requestParams: List<ValueDTField>,
-        val pojoParams: List<DTPojo>,
-        val body: EntityDTField?,
+        val body: ComplexDTField?,
         val returnValue: ReturnValue?,
         val canReceiveProjection: Boolean
 ) {

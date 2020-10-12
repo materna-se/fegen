@@ -117,3 +117,11 @@ data class EnumDTField(
         override val justSettable: Boolean,
         override val type: EnumType
 ): ValueDTField()
+
+data class PojoDTField(override val type: Pojo,
+                       override val name: String,
+                       override val list: Boolean = false,
+                       override val optional: Boolean = false,
+                       override val justSettable: Boolean = false)
+    : ComplexDTField()
+

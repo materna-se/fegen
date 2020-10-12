@@ -98,7 +98,16 @@ class FieldMgr(
                                     ?: throw RuntimeException("Could not resolve projection type $type")
 
                     )
-                    else -> throw RuntimeException("UNKNOWN class ${type.typeName} & ${type::class.java.name} ${context.context()}")
+                    else -> PojoDTField(
+                            name = name,
+                            list = list,
+                            optional = optional,
+                            justSettable = justSettable,
+                            type = Pojo(name = name, typeName = type.simpleName).apply {
+                                fields = type.declaredFields.map { field ->  domainMgr.fieldMgr.dtFieldFromType(name = field.name, type = field.type, context = FieldContext(field.type)) }
+                            }
+                    )
+                    //throw RuntimeException("UNKNOWN class ${type.typeName} & ${type::class.java.name} ${context.context()}")
                 }
                 is ParameterizedType -> {
                     if (!java.lang.Iterable::class.java.isAssignableFrom(type.rawType as Class<*>)) throw IllegalStateException("Cannot handle ${type}.")

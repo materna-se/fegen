@@ -34,7 +34,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import java.awt.print.Pageable
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
@@ -88,26 +87,12 @@ class CustomEndpointMgr(
                             context = FieldMgr.ParameterContext(method)
                     ) as ValueDTField
                 },
-                pojoParams = method.parameters
-                        .filter { parameter -> !parameter.type.isPrimitive && !parameter.isSimpleType && !parameter.type.isEntity && parameter.type != Pageable::class.java}
-                        .map {
-                            when{
-                                java.lang.Iterable::class.java.isAssignableFrom(it.type as Class<*>) -> {
-                                    val type = (it.parameterizedType as ParameterizedType).actualTypeArguments.first() as Class<*>
-                                    DTPojo(name = it.name, list = true, typeName = type.simpleName).apply {
-                                    fields = type.declaredFields.map { field ->  domainMgr.fieldMgr.dtFieldFromType(name = field.name, type = field.type, context = FieldMgr.FieldContext(field.type))}
-                                }}
-                                else -> DTPojo(name = it.name, typeName = it.type.simpleName).apply {
-                                    fields = it.type.declaredFields.map { field ->  domainMgr.fieldMgr.dtFieldFromType(name = field.name, type = field.type, context = FieldMgr.FieldContext(field.type)) }
-                                }
-                            }
-                        },
                 body = method.requestBody?.let {
-                    domainMgr.fieldMgr.dtFieldFromType(
-                            name = "body",
-                            type = it.parameterizedType,
-                            context = FieldMgr.ParameterContext(method)
-                    ) as? EntityDTField
+                    it -> domainMgr.fieldMgr.dtFieldFromType(
+                        name = "body",
+                        type = it.parameterizedType,
+                        context = FieldMgr.ParameterContext(method)
+                ) as? ComplexDTField
                 },
                 returnValue = resolveReturnType(method),
                 canReceiveProjection = canReceiveProjection(method)

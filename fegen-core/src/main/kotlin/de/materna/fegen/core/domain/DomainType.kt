@@ -164,4 +164,8 @@ data class Search(
     }
 }
 
-data class DTPojo(override val name: String, val list: Boolean = false, val typeName: String): ComplexType()
+data class Pojo(override val name: String, val typeName: String): ComplexType() {
+    override fun toString(): String {
+        return "Pojo(name=$name, typeName=$typeName, fields=$fields"
+    }
+}

@@ -22,6 +22,7 @@
 package de.materna.fegen.core
 
 import de.materna.fegen.core.domain.DomainType
+import de.materna.fegen.core.domain.PojoDTField
 import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.generator.DomainMgr
 import java.io.File
@@ -49,11 +50,11 @@ abstract class FeGen(
     val enumTypes
         get() = domainMgr.enumMgr.enums
 
-    val pojos
-        get() = customControllers.flatMap { it.endpoints }.flatMap { it.pojoParams }
+    val pojoTypes
+        get() = customControllers.flatMap { it.endpoints }.map { it.body as? PojoDTField }.mapNotNull { it?.type }.distinctBy { it.typeName }
 
     val types: List<DomainType> by lazy {
-        (entityTypes + projectionTypes + embeddableTypes + enumTypes + pojos).sortedBy { it.name }
+        (entityTypes + projectionTypes + embeddableTypes + enumTypes + pojoTypes).sortedBy { it.name }
     }
 
     val customControllers
