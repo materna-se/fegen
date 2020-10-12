@@ -27,6 +27,7 @@ import de.materna.fegen.core.generator.DomainMgr
 import de.materna.fegen.core.generator.FieldMgr
 import de.materna.fegen.core.generator.types.EntityMgr
 import de.materna.fegen.core.log.FeGenLogger
+import org.springframework.data.domain.Pageable
 import org.springframework.hateoas.CollectionModel
 import org.springframework.hateoas.EntityModel
 import org.springframework.hateoas.PagedModel
@@ -34,7 +35,6 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
-import java.awt.print.Pageable
 import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
