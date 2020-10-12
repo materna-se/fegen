@@ -62,7 +62,8 @@ sealed class ComplexType: DomainType() {
 
 data class EntityType(
         override var name: String,
-        var searches: List<Search> = emptyList()
+        var searches: List<Search> = emptyList(),
+        var exported: Boolean = true
 ): ComplexType()
 
 data class EmbeddableType(

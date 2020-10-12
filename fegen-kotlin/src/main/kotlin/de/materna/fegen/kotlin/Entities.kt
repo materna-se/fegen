@@ -147,7 +147,7 @@ private fun EntityType.toDeclaration() = """
     data class $nameLinks(
         override val linkMap: Map<String, ApiNavigationLink>
     ): BaseApiNavigationLinks(linkMap) {
-        ${entityFields.join(indent = 2) { "val $name: ApiNavigationLink by linkMap" }}
+        ${entityFields.filter { it.type.exported }.join(indent = 2) { "val $name: ApiNavigationLink by linkMap" }}
     }
 
     class ${nameLinks}Deserializer(private val vc: Class<*>? = null):  StdDeserializer<$nameLinks>(vc) {
