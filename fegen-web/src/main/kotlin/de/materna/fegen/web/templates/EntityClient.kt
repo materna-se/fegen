@@ -38,7 +38,7 @@ import de.materna.fegen.web.projectionTypeInterfaceName
 import de.materna.fegen.web.readOrderByParameter
 import de.materna.fegen.web.returnDeclaration
 
-fun FeGenWeb.toEntityClientTS() = entityTypes.join(separator = "\n\n") domainType@{
+fun FeGenWeb.toEntityClientTS() = entityTypes.filter { it.exported }.join(separator = "\n\n") domainType@{
     """
 export class $nameClient extends BaseClient<ApiClient, $nameNew, $name> {
 
@@ -95,27 +95,6 @@ private fun readEntityTemplate(entityType: EntityType, projectionTypes: List<Pro
     
     public async readAll(page?: number, size?: number${if (entityType.mayHaveSortParameter) entityType.readOrderByParameter else ""}) : Promise<PagedItems<${entityType.name}>> {
         return await this.readProjections<${entityType.name}>(undefined, page, size${if (entityType.mayHaveSortParameter) ", sort" else ""});
-    }"""
-
-private fun updateEntityTemplate(entityType: EntityType) = """
-    public toDto(obj: ${entityType.name}): ${entityType.nameDto} {
-        ${if (entityType.fields.any { it.name == "id" }) """
-            return obj;
-        """.trimIndent()
-else """
-        const {
-          id,
-          ...${entityType.nameDto.decapitalize()}
-        } = obj
-        return ${entityType.nameDto.decapitalize()};
-  """.doIndent(4)}
-    }
-
-    public toBase<T extends ${entityType.nameNew}>(obj: T): ${entityType.nameNew} {
-        return {
-            ${entityType.nonComplexFields.filter { it.name != "id" }.join(indent = 3, separator = "\n") { "${name}: obj.${name}," }}
-            ${entityType.entityFields.join(indent = 3, separator = "\n") { "${name}: obj.${name}," }}
-        };
     }"""
 
 private fun deleteEntityTemplate(entityType: EntityType) = """

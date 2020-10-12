@@ -62,7 +62,7 @@ fun FeGenKotlin.toApiClientKt() = """
             adapter = RequestAdapter(request)
         }
     
-        ${entityTypes.join(indent = 2) {
+        ${entityTypes.filter { it.exported }.join(indent = 2) {
     """
             open val ${nameClient.decapitalize()} by lazy { $nameClient(apiClient = this, requestAdapter = adapter) }
             open val ${nameRepository.decapitalize()} by lazy { ${nameRepository}(client = ${nameClient.decapitalize()}) }
@@ -75,7 +75,7 @@ fun FeGenKotlin.toApiClientKt() = """
 }}
     }
 
-    ${entityTypes.join(indent = 1, separator = "\n\n") domainType@{
+    ${entityTypes.filter { it.exported }.join(indent = 1, separator = "\n\n") domainType@{
     """
         open class $nameClient(
                 override val apiClient: ApiClient,
@@ -84,7 +84,7 @@ fun FeGenKotlin.toApiClientKt() = """
 
             suspend fun create(obj: $nameBase) = requestAdapter.createObject(
                 newObject = obj,
-                createURI = "${uriREST}"
+                createURI = "$uriREST"
             )
 
             suspend fun readAll(page: Int? = null, size: Int? = null${if (mayHaveSortParameter) ", sort: String? = null" else ""}) =
@@ -223,7 +223,7 @@ fun FeGenKotlin.toApiClientKt() = """
     """.trimIndent()
 }}
 
-    ${entityTypes.join(indent = 1, separator = "\n\n") domainType@{
+    ${entityTypes.filter { it.exported }.join(indent = 1, separator = "\n\n") domainType@{
     """
         open class ${nameRepository}( val client: $nameClient ) {
 
@@ -363,88 +363,6 @@ if (paging) """
             """.doIndent(2) else ""}) }
 """.trimIndent()
 
-//private fun CustomEndpoint.buildFunction(projection: ProjectionType? = null) = """
-//    suspend fun custom$clientMethodName${projection?.projectionTypeInterfaceName
-//        ?: ""}($params${if (params.isEmpty() || !paging) "" else ", "}${
-//if (paging) """
-//        page: Int? = null, size: Int? = null, sort: String? = null
-//    """.doIndent(2) else ""}): ${if (projection == null || returnType == null) returnDeclaration else projectionReturnDeclaration(projection)} {
-//
-//        val url = "$baseUri/$uriPatternString".appendParams(${requestParams.join(indent = 4, separator = ",\n") { "\"$name\" to $name" }})
-//
-//        ${when {
-//    paging -> """
-//                return requestAdapter.doPageRequest<${if (projection == null) "$returnDeclarationSingle, ${(returnType as ComplexType).nameDto}" else
-//        "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.nameBase}"}>(
-//                    url = url,
-//                    method = "$method",${if (body == null) "" else """
-//                    body = body,
-//                    """.trimIndent()}
-//                    embeddedPropName = "${parentType!!.nameRest}",
-//                    ${if (projection != null) "projectionName = \"${projection.projectionName}\"," else ""}
-//                    page = page,
-//                    size = size,
-//                    sort = sort,
-//                    ignoreBasePath = true,
-//                    type = object : TypeReference<ApiHateoasPage<${if (projection == null) "${(returnType as ComplexType).nameDto}, ${returnType!!
-//            .name}" else "${projection.projectionTypeInterfaceName}Dto, ${projection.projectionTypeInterfaceName}"}>>() {}
-//                )
-//            """.doIndent(2)
-//    list -> """
-//                return requestAdapter.doListRequest<${if (projection == null) "$returnDeclarationSingle, ${(returnType as ComplexType).nameDto}" else
-//        "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.nameBase}"}>(
-//                    url = url,
-//                    method = "$method",${if (body == null) "" else """
-//                    body = body,
-//                    """.trimIndent()}
-//                    embeddedPropName = "${parentType!!.nameRest}"${if (projection != null) """,
-//                    projectionName = "${projection.projectionName}"""".trimIndent() else ""},
-//                    ignoreBasePath = true,
-//                    type = object : TypeReference<ApiHateoasList<${if (projection == null) "${(returnType as ComplexType).nameDto}, ${returnType!!
-//            .name}" else "${projection.projectionTypeInterfaceName}Dto, ${projection.projectionTypeInterfaceName}"}>>() {}
-//                )
-//            """.doIndent(2)
-//    returnType != null -> """
-//                return requestAdapter.doSingleRequest<${if (projection == null) "$returnDeclarationSingle, ${(returnType as ComplexType).nameDto}" else
-//        "${projection.projectionTypeInterfaceName}, ${projection.projectionTypeInterfaceName}Dto"}${if (body == null) "" else ", ${body!!.type.nameBase}"}>(
-//                    url = url,
-//                    method = "$method"${if (body == null) "" else """,
-//                    body = body
-//                    """.trimIndent()}${if (projection != null) """,
-//                    projectionName = "${projection.projectionName}"""".trimIndent() else ""},
-//                    ignoreBasePath = true
-//                )
-//            """.doIndent(2)
-//    else -> """
-//                return requestAdapter.doVoidRequest(
-//                    url = url,
-//                    method = "$method"${if (body == null) "" else """,
-//                    body = body
-//                    """.trimIndent()}${if (projection != null) """,
-//                    projectionName = "${projection.projectionName}"""".trimIndent() else ""},
-//                    ignoreBasePath = true
-//                )
-//            """.doIndent(2)
-//}}
-//    }
-//""".trimIndent()
-//
-//private fun CustomEndpoint.buildBlockingFunction(projection: ProjectionType? = null) = """
-//fun custom$clientMethodName${projection?.projectionTypeInterfaceName
-//        ?: ""}($params${if (params.isEmpty() || !paging) "" else ", "}${
-//if (paging) """
-//        page: Int? = null, size: Int? = null, sort: String? = null
-//    """.doIndent(2) else ""}): ${if (projection == null || returnType == null) returnDeclaration else projectionReturnDeclaration(projection)} =
-//        runBlocking { client.custom$clientMethodName${projection?.projectionTypeInterfaceName
-//        ?: ""}($paramNames${if (paramNames.isEmpty() || !paging) "" else ", "}${
-//if (paging) """
-//                page, size, sort
-//            """.doIndent(2) else ""}) }
-//""".trimIndent()
-//
-//val CustomEndpoint.uriPatternString
-//    get() = (name.replace(regex = Regex("\\{([^}]+)\\}")) { "${'$'}${it.groupValues[1]}" }).trim('/')
-
 private val Search.path
     get() = "${if (inRepo) returnType.searchResourceName else "search"}/$name"
 
@@ -460,17 +378,3 @@ private val DTField.deleteFromAssociation
 private val DTField.addToAssociation
     get() = "addTo${name.capitalize()}"
 
-private val DTField.parameterDeclaration
-    get() = "$declaration${if (optional) "?" else ""}"
-
-private val CustomEndpoint.params
-    get() = listOf(pathVariables, listOf(body), requestParams).flatten()
-            .filterNotNull()
-            .sortedBy { it.optional }
-            .join(separator = ", ") { parameter(true) }
-
-private val CustomEndpoint.paramNames
-    get() = listOf(pathVariables, listOf(body), requestParams).flatten()
-            .filterNotNull()
-            .sortedBy { it.optional }
-            .join(separator = ", ") { parameterNames }
