@@ -50,7 +50,7 @@ private fun DomainType.toDeclaration() = when (this) {
     is EmbeddableType -> toDeclaration()
     is ProjectionType -> if (baseProjection) "" else toDeclaration()
     is EnumType -> toDeclaration()
-    is DTPojo -> toDeclaration()
+    is Pojo -> toDeclaration()
 }
 
 private fun EmbeddableType.toDeclaration() = """
@@ -220,7 +220,7 @@ private fun DTField.toObjAssignment(): String {
     return assignment + optionalQuestionMark + objConversion
 }
 
-private fun DTPojo.toDeclaration() = """
+private fun Pojo.toDeclaration() = """
     data class $typeName (
         ${fields.sortedBy { it.optional }.join(indent = 2, separator = ",\n") {
             toDeclaration()

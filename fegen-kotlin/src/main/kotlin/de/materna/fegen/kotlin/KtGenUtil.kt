@@ -31,9 +31,6 @@ internal val EntityType.nameBase
 internal val ComplexType.nameDto
     get() = "${declaration}Dto"
 
-internal val EntityType.nameEAGER
-    get() = "${name}EAGER"
-
 internal val EntityType.nameClient
     get() = "${name}Client"
 
@@ -44,10 +41,7 @@ internal val EntityType.nameLinks
     get() = "${name}Links"
 
 internal val ProjectionType.parentTypeName
-    get() = /*if (entityFields.map { name }.containsAll(parentType.entityFields.map { name }))
-        parentType.nameEAGER
-    else*/
-        parentType.name
+    get() = parentType.name
 
 internal val ProjectionType.projectionTypeInterfaceName
     get() = if (baseProjection) "$parentTypeName$name" else name
@@ -76,6 +70,7 @@ internal val DTField.declaration
         is EntityDTField -> type.declaration
         is EmbeddableDTField -> type.declaration
         is EnumDTField -> type.declaration
+        is PojoDTField -> type.declaration
     }}${if (list) ">" else ""}"
 
 internal val DTField.baseDeclaration
@@ -85,6 +80,7 @@ internal val DTField.baseDeclaration
         is EntityDTField -> type.nameBase
         is EmbeddableDTField -> type.name
         is EnumDTField -> type.declaration
+        is PojoDTField -> type.declaration
     }}${if (list) ">" else ""}"
 
 internal val SimpleType.declaration
@@ -111,7 +107,7 @@ internal val ComplexType.declaration
         is EntityType -> declaration
         is EmbeddableType -> declaration
         is ProjectionType -> declaration
-        is DTPojo -> declaration
+        is Pojo -> declaration
     }
 
 
@@ -196,7 +192,7 @@ internal val ComplexType.allSimpleFields
         is ProjectionType -> (simpleFields + parentType.simpleFields)
         is EntityType -> simpleFields
         is EmbeddableType -> simpleFields
-        is DTPojo -> simpleFields
+        is Pojo -> simpleFields
     }
 
 internal val ComplexType.allSortableFields
@@ -215,5 +211,5 @@ internal val DomainType.uriREST
 internal val DomainType.searchResourceName
     get() = "$nameRest/search"
 
-internal val DTPojo.declaration
+internal val Pojo.declaration
     get() = name.capitalize()

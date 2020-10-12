@@ -79,7 +79,6 @@ class CustomControllerGenerator(
         }
         params += endpoint.pathVariables.map { parameter(it) }
         params += endpoint.requestParams.map { parameter(it) }
-        params += endpoint.pojoParams.map { parameterFromDTPojo(it) }
         if (endpoint.returnValue?.multiplicity == RestMultiplicity.PAGED) {
             params += ParameterSpec.builder("page", INT.copy(true)).defaultValue("null").build()
             params += ParameterSpec.builder("size", INT.copy(true)).defaultValue("null").build()
@@ -92,11 +91,11 @@ class CustomControllerGenerator(
         return ParameterSpec.builder(parameter.name, parameterType(parameter)).build()
     }
 
-    private fun parameterFromDTPojo(parameter: DTPojo): ParameterSpec {
+    private fun parameterFromDTPojo(parameter: PojoDTField): ParameterSpec {
         if(parameter.list) {
-            return ParameterSpec.builder(parameter.name, List::class.asClassName().parameterizedBy(ClassName(feGenKotlin.frontendPkg, parameter.typeName))).build()
+            return ParameterSpec.builder(parameter.name, List::class.asClassName().parameterizedBy(ClassName(feGenKotlin.frontendPkg, parameter.type.typeName))).build()
         }
-        return ParameterSpec.builder(parameter.name, ClassName(feGenKotlin.frontendPkg, parameter.typeName)).build()
+        return ParameterSpec.builder(parameter.name, ClassName(feGenKotlin.frontendPkg, parameter.type.typeName)).build()
     }
 
     private fun parameterType(parameter: DTField): TypeName =
