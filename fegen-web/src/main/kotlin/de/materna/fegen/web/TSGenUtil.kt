@@ -58,6 +58,7 @@ internal val DTField.baseDeclaration
         is EntityDTField -> type.nameNew
         is EnumDTField -> type.declaration
         is EmbeddableDTField -> type.declaration
+        is PojoDTField -> type.typeName
     }}${if (list) "[]" else ""}"
 
 internal val SimpleType.declaration
@@ -133,7 +134,7 @@ val ComplexType.allSimpleFields
         is ProjectionType -> (simpleFields + parentType.simpleFields)
         is EntityType -> simpleFields
         is EmbeddableType -> simpleFields
-        is DTPojo -> simpleFields
+        is Pojo -> simpleFields
     }
 
 internal val ComplexType.allSortableFields

@@ -59,7 +59,7 @@ internal val CustomEndpoint.params
           .sortedBy { it.optional }
 
 internal val CustomEndpoint.bodyParam
-  get() = body?.let { "data${it.parameterDeclaration}" } ?: ""
+  get() = body?.let { "data${(it as EntityDTField).parameterDeclaration}" } ?: ""
 
 internal val CustomEndpoint.clientMethodPathParams
   get() = if (pathVariables.isNotEmpty()) pathVariables.join(
