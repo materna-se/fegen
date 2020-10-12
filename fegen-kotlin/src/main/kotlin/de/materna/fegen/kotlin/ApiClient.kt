@@ -134,7 +134,7 @@ fun FeGenKotlin.toApiClientKt() = """
                 suspend fun readOne$projectionTypeInterfaceName(id: Long) =
                     requestAdapter.readProjection<$name, $nameDto>(
                         id = id,
-                        uri = "$uriREST",
+                        uri = "${this.parentType.uriREST}",
                         projectionName = "$projectionName"
                     )
             """.trimIndent()
