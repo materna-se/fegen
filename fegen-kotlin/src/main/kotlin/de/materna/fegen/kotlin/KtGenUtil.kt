@@ -212,4 +212,4 @@ internal val DomainType.searchResourceName
     get() = "$nameRest/search"
 
 internal val Pojo.declaration
-    get() = name.capitalize()
+    get() = typeName

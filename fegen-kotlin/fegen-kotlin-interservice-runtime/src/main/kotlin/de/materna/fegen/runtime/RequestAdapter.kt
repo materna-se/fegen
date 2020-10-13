@@ -214,7 +214,7 @@ open class RequestAdapter(val request: FetchRequest) {
         return dto.toObj()
     }
 
-    suspend inline fun <V : ApiObj<*>> doVoidRequest(
+    suspend inline fun <V> doVoidRequest(
             url: String,
             method: String = "GET",
             body: V,
