@@ -22,6 +22,7 @@
 package de.materna.fegen.core
 
 import de.materna.fegen.core.domain.DomainType
+import de.materna.fegen.core.domain.Pojo
 import de.materna.fegen.core.domain.PojoDTField
 import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.generator.DomainMgr
@@ -50,15 +51,23 @@ abstract class FeGen(
     val enumTypes
         get() = domainMgr.enumMgr.enums
 
-    val pojoTypes
-        get() = customControllers.flatMap { it.endpoints }.map { it.body as? PojoDTField }.mapNotNull { it?.type }.distinctBy { it.typeName }
+    private fun pojoTypes(): List<Pojo> {
+        val pojos = customEndpoints.map { it.body as? PojoDTField }.mapNotNull { it?.type }
+        return extractPojos(pojos)
+    }
+
+    private fun extractPojos(pojoList: List<Pojo>): List<Pojo> =
+            pojoList.flatMap { listOf(it) + extractPojos(it.fields.map { it as? PojoDTField}.mapNotNull { it?.type }) }
 
     val types: List<DomainType> by lazy {
-        (entityTypes + projectionTypes + embeddableTypes + enumTypes + pojoTypes).sortedBy { it.name }
+        (entityTypes + projectionTypes + embeddableTypes + enumTypes + pojoTypes().distinctBy { it.typeName }).sortedBy { it.name }
     }
 
     val customControllers
         get() = domainMgr.customEndpointMgr.controllers
+
+    val customEndpoints
+        get() = customControllers.flatMap { it.endpoints }
 
     init {
         handleDatesAsString = feGenConfig.datesAsString
