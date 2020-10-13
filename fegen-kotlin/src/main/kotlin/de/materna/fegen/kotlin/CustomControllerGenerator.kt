@@ -91,13 +91,6 @@ class CustomControllerGenerator(
         return ParameterSpec.builder(parameter.name, parameterType(parameter)).build()
     }
 
-    private fun parameterFromDTPojo(parameter: PojoDTField): ParameterSpec {
-        if(parameter.list) {
-            return ParameterSpec.builder(parameter.name, List::class.asClassName().parameterizedBy(ClassName(feGenKotlin.frontendPkg, parameter.type.typeName))).build()
-        }
-        return ParameterSpec.builder(parameter.name, ClassName(feGenKotlin.frontendPkg, parameter.type.typeName)).build()
-    }
-
     private fun parameterType(parameter: DTField): TypeName =
         when {
             parameter.list -> List::class.asClassName().parameterizedBy(parameterSingleType(parameter))
@@ -109,6 +102,7 @@ class CustomControllerGenerator(
         when (parameter) {
             is EntityDTField -> ClassName(feGenKotlin.frontendPkg, parameter.type.nameBase)
             is ValueDTField -> simpleType(parameter.type)
+            is PojoDTField -> ClassName(feGenKotlin.frontendPkg, parameter.type.typeName)
             else -> error("Unsupported parameter ${parameter.name}")
         }
 
@@ -145,6 +139,7 @@ class CustomControllerGenerator(
 
     private fun paramDeclaration(type: Type): TypeName = when (type) {
         is EntityType -> ClassName(feGenKotlin.frontendPkg, type.nameBase)
+        is Pojo -> ClassName(feGenKotlin.frontendPkg, type.typeName)
         else -> ClassName(feGenKotlin.frontendPkg, type.name)
     }
 
