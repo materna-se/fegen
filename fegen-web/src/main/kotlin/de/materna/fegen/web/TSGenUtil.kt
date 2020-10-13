@@ -47,6 +47,7 @@ internal val DTField.declaration
     get() = "${when(this) {
         is SimpleDTField -> type.declaration
         is ProjectionDTField -> type.declaration
+        is PojoDTField -> type.declaration
         is ComplexDTField -> type.declaration
         is EnumDTField -> type.declaration
     }}${if(list) "[]" else ""}"
@@ -77,6 +78,9 @@ internal val ComplexType.declaration
 
 internal val ProjectionType.declaration
     get() = projectionTypeInterfaceName
+
+internal val Pojo.declaration
+    get() = typeName
 
 internal val DTField.initialization
     get() = when(this) {

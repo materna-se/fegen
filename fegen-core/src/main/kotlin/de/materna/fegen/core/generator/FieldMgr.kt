@@ -104,7 +104,7 @@ class FieldMgr(
                             optional = optional,
                             justSettable = justSettable,
                             type = Pojo(name = name, typeName = type.simpleName).apply {
-                                fields = type.declaredFields.map { field ->  domainMgr.fieldMgr.dtFieldFromType(name = field.name, type = field.type, context = FieldContext(field.type)) }
+                                fields = type.declaredFields.map { field ->  domainMgr.fieldMgr.dtFieldFromType(name = field.name, type = field.genericType, context = FieldContext(field.type)) }
                             }
                     )
                 }
