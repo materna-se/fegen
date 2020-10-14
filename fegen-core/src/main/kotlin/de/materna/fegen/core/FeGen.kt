@@ -51,16 +51,18 @@ abstract class FeGen(
     val enumTypes
         get() = domainMgr.enumMgr.enums
 
-    private fun pojoTypes(): List<Pojo> {
-        val pojos = customEndpoints.map { it.body as? PojoDTField }.mapNotNull { it?.type }
-        return extractPojos(pojos)
-    }
+   val pojoTypes: List<Pojo>
+        get() {
+            val pojosFromBody = customEndpoints.map { it.body as? PojoDTField }.mapNotNull { it?.type }
+            val pojosFromReturnValues = customEndpoints.map { it.returnValue?.type as? Pojo }.filterNotNull()
+            return extractPojos(pojosFromBody + pojosFromReturnValues).distinctBy { it.typeName }
+        }
 
     private fun extractPojos(pojoList: List<Pojo>): List<Pojo> =
             pojoList.flatMap { listOf(it) + extractPojos(it.fields.map { it as? PojoDTField}.mapNotNull { it?.type }) }
 
     val types: List<DomainType> by lazy {
-        (entityTypes + projectionTypes + embeddableTypes + enumTypes + pojoTypes().distinctBy { it.typeName }).sortedBy { it.name }
+        (entityTypes + projectionTypes + embeddableTypes + enumTypes).sortedBy { it.name } + pojoTypes
     }
 
     val customControllers

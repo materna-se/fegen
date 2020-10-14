@@ -27,7 +27,6 @@ import de.materna.fegen.core.generator.DomainMgr
 import de.materna.fegen.core.generator.FieldMgr
 import de.materna.fegen.core.generator.types.EntityMgr
 import de.materna.fegen.core.log.FeGenLogger
-import org.springframework.data.domain.Pageable
 import org.springframework.hateoas.CollectionModel
 import org.springframework.hateoas.EntityModel
 import org.springframework.hateoas.PagedModel
@@ -157,13 +156,15 @@ class CustomEndpointMgr(
             EntityModel::class.java -> RestMultiplicity.SINGLE
             else -> throw CustomEndpointReturnTypeError.UnknownResponseEntityContent(type)
         }
-        val entityClass = type.actualTypeArguments.first()
-        if (entityClass !is Class<*>) {
-            throw CustomEndpointReturnTypeError.NotEntity(entityClass)
+        val typeClass = type.actualTypeArguments.first()
+        if (typeClass !is Class<*>) {
+            throw CustomEndpointReturnTypeError.NotEntity(typeClass)
         }
-        val entityType = entityMgr.class2Entity[entityClass]
-                ?: throw CustomEndpointReturnTypeError.NotEntity(entityClass)
-        return ReturnValue(entityType, multiplicity)
+        val returnType = entityMgr.class2Entity[typeClass]
+                ?: Pojo(name = typeClass.simpleName, typeName = typeClass.simpleName).apply {
+                    fields = typeClass.declaredFields.map { field ->  domainMgr.fieldMgr.dtFieldFromType(name = field.name, type = field.genericType, context = FieldMgr.FieldContext(field.type)) }
+                }
+        return ReturnValue(returnType, multiplicity)
     }
 
     sealed class CustomEndpointReturnTypeError : Exception() {
