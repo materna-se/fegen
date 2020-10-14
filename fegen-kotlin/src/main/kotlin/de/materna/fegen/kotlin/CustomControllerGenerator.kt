@@ -207,7 +207,8 @@ class CustomControllerGenerator(
                 if (endpoint.body != null) CodeBlock.of("body = body") else null,
                 CodeBlock.of("ignoreBasePath = true")
         )
-        return "return requestAdapter.doSingleRequest<%C>(%C)".formatCode(typeParams.joinToCode(), params.joinCode())
+        return if(endpoint.returnValue!!.type is Pojo) "return requestAdapter.doSingleRequestWithoutReturnValueTransformation<%C>(%C)".formatCode(listOfNotNull(bodyType, returnType).joinToCode(), params.joinCode())
+            else "return requestAdapter.doSingleRequest<%C>(%C)".formatCode(typeParams.joinToCode(), params.joinCode())
     }
 
     private fun voidRequest(endpoint: CustomEndpoint): CodeBlock {

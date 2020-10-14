@@ -214,6 +214,48 @@ open class RequestAdapter(val request: FetchRequest) {
         return dto.toObj()
     }
 
+    suspend inline fun <reified T, reified U> doSingleRequestWithoutReturnValueTransformation(
+            url: String,
+            method: String = "GET",
+            body: T,
+            projectionName: String? = null,
+            ignoreBasePath: Boolean = false
+    ) = doSingleRequestWithoutReturnValueTransformation<U>(
+            url = url,
+            method = method,
+            bodyContent = request.mapper.writeValueAsString(body),
+            projectionName = projectionName,
+            ignoreBasePath = ignoreBasePath
+    )
+
+    suspend inline fun <reified U> doSingleRequestWithoutReturnValueTransformation(
+            url: String,
+            method: String = "GET",
+            contentType: String = "application/json",
+            bodyContent: String = "",
+            projectionName: String? = null,
+            ignoreBasePath: Boolean = false
+    ): U {
+
+        var fullUrl = url
+
+        val urlContainsParams = fullUrl.indexOf("?") > 0
+
+        val firstConnector = if (urlContainsParams) "&" else "?"
+
+        fullUrl = if (projectionName != null) "$fullUrl${firstConnector}projection=$projectionName" else fullUrl
+
+        val res = request.fetch(
+                url = fullUrl,
+                method = method,
+                contentType = contentType,
+                bodyContent = if (method == "PUT" && bodyContent.isEmpty()) "{}" else bodyContent,
+                ignoreBasePath = ignoreBasePath
+        )
+
+        return request.mapper.readValue(res.body()?.string() ?: "No result", U::class.java)
+    }
+
     suspend inline fun <V> doVoidRequest(
             url: String,
             method: String = "GET",
