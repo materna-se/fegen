@@ -120,9 +120,15 @@ class CustomControllerGenerator(
             }
             ${
             if (returnValue != null) """
+            ${
+            if (returnValue.type is Pojo && returnValue.multiplicity == RestMultiplicity.LIST) """
+            return (await response.json()) as ${returnValue.type.name}[];
+            """
+            else """
             const responseObj = (await response.json()) as ${responseType(returnValue.multiplicity, returnValue.type.name)};
-    
             ${responseHandling(returnValue.multiplicity, (returnValue.type as ComplexType).nameRest)}
+            """
+            }
             """ else ""
         }
         }""".trimIndent()
@@ -132,11 +138,13 @@ class CustomControllerGenerator(
 private fun clientMethodReturnType(endpoint: CustomEndpoint): String {
     val returnValue = endpoint.returnValue ?: return "void"
     val singleType = returnValue.type.name
-    return when (endpoint.returnValue?.multiplicity) {
-        null -> "void"
-        RestMultiplicity.LIST -> "Items<$singleType>"
-        RestMultiplicity.PAGED -> "PagedItems<$singleType>"
-        RestMultiplicity.SINGLE -> singleType
+    val endpointMultiplicity = endpoint.returnValue?.multiplicity
+    return when  {
+        endpointMultiplicity == null -> "void"
+        endpointMultiplicity == RestMultiplicity.LIST && returnValue.type is Pojo -> "$singleType[]"
+        endpointMultiplicity == RestMultiplicity.LIST  -> "Items<$singleType>"
+        endpointMultiplicity == RestMultiplicity.PAGED -> "PagedItems<$singleType>"
+        else -> singleType
     }
 }
 
