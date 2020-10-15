@@ -185,15 +185,22 @@ class CustomControllerGenerator(
         val dtoType = ClassName(feGenKotlin.frontendPkg, (endpoint.returnValue!!.type as ComplexType).nameDto)
         val typeReference = ClassName("com.fasterxml.jackson.core.type", "TypeReference")
         val apiHateoasList = ClassName("de.materna.fegen.runtime","ApiHateoasList")
-        val params = listOfNotNull(
+        val paramsEntityReturnValue = listOfNotNull(
                 CodeBlock.of("url = url"),
                 CodeBlock.of("method = %S", endpoint.method),
                 if (endpoint.body != null) CodeBlock.of("body = body") else null,
-                CodeBlock.of("embeddedPropName = %S", (endpoint.returnValue!!.type as EntityType).nameRest),
+                CodeBlock.of("embeddedPropName = %S", (endpoint.returnValue!!.type as? EntityType)?.nameRest ?: ""),
                 CodeBlock.of("ignoreBasePath = true"),
                 CodeBlock.of("type = object : %T<%T<%T, %T>>() {}", typeReference, apiHateoasList, dtoType, returnType)
         )
-        return "return requestAdapter.doListRequest(%C)".formatCode(params.joinCode())
+        val paramsPojoReturnValue = listOfNotNull(
+                CodeBlock.of("url = url"),
+                CodeBlock.of("method = %S", endpoint.method),
+                if (endpoint.body != null) CodeBlock.of("body = body") else null,
+                CodeBlock.of("ignoreBasePath = true")
+        )
+        return if(endpoint.returnValue!!.type is Pojo) "return requestAdapter.doListRequestSimple(%C)".formatCode(paramsPojoReturnValue.joinCode())
+            else "return requestAdapter.doListRequest(%C)".formatCode(paramsEntityReturnValue.joinCode())
     }
 
     private fun singleRequest(endpoint: CustomEndpoint): CodeBlock {
