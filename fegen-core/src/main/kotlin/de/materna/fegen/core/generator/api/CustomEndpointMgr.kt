@@ -133,10 +133,10 @@ class CustomEndpointMgr(
                 if (methodReturnType.rawType != ResponseEntity::class.java) {
                     throw CustomEndpointReturnTypeError.NoResponseEntity(methodReturnType)
                 }
-                when (val responseEntityType = methodReturnType.actualTypeArguments.first()) {
-                    is Class<*> -> resolveSimpleReturnType(responseEntityType)
-                    is ParameterizedType -> resolveEntityReturnType(responseEntityType)
-                    else -> throw CustomEndpointReturnTypeError.UnknownResponseEntityContent(responseEntityType)
+                when (val responseType = methodReturnType.actualTypeArguments.first()) {
+                    is Class<*> -> resolveSimpleReturnType(responseType)
+                    is ParameterizedType -> resolveEntityReturnType(responseType)
+                    else -> throw CustomEndpointReturnTypeError.UnknownResponseEntityContent(responseType)
                 }
             }
             else -> throw CustomEndpointReturnTypeError.NoResponseEntity(methodReturnType)
@@ -144,27 +144,26 @@ class CustomEndpointMgr(
     }
 
     private fun resolveSimpleReturnType(type: Class<*>): ReturnValue {
-        val simpleType = SimpleType.fromType(type)
-                ?: throw CustomEndpointReturnTypeError.UnknownResponseEntityContent(type)
-        return ReturnValue(simpleType, RestMultiplicity.SINGLE)
+        val simpleType = when {
+            SimpleType.fromType(type) != null -> SimpleType.fromType(type)
+            else -> Pojo.fromClass(type, domainMgr)
+        }
+        return ReturnValue(simpleType!!, RestMultiplicity.SINGLE)
     }
 
     private fun resolveEntityReturnType(type: ParameterizedType): ReturnValue {
-        val multiplicity = when (type.rawType) {
-            PagedModel::class.java -> RestMultiplicity.PAGED
-            CollectionModel::class.java -> RestMultiplicity.LIST
-            EntityModel::class.java -> RestMultiplicity.SINGLE
+        val multiplicity = when  {
+            type.rawType == PagedModel::class.java -> RestMultiplicity.PAGED
+            type.rawType == CollectionModel::class.java || java.lang.Iterable::class.java.isAssignableFrom(type.rawType as Class<*>) -> RestMultiplicity.LIST
+            type.rawType == EntityModel::class.java -> RestMultiplicity.SINGLE
             else -> throw CustomEndpointReturnTypeError.UnknownResponseEntityContent(type)
         }
-        val typeClass = type.actualTypeArguments.first()
-        if (typeClass !is Class<*>) {
-            throw CustomEndpointReturnTypeError.NotEntity(typeClass)
+        val entityClass = type.actualTypeArguments.first()
+        if (entityClass !is Class<*>) {
+            throw CustomEndpointReturnTypeError.NotEntity(entityClass)
         }
-        val returnType = entityMgr.class2Entity[typeClass]
-                ?: Pojo(name = typeClass.simpleName, typeName = typeClass.simpleName).apply {
-                    fields = typeClass.declaredFields.map { field ->  domainMgr.fieldMgr.dtFieldFromType(name = field.name, type = field.genericType, context = FieldMgr.FieldContext(field.type)) }
-                }
-        return ReturnValue(returnType, multiplicity)
+        val entityType = if(entityClass.isEntity) entityMgr.class2Entity[entityClass] else Pojo.fromClass(entityClass, domainMgr)
+        return ReturnValue(entityType!!, multiplicity)
     }
 
     sealed class CustomEndpointReturnTypeError : Exception() {

@@ -103,9 +103,7 @@ class FieldMgr(
                             list = list,
                             optional = optional,
                             justSettable = justSettable,
-                            type = Pojo(name = name, typeName = type.simpleName).apply {
-                                fields = type.declaredFields.map { field ->  domainMgr.fieldMgr.dtFieldFromType(name = field.name, type = field.genericType, context = FieldContext(field.type)) }
-                            }
+                            type = Pojo.fromClass(type, domainMgr)
                     )
                 }
                 is ParameterizedType -> {

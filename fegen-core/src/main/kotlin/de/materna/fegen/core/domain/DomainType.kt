@@ -21,6 +21,8 @@
  */
 package de.materna.fegen.core.domain
 
+import de.materna.fegen.core.generator.DomainMgr
+import de.materna.fegen.core.generator.FieldMgr
 import org.atteo.evo.inflector.English
 import java.util.*
 
@@ -168,5 +170,12 @@ data class Search(
 data class Pojo(override val name: String, val typeName: String): ComplexType() {
     override fun toString(): String {
         return "Pojo(name=$name, typeName=$typeName, fields=$fields"
+    }
+
+    companion object {
+        fun fromClass(type: Class<*>, domainMgr: DomainMgr): Pojo =
+                Pojo(name = type.simpleName, typeName = type.simpleName).apply {
+                    fields = type.declaredFields.map { field ->  domainMgr.fieldMgr.dtFieldFromType(name = field.name, type = field.genericType, context = FieldMgr.FieldContext(field.type)) }
+                }
     }
 }
