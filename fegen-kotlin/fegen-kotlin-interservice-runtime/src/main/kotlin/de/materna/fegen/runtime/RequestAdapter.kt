@@ -171,7 +171,33 @@ open class RequestAdapter(val request: FetchRequest) {
         }
     }
 
-    suspend inline fun <reified T, reified U> doListRequestSimple(
+    suspend inline fun <reified U> doListRequestSimple(
+            url: String,
+            method: String = "GET",
+            contentType: String = "application/json",
+            ignoreBasePath: Boolean = false
+    ): List<U> {
+
+        var fullUrl = url
+
+        try {
+            val res = request.fetch(
+                    url = fullUrl,
+                    method = method,
+                    contentType = contentType,
+                    bodyContent = "",
+                    ignoreBasePath = ignoreBasePath
+            )
+            return request.mapper.readValue(res.body()?.string() ?: "No result", Array<U>::class.java).toList()
+        } catch (e: BadStatusCodeException) {
+            when {
+                e.statusCode == 404 -> return emptyList()
+                else -> throw e
+            }
+        }
+    }
+
+    suspend inline fun <reified T, reified U> doListRequestSimpleIncludingBody(
             url: String,
             method: String = "GET",
             contentType: String = "application/json",

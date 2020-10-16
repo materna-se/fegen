@@ -193,13 +193,8 @@ class CustomControllerGenerator(
                 CodeBlock.of("ignoreBasePath = true"),
                 CodeBlock.of("type = object : %T<%T<%T, %T>>() {}", typeReference, apiHateoasList, dtoType, returnType)
         )
-        val paramsPojoReturnValue = listOfNotNull(
-                CodeBlock.of("url = url"),
-                CodeBlock.of("method = %S", endpoint.method),
-                if (endpoint.body != null) CodeBlock.of("body = body") else null,
-                CodeBlock.of("ignoreBasePath = true")
-        )
-        return if(endpoint.returnValue!!.type is Pojo) "return requestAdapter.doListRequestSimple(%C)".formatCode(paramsPojoReturnValue.joinCode())
+
+        return if(endpoint.returnValue!!.type is Pojo) buildMethodBody(endpoint, returnType)
             else "return requestAdapter.doListRequest(%C)".formatCode(paramsEntityReturnValue.joinCode())
     }
 
@@ -237,4 +232,16 @@ class CustomControllerGenerator(
 
     private fun uriPatternString(endpoint: CustomEndpoint): String =
         (endpoint.url.replace(Regex("\\{([^}]+)}")) { "${'$'}${it.groupValues[1]}" }).trim('/')
+
+    private fun buildMethodBody(endpoint: CustomEndpoint, returnType: TypeName): CodeBlock {
+        val paramsPojoReturnValue = listOfNotNull(
+                CodeBlock.of("url = url"),
+                CodeBlock.of("method = %S", endpoint.method),
+                if (endpoint.body != null)
+                    CodeBlock.of("body = body", "type = object : <%T, %T>() {}", endpoint.body?.type, returnType)
+                else null,
+                CodeBlock.of("ignoreBasePath = true")
+        )
+        return "return requestAdapter.${if(endpoint.body != null)"doListRequestSimpleIncludingBody(%C)" else "doListRequestSimple(%C)"}".formatCode(paramsPojoReturnValue.joinCode())
+    }
 }
