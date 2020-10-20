@@ -34,8 +34,7 @@ FeGen currently has some limitations such as the following which may be lifted i
 
 - Embeddables can be used, but they may only contain primitive types since references to other entities are not yet supported
 - A plugin for Swift (to use in iOS apps) exists, but is not yet publicly released
-- Only primitive types and (lists of) entities are supported as API parameters
-    - Generating code for API endpoints used to up- or download files is not supported
+- Generating code for API endpoints used to up- or download files is not supported
 - There are some tests for the generated code, however, currently no CI/CD pipeline exists
 
 ## Guide
@@ -527,9 +526,11 @@ open fun createOrUpdateContact(
 
 FeGen will generate a Typescript method in the API client corresponding to the class' `@RequestMapping` `path` or value if the Java or Kotlin method has a `@RequestMapping` (or `@GetMapping`, `@PostMapping`, etc.) annotation.
 
-Custom endpoints must have a void return type or return entities.
+Custom endpoints must have a void return type or return entities. 
 In the latter case, the entity class must be wrapped in an `EntityModel` (if a single entity should be returned) or in `CollectionModel` or `PagedModel` (if multiple entities should be returned).
 Those classes themselves must be wrapped in a `ResponseEntity`.
+
+Custom endpoints can also return pojos. In this case, a pojo or a list of those must be wrapped in a `ResponseEntity`.
 
 To reliably use the returned values in the frontend, make sure you added the `fegen-spring-util` dependency to your Spring project.
 
