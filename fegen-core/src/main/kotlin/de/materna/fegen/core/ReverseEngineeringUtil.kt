@@ -264,3 +264,17 @@ val Parameter.isSimpleType
             || type == OffsetDateTime::class.java
             || type == Duration::class.java
             || type == URI::class.java
+
+val Class<*>.candidateFields
+    get() = getters.filter { m ->
+                val field = m.field
+                if (field == null) {
+                    true
+                } else {
+                    if (field.notIgnored && m.notIgnored) {
+                        true
+                    } else {
+                        field.setter?.writable ?: false
+                    }
+                }
+            }

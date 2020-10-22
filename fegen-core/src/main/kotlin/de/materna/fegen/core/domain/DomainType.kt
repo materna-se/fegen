@@ -21,6 +21,7 @@
  */
 package de.materna.fegen.core.domain
 
+import de.materna.fegen.core.*
 import de.materna.fegen.core.generator.DomainMgr
 import de.materna.fegen.core.generator.FieldMgr
 import org.atteo.evo.inflector.English
@@ -175,7 +176,14 @@ data class Pojo(override val name: String, val typeName: String): ComplexType() 
     companion object {
         fun fromClass(type: Class<*>, domainMgr: DomainMgr): Pojo =
                 Pojo(name = type.simpleName, typeName = type.simpleName).apply {
-                    fields = type.declaredFields.map { field ->  domainMgr.fieldMgr.dtFieldFromType(name = field.name, type = field.genericType, context = FieldMgr.FieldContext(field.type)) }
+                    fields = type.candidateFields.map {
+                        method ->  domainMgr.fieldMgr.dtFieldFromType(
+                            name = method.fieldName,
+                            optional = method.field?.optional ?: false,
+                            type = method.fieldType,
+                            context = FieldMgr.FieldContext(type)
+                        )
+                    }
                 }
     }
 }
