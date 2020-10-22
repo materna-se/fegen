@@ -37,7 +37,7 @@ enum class SimpleType: ValueType {
     companion object {
         fun fromType(type: java.lang.reflect.Type): SimpleType? =
             when (type) {
-                Boolean::class.java -> BOOLEAN
+                Boolean::class.java, java.lang.Boolean::class.java -> BOOLEAN
                 java.lang.Long::class.java, 1L.javaClass -> LONG
                 java.lang.Integer::class.java, 1.javaClass -> INTEGER
                 java.lang.Double::class.java, 1.0.javaClass -> DOUBLE
