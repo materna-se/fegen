@@ -96,7 +96,6 @@ class FieldMgr(
                             justSettable = justSettable,
                             type = domainMgr.projectionMgr.class2Projection[type]
                                     ?: throw RuntimeException("Could not resolve projection type $type")
-
                     )
                     else -> PojoDTField(
                             name = name,
