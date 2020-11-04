@@ -137,9 +137,9 @@ class CustomControllerGenerator(
         }
     }
 
-    private fun paramDeclaration(type: Type): TypeName = when (type) {
+    private fun paramDeclaration(type: Type, list: Boolean? = null): TypeName = when (type) {
         is EntityType -> ClassName(feGenKotlin.frontendPkg, type.nameBase)
-        is Pojo -> ClassName(feGenKotlin.frontendPkg, type.typeName)
+        is Pojo -> if(list != null && list) List::class.asClassName().parameterizedBy(returnDeclarationSingle(type)) else ClassName(feGenKotlin.frontendPkg, type.typeName)
         else -> ClassName(feGenKotlin.frontendPkg, type.name)
     }
 
@@ -234,6 +234,7 @@ class CustomControllerGenerator(
         (endpoint.url.replace(Regex("\\{([^}]+)}")) { "${'$'}${it.groupValues[1]}" }).trim('/')
 
     private fun buildMethodBody(endpoint: CustomEndpoint, returnType: TypeName): CodeBlock {
+        val bodyType = endpoint.body?.type?.let { paramDeclaration(it, list = endpoint.body?.list) }
         val paramsPojoReturnValue = listOfNotNull(
                 CodeBlock.of("url = url"),
                 CodeBlock.of("method = %S", endpoint.method),
@@ -242,6 +243,7 @@ class CustomControllerGenerator(
                 else null,
                 CodeBlock.of("ignoreBasePath = true")
         )
-        return "return requestAdapter.${if(endpoint.body != null)"doListRequestSimpleIncludingBody(%C)" else "doListRequestSimple(%C)"}".formatCode(paramsPojoReturnValue.joinCode())
+        val typeParams = listOfNotNull(if(endpoint.body != null) bodyType else ClassName(Any::class.java.packageName, Any::class.java.simpleName), returnType)
+        return "return requestAdapter.doListRequestSimple<%C>(%C)".formatCode(typeParams.joinToCode(), paramsPojoReturnValue.joinCode())
     }
 }
