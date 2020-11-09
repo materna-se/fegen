@@ -14,6 +14,8 @@ class PojoMgr(
 
     private val class2Pojo = mutableMapOf<Class<*>, Pojo>()
 
+    val pojos get() = class2Pojo.values.sortedBy { it.name }
+
     fun resolvePojo(type: Class<*>): Pojo {
         var result = class2Pojo[type]
         if (result == null) {

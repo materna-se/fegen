@@ -52,14 +52,7 @@ abstract class FeGen(
         get() = domainMgr.enumMgr.enums
 
    val pojoTypes: List<Pojo>
-        get() {
-            val pojosFromBody = customEndpoints.map { it.body as? PojoDTField }.mapNotNull { it?.type }
-            val pojosFromReturnValues = customEndpoints.map { it.returnValue?.type as? Pojo }.filterNotNull()
-            return extractPojos(pojosFromBody + pojosFromReturnValues).distinctBy { it.typeName }
-        }
-
-    private fun extractPojos(pojoList: List<Pojo>): List<Pojo> =
-            pojoList.flatMap { listOf(it) + extractPojos(it.fields.map { it as? PojoDTField}.mapNotNull { it?.type }) }
+        get() = domainMgr.pojoMgr.pojos
 
     val types: List<DomainType> by lazy {
         (entityTypes + projectionTypes + embeddableTypes + enumTypes).sortedBy { it.name } + pojoTypes
