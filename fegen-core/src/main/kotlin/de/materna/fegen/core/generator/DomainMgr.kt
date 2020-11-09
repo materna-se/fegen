@@ -26,10 +26,7 @@ import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.generator.api.CustomEndpointMgr
 import de.materna.fegen.core.generator.api.CustomSearchMgr
 import de.materna.fegen.core.generator.api.RepositorySearchMgr
-import de.materna.fegen.core.generator.types.EmbeddableMgr
-import de.materna.fegen.core.generator.types.EntityMgr
-import de.materna.fegen.core.generator.types.EnumMgr
-import de.materna.fegen.core.generator.types.ProjectionMgr
+import de.materna.fegen.core.generator.types.*
 import java.net.URL
 import java.net.URLClassLoader
 
@@ -55,6 +52,8 @@ class DomainMgr(
     val embeddableMgr = EmbeddableMgr(feGenConfig, logger, this)
 
     val enumMgr = EnumMgr()
+
+    val pojoMgr = PojoMgr(feGenConfig, logger, this)
 
     private val repositorySearchMgr = RepositorySearchMgr(feGenConfig, logger, entityMgr, this)
 

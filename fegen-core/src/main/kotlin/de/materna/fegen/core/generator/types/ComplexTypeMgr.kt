@@ -37,6 +37,20 @@ abstract class ComplexTypeMgr(
         domainMgr: DomainMgr
 ): BaseMgr(feGenConfig, domainMgr) {
 
+    fun candidateFields(clazz: Class<*>): List<ResolvedMethod> =
+            clazz.getters.filter { m ->
+                val field = m.field
+                if (field == null) {
+                    true
+                } else {
+                    if (field.notIgnored && m.notIgnored) {
+                        true
+                    } else {
+                        field.setter?.writable ?: false
+                    }
+                }
+            }
+
     private fun justSettable(method: ResolvedMethod, field: ResolvedField?): Boolean {
         if (field == null) {
             return false
@@ -101,7 +115,7 @@ abstract class ComplexTypeMgr(
     }
 
     protected fun addFields(owningClass: Class<*>, owningType: ComplexType) {
-        owningType.fields = owningClass.candidateFields
+        owningType.fields = candidateFields(owningClass)
                 .asSequence()
                 .filter { !omitField(it, owningType) }
                 .filter { !isVersion(it) }

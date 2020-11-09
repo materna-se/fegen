@@ -172,18 +172,4 @@ data class Pojo(override val name: String, val typeName: String): ComplexType() 
     override fun toString(): String {
         return "Pojo(name=$name, typeName=$typeName, fields=$fields"
     }
-
-    companion object {
-        fun fromClass(type: Class<*>, domainMgr: DomainMgr): Pojo =
-                Pojo(name = type.simpleName, typeName = type.simpleName).apply {
-                    fields = type.candidateFields.asSequence().sortedBy {  it.fieldName }.map { method ->
-                        domainMgr.fieldMgr.dtFieldFromType(
-                            name = method.fieldName,
-                            optional = method.field?.optional ?: false,
-                            type = method.fieldType,
-                            context = FieldMgr.FieldContext(type)
-                        )
-                    }.toList()
-                }
-    }
 }
