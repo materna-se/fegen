@@ -12,16 +12,27 @@ class PojoMgr(
         domainMgr: DomainMgr
 ) : ComplexTypeMgr(feGenConfig, logger, domainMgr) {
 
+    private val class2Pojo = mutableMapOf<Class<*>, Pojo>()
 
-    fun fromClass(type: Class<*>): Pojo =
-            Pojo(name = type.simpleName, typeName = type.simpleName).apply {
-                fields = candidateFields(type).asSequence().sortedBy { it.fieldName }.map { method ->
-                    domainMgr.fieldMgr.dtFieldFromType(
-                            name = method.fieldName,
-                            optional = method.field?.optional ?: false,
-                            type = method.fieldType,
-                            context = FieldMgr.FieldContext(type)
-                    )
-                }.toList()
-            }
+    fun resolvePojo(type: Class<*>): Pojo {
+        var result = class2Pojo[type]
+        if (result == null) {
+            result = Pojo(name = type.simpleName, typeName = type.simpleName)
+            // It is crucial to insert the pojo into the map before resolving its fields
+            class2Pojo[type] = result
+            // because resolveFields may run into a stack overflow when encountering recursive types otherwise
+            result.fields = resolveFields(type)
+        }
+        return result
+    }
+
+    private fun resolveFields(type: Class<*>) =
+            candidateFields(type).asSequence().sortedBy { it.fieldName }.map { method ->
+                domainMgr.fieldMgr.dtFieldFromType(
+                        name = method.fieldName,
+                        optional = method.field?.optional ?: false,
+                        type = method.fieldType,
+                        context = FieldMgr.FieldContext(type)
+                )
+            }.toList()
 }

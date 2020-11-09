@@ -102,7 +102,7 @@ class FieldMgr(
                             list = list,
                             optional = optional,
                             justSettable = justSettable,
-                            type = domainMgr.pojoMgr.fromClass(type)
+                            type = domainMgr.pojoMgr.resolvePojo(type)
                     )
                 }
                 is ParameterizedType -> {

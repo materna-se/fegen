@@ -144,7 +144,7 @@ class CustomEndpointMgr(
     }
 
     private fun resolveSimpleReturnType(type: Class<*>): ReturnValue {
-        val simpleType = SimpleType.fromType(type) ?: domainMgr.pojoMgr.fromClass(type)
+        val simpleType = SimpleType.fromType(type) ?: domainMgr.pojoMgr.resolvePojo(type)
         return ReturnValue(simpleType, RestMultiplicity.SINGLE)
     }
 
@@ -162,7 +162,7 @@ class CustomEndpointMgr(
         val entityType = if(entityClass.isEntity) {
             entityMgr.class2Entity[entityClass]
         } else {
-            domainMgr.pojoMgr.fromClass(entityClass)
+            domainMgr.pojoMgr.resolvePojo(entityClass)
         }
         return ReturnValue(entityType!!, multiplicity)
     }
