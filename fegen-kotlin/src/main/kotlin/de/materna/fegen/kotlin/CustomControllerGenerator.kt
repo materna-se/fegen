@@ -63,14 +63,14 @@ class CustomControllerGenerator(
     }
 
     private fun method(endpoint: CustomEndpoint): FunSpec =
-        FunSpec.builder(endpoint.name)
-                .addModifiers(KModifier.SUSPEND)
-                .addParameters(parameters(endpoint))
-                .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "UNUSED").build())
-                .returns(returnDeclaration(endpoint.returnValue))
-                .addCode(defineUrl(endpoint))
-                .addCode(request(endpoint))
-                .build()
+            FunSpec.builder(endpoint.name)
+                    .addModifiers(KModifier.SUSPEND)
+                    .addParameters(parameters(endpoint))
+                    .addAnnotation(AnnotationSpec.builder(Suppress::class).addMember("%S", "UNUSED").build())
+                    .returns(returnDeclaration(endpoint.returnValue))
+                    .addCode(defineUrl(endpoint))
+                    .addCode(request(endpoint))
+                    .build()
 
     private fun parameters(endpoint: CustomEndpoint): List<ParameterSpec> {
         val params = mutableListOf<ParameterSpec>()
@@ -92,19 +92,19 @@ class CustomControllerGenerator(
     }
 
     private fun parameterType(parameter: DTField): TypeName =
-        when {
-            parameter.list -> List::class.asClassName().parameterizedBy(parameterSingleType(parameter))
-            parameter.optional -> parameterSingleType(parameter).copy(true)
-            else -> parameterSingleType(parameter)
-        }
+            when {
+                parameter.list -> List::class.asClassName().parameterizedBy(parameterSingleType(parameter))
+                parameter.optional -> parameterSingleType(parameter).copy(true)
+                else -> parameterSingleType(parameter)
+            }
 
     private fun parameterSingleType(parameter: DTField): TypeName =
-        when (parameter) {
-            is EntityDTField -> ClassName(feGenKotlin.frontendPkg, parameter.type.nameBase)
-            is ValueDTField -> simpleType(parameter.type)
-            is PojoDTField -> ClassName(feGenKotlin.frontendPkg, parameter.type.typeName)
-            else -> error("Unsupported parameter ${parameter.name}")
-        }
+            when (parameter) {
+                is EntityDTField -> ClassName(feGenKotlin.frontendPkg, parameter.type.nameBase)
+                is ValueDTField -> simpleType(parameter.type)
+                is PojoDTField -> ClassName(feGenKotlin.frontendPkg, parameter.type.typeName)
+                else -> error("Unsupported parameter ${parameter.name}")
+            }
 
     private fun simpleType(type: ValueType): ClassName {
         return when (type) {
@@ -139,7 +139,11 @@ class CustomControllerGenerator(
 
     private fun paramDeclaration(type: Type, list: Boolean? = null): TypeName = when (type) {
         is EntityType -> ClassName(feGenKotlin.frontendPkg, type.nameBase)
-        is Pojo -> if(list != null && list) List::class.asClassName().parameterizedBy(returnDeclarationSingle(type)) else ClassName(feGenKotlin.frontendPkg, type.typeName)
+        is Pojo -> if (list != null && list) {
+            List::class.asClassName().parameterizedBy(returnDeclarationSingle(type))
+        } else {
+            ClassName(feGenKotlin.frontendPkg, type.typeName)
+        }
         else -> ClassName(feGenKotlin.frontendPkg, type.name)
     }
 
@@ -165,7 +169,7 @@ class CustomControllerGenerator(
         val returnType = returnDeclarationSingle(endpoint.returnValue!!.type)
         val dtoType = ClassName(feGenKotlin.frontendPkg, (endpoint.returnValue!!.type as ComplexType).nameDto)
         val typeReference = ClassName("com.fasterxml.jackson.core.type", "TypeReference")
-        val apiHateoasPage = ClassName("de.materna.fegen.runtime","ApiHateoasPage")
+        val apiHateoasPage = ClassName("de.materna.fegen.runtime", "ApiHateoasPage")
         val params = listOfNotNull(
                 CodeBlock.of("url = url"),
                 CodeBlock.of("method = %S", endpoint.method),
@@ -184,7 +188,7 @@ class CustomControllerGenerator(
         val returnType = returnDeclarationSingle(endpoint.returnValue!!.type)
         val dtoType = ClassName(feGenKotlin.frontendPkg, (endpoint.returnValue!!.type as ComplexType).nameDto)
         val typeReference = ClassName("com.fasterxml.jackson.core.type", "TypeReference")
-        val apiHateoasList = ClassName("de.materna.fegen.runtime","ApiHateoasList")
+        val apiHateoasList = ClassName("de.materna.fegen.runtime", "ApiHateoasList")
         val paramsEntityReturnValue = listOfNotNull(
                 CodeBlock.of("url = url"),
                 CodeBlock.of("method = %S", endpoint.method),
@@ -194,8 +198,11 @@ class CustomControllerGenerator(
                 CodeBlock.of("type = object : %T<%T<%T, %T>>() {}", typeReference, apiHateoasList, dtoType, returnType)
         )
 
-        return if(endpoint.returnValue!!.type is Pojo) buildMethodBody(endpoint, returnType)
-            else "return requestAdapter.doListRequest(%C)".formatCode(paramsEntityReturnValue.joinCode())
+        return if (endpoint.returnValue!!.type is Pojo) {
+            buildMethodBody(endpoint, returnType)
+        } else {
+            "return requestAdapter.doListRequest(%C)".formatCode(paramsEntityReturnValue.joinCode())
+        }
     }
 
     private fun singleRequest(endpoint: CustomEndpoint): CodeBlock {
@@ -209,8 +216,11 @@ class CustomControllerGenerator(
                 if (endpoint.body != null) CodeBlock.of("body = body") else null,
                 CodeBlock.of("ignoreBasePath = true")
         )
-        return if(endpoint.returnValue!!.type is Pojo) "return requestAdapter.doSingleRequestWithoutReturnValueTransformation<%C>(%C)".formatCode(listOfNotNull(bodyType, returnType).joinToCode(), params.joinCode())
-            else "return requestAdapter.doSingleRequest<%C>(%C)".formatCode(typeParams.joinToCode(), params.joinCode())
+        return if (endpoint.returnValue!!.type is Pojo) {
+            "return requestAdapter.doSingleRequestWithoutReturnValueTransformation<%C>(%C)".formatCode(listOfNotNull(bodyType, returnType).joinToCode(), params.joinCode())
+        } else {
+            "return requestAdapter.doSingleRequest<%C>(%C)".formatCode(typeParams.joinToCode(), params.joinCode())
+        }
     }
 
     private fun voidRequest(endpoint: CustomEndpoint): CodeBlock {
@@ -231,10 +241,9 @@ class CustomControllerGenerator(
     }
 
     private fun uriPatternString(endpoint: CustomEndpoint): String =
-        (endpoint.url.replace(Regex("\\{([^}]+)}")) { "${'$'}${it.groupValues[1]}" }).trim('/')
+            (endpoint.url.replace(Regex("\\{([^}]+)}")) { "${'$'}${it.groupValues[1]}" }).trim('/')
 
     private fun buildMethodBody(endpoint: CustomEndpoint, returnType: TypeName): CodeBlock {
-        val bodyType = endpoint.body?.type?.let { paramDeclaration(it, list = endpoint.body?.list) }
         val paramsPojoReturnValue = listOfNotNull(
                 CodeBlock.of("url = url"),
                 CodeBlock.of("method = %S", endpoint.method),
@@ -243,7 +252,6 @@ class CustomControllerGenerator(
                 else null,
                 CodeBlock.of("ignoreBasePath = true")
         )
-        val typeParams = listOfNotNull(if(endpoint.body != null) bodyType else ClassName(Any::class.java.packageName, Any::class.java.simpleName), returnType)
-        return "return requestAdapter.doListRequestSimple<%C>(%C)".formatCode(typeParams.joinToCode(), paramsPojoReturnValue.joinCode())
+        return "return requestAdapter.doListRequestSimple(%C)".formatCode(paramsPojoReturnValue.joinCode())
     }
 }

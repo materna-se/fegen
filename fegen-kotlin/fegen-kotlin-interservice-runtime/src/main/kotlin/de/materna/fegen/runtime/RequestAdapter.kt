@@ -171,16 +171,16 @@ open class RequestAdapter(val request: FetchRequest) {
         }
     }
 
-    suspend inline fun <reified  V: Any?, reified U> doListRequestSimple(
+    suspend inline fun <reified U> doListRequestSimple(
             url: String,
             method: String = "GET",
-            body: V? = null,
+            body: Any? = null,
             ignoreBasePath: Boolean = false
     ): List<U> {
         return doListRequestSimple(
                 url = url,
                 method = method,
-                bodyContent = if(body != null ) request.mapper.writeValueAsString(body) else "",
+                bodyContent = if (body != null ) request.mapper.writeValueAsString(body) else "",
                 ignoreBasePath = ignoreBasePath
         )
     }
@@ -193,11 +193,9 @@ open class RequestAdapter(val request: FetchRequest) {
             ignoreBasePath: Boolean = false
     ): List<U> {
 
-        var fullUrl = url
-
         try {
             val res = request.fetch(
-                    url = fullUrl,
+                    url = url,
                     method = method,
                     contentType = contentType,
                     bodyContent = bodyContent,
@@ -205,8 +203,8 @@ open class RequestAdapter(val request: FetchRequest) {
             )
             return request.mapper.readValue(res.body()?.string() ?: "No result", Array<U>::class.java).toList()
         } catch (e: BadStatusCodeException) {
-            when {
-                e.statusCode == 404 -> return emptyList()
+            when (e.statusCode) {
+                404 -> return emptyList()
                 else -> throw e
             }
         }
@@ -275,10 +273,8 @@ open class RequestAdapter(val request: FetchRequest) {
             ignoreBasePath: Boolean = false
     ): U {
 
-        var fullUrl = url
-
         val res = request.fetch(
-                url = fullUrl,
+                url = url,
                 method = method,
                 contentType = contentType,
                 bodyContent = if (method == "PUT" && bodyContent.isEmpty()) "{}" else bodyContent,
