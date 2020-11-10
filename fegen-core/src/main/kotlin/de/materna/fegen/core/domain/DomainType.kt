@@ -21,11 +21,7 @@
  */
 package de.materna.fegen.core.domain
 
-import de.materna.fegen.core.*
-import de.materna.fegen.core.generator.DomainMgr
-import de.materna.fegen.core.generator.FieldMgr
 import org.atteo.evo.inflector.English
-import java.util.*
 
 sealed class DomainType: Type {
     val nameRest by lazy {
@@ -142,34 +138,9 @@ data class EnumType(
         val constants: List<String>
 ): DomainType(), ValueType
 
-data class Search(
-        val name: String,
-        val parameters: List<ValueDTField>,
-        val list: Boolean,
-        val paging: Boolean,
-        val returnType: EntityType,
-        val inRepo: Boolean
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Search) return false
-        return name == other.name &&
-                list == other.list &&
-                paging == other.paging &&
-                returnType.name == other.returnType.name
-    }
-
-    override fun hashCode(): Int {
-        return Objects.hash(Search::class.java, name, list, paging, returnType.name)
-    }
-
-    override fun toString(): String {
-        return "Search(name=$name, list=$list, paging=$paging, returnType=${returnType.name})"
-    }
-}
-
 data class Pojo(override val name: String, val typeName: String): ComplexType() {
     override fun toString(): String {
         return "Pojo(name=$name, typeName=$typeName, fields=$fields"
     }
 }
+

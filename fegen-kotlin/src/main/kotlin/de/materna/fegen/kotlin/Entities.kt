@@ -42,11 +42,11 @@ fun FeGenKotlin.toEntitiesKt() = """
         separator = "\n\n"
 ) {
 
-    toDeclaration() }}
+    toDeclaration(restBasePath) }}
 """.trimIndent()
 
-private fun DomainType.toDeclaration() = when (this) {
-    is EntityType -> toDeclaration()
+private fun DomainType.toDeclaration(restBasePath: String) = when (this) {
+    is EntityType -> toDeclaration(restBasePath)
     is EmbeddableType -> toDeclaration()
     is ProjectionType -> if (baseProjection) "" else toDeclaration()
     is EnumType -> toDeclaration()
@@ -89,7 +89,7 @@ private fun ProjectionType.toDeclaration() = """
     }
 """.trimIndent()
 
-private fun EntityType.toDeclaration() = """
+private fun EntityType.toDeclaration(restBasePath: String) = """
 
     /**
      * This type is used as a basis for the different variants of this domain type. It can be created in the frontend
@@ -137,8 +137,8 @@ private fun EntityType.toDeclaration() = """
          * Don't use this method in production code.
          */
         fun toDto(id: Long) = toDto($nameLinks(mapOf(
-            "self" to ApiNavigationLink("$uriREST/${'$'}id", false)${entityFields.join(indent = 3, separator = ",\n", prefix = ",\n\t\t\t") {
-                "\"$name\" to ApiNavigationLink(\"$uriREST/${'$'}id/$name\", false)"
+            "self" to ApiNavigationLink("${uriREST(restBasePath)}/${'$'}id", false)${entityFields.join(indent = 3, separator = ",\n", prefix = ",\n\t\t\t") {
+                "\"$name\" to ApiNavigationLink(\"${uriREST(restBasePath)}/${'$'}id/$name\", false)"
             }}
         )))
     }

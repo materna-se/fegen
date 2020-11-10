@@ -205,8 +205,7 @@ internal val ComplexType.mayHaveSortParameter
 internal val ComplexType.readOrderByParameter
     get() = allSortableFields.join(prefix = ", sort: ", separator = " | ") { """"${name},ASC" | "${name},DESC"""" }
 
-internal val DomainType.uriREST
-    get() = "$restBasePath/$nameRest"
+internal fun DomainType.uriREST(restBasePath: String) = "$restBasePath/$nameRest"
 
 internal val DomainType.searchResourceName
     get() = "$nameRest/search"

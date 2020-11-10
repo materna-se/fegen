@@ -49,8 +49,6 @@ import java.time.*
 import javax.persistence.*
 import javax.validation.constraints.NotNull
 
-lateinit var restBasePath: String
-
 private val typeResolver by lazy {
     TypeResolver()
 }

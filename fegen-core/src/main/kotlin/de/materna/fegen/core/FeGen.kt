@@ -23,7 +23,6 @@ package de.materna.fegen.core
 
 import de.materna.fegen.core.domain.DomainType
 import de.materna.fegen.core.domain.Pojo
-import de.materna.fegen.core.domain.PojoDTField
 import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.generator.DomainMgr
 import java.io.File
@@ -36,6 +35,8 @@ abstract class FeGen(
         val feGenConfig: FeGenConfig,
         val logger: FeGenLogger
 ) {
+
+    val restBasePath = initRestBasePath()
 
     private val domainMgr = initDomainMgr()
 
@@ -66,6 +67,9 @@ abstract class FeGen(
 
     init {
         handleDatesAsString = feGenConfig.datesAsString
+    }
+
+    private fun initRestBasePath(): String {
         val properties = Properties()
         try {
             logger.info("Loading properties from: ${feGenConfig.resourcesDir}")
@@ -80,7 +84,7 @@ abstract class FeGen(
                 }
             }
         }
-        restBasePath = properties.getProperty("spring.data.rest.basePath") ?: ""
+        return properties.getProperty("spring.data.rest.basePath") ?: ""
     }
 
     protected open fun logConfiguration() {
@@ -94,7 +98,7 @@ abstract class FeGen(
     }
 
     private fun initDomainMgr(): DomainMgr {
-        val result = DomainMgr(feGenConfig, logger)
+        val result = DomainMgr(feGenConfig, logger, restBasePath)
         result.validate()
         return result
     }

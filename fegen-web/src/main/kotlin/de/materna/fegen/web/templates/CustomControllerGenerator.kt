@@ -22,6 +22,9 @@
 package de.materna.fegen.web.templates
 
 import de.materna.fegen.core.domain.*
+import de.materna.fegen.core.domain.ComplexType
+import de.materna.fegen.core.domain.EntityType
+import de.materna.fegen.core.domain.Pojo
 import de.materna.fegen.core.join
 import de.materna.fegen.web.nameNew
 import de.materna.fegen.web.parameter

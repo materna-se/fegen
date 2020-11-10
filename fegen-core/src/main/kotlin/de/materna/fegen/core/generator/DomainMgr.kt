@@ -32,7 +32,8 @@ import java.net.URLClassLoader
 
 class DomainMgr(
         feGenConfig: FeGenConfig,
-        logger: FeGenLogger
+        logger: FeGenLogger,
+        restBasePath: String
 ) {
 
     val classLoader by lazy {
@@ -55,6 +56,8 @@ class DomainMgr(
 
     val pojoMgr = PojoMgr(feGenConfig, logger, this)
 
+    val securityMgr = SecurityMgr(feGenConfig, logger, this)
+
     private val repositorySearchMgr = RepositorySearchMgr(feGenConfig, logger, entityMgr, this)
 
     private val customSearchMgr = CustomSearchMgr(feGenConfig, logger, entityMgr, this)
@@ -62,6 +65,7 @@ class DomainMgr(
     val customEndpointMgr = CustomEndpointMgr(feGenConfig, logger, entityMgr, this)
 
     fun validate() {
+        securityMgr.collectConfigFromWebSecurityConfigurerAdapter()
         entityMgr.addFields()
         entityMgr.addNameRestOverride()
         entityMgr.warnIfEmpty()

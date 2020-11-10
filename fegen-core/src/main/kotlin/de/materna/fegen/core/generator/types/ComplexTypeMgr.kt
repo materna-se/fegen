@@ -25,6 +25,7 @@ import com.fasterxml.classmate.members.ResolvedField
 import com.fasterxml.classmate.members.ResolvedMethod
 import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.*
+import de.materna.fegen.core.domain.ComplexType
 import de.materna.fegen.core.log.DiagnosticsLevel
 import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.generator.BaseMgr

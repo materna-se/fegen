@@ -23,14 +23,15 @@ package de.materna.fegen.web.templates
 
 import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.*
+import de.materna.fegen.core.domain.DomainType
+import de.materna.fegen.core.domain.Search
 import de.materna.fegen.web.declaration
 
 internal val CustomEndpoint.uriPatternString
   get() = (url.replace(regex = Regex("\\{([^}]+)}")) { "${'$'}{${it.groupValues[1]}}" }).trim('/')
 
 // TODO use a configurable context path instead of 'rest' (e.g. for supporting api-versions)
-internal val DomainType.uriREST
-  get() = "$restBasePath/$nameRest"
+internal fun DomainType.uriREST(restBasePath: String) = "$restBasePath/$nameRest"
 
 internal val DomainType.searchResourceName
   get() = "$nameRest/search"

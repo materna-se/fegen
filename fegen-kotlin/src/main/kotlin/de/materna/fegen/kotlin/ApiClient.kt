@@ -23,6 +23,8 @@ package de.materna.fegen.kotlin
 
 import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.*
+import de.materna.fegen.core.domain.ProjectionType
+import de.materna.fegen.core.domain.Search
 
 /**
  * Generates the ApiClient class which helps to navigate to the different clients as well as the client classes itself.
@@ -84,7 +86,7 @@ fun FeGenKotlin.toApiClientKt() = """
 
             suspend fun create(obj: $nameBase) = requestAdapter.createObject(
                 newObject = obj,
-                createURI = "$uriREST"
+                createURI = "${uriREST(restBasePath)}"
             )
 
             suspend fun readAll(page: Int? = null, size: Int? = null${if (mayHaveSortParameter) ", sort: String? = null" else ""}) =
@@ -114,7 +116,7 @@ fun FeGenKotlin.toApiClientKt() = """
                     type: TypeReference<ApiHateoasPage<U, T>>
             ) =
                 requestAdapter.doPageRequest<T, U>(
-                    url = "$uriREST",
+                    url = "${uriREST(restBasePath)}",
                     embeddedPropName = "$nameRest",
                     projectionName = projectionName,
                     page = page,
@@ -125,7 +127,7 @@ fun FeGenKotlin.toApiClientKt() = """
 
             suspend fun readOne(id: Long) = requestAdapter.readProjection<$name, $nameDto>(
                 id = id,
-                uri = "$uriREST"
+                uri = "${uriREST(restBasePath)}"
             )
 
 
@@ -134,7 +136,7 @@ fun FeGenKotlin.toApiClientKt() = """
                 suspend fun readOne$projectionTypeInterfaceName(id: Long) =
                     requestAdapter.readProjection<$name, $nameDto>(
                         id = id,
-                        uri = "${this.parentType.uriREST}",
+                        uri = "${this.parentType.uriREST(restBasePath)}",
                         projectionName = "$projectionName"
                     )
             """.trimIndent()
@@ -144,7 +146,7 @@ fun FeGenKotlin.toApiClientKt() = """
 
             suspend fun delete(obj: $name) = requestAdapter.deleteObject(obj)
 
-            suspend fun delete(id: Long) = requestAdapter.deleteObject(id, "$uriREST")
+            suspend fun delete(id: Long) = requestAdapter.deleteObject(id, "${uriREST(restBasePath)}")
 
 
             ${entityFields.join(indent = 3, separator = "\n\n") dtField@{
@@ -199,7 +201,7 @@ fun FeGenKotlin.toApiClientKt() = """
                 ${if (optional || list) """
                     suspend fun $deleteFromAssociation(obj: ${this@domainType.name}, childToDelete: ${type.name}) =
                         requestAdapter.request.delete(
-                            url = "${this@domainType.uriREST}/${"$"}{obj.id}/$name/${"$"}{childToDelete.id}"
+                            url = "${this@domainType.uriREST(restBasePath)}/${"$"}{obj.id}/$name/${"$"}{childToDelete.id}"
                         )
                 """.doIndent(4)
         else ""}
@@ -209,11 +211,11 @@ fun FeGenKotlin.toApiClientKt() = """
 
             ${searches.join(indent = 3, separator = "\n\n") search@{
         """
-                ${buildFunction().doIndent(4)}
+                ${buildFunction(restBasePath = restBasePath).doIndent(4)}
 
                 ${projectionTypes.filter { !it.baseProjection }.filter { it.parentType == this@domainType }.join(indent = 4, separator = "\n\n") {
             """
-                    ${buildFunction(projection = this).doIndent(5)}
+                    ${buildFunction(projection = this, restBasePath = restBasePath).doIndent(5)}
                 """
         }}
             """
@@ -309,7 +311,7 @@ fun FeGenKotlin.toApiClientKt() = """
 }}
 """.trimIndent()
 
-private fun Search.buildFunction(projection: ProjectionType? = null) = """
+private fun Search.buildFunction(projection: ProjectionType? = null, restBasePath: String) = """
     suspend fun search${name.capitalize()}${projection?.projectionTypeInterfaceName
         ?: ""}(${parameters.paramDecl}${if (parameters.isEmpty() || !paging) "" else ", "}${
 if (paging) """

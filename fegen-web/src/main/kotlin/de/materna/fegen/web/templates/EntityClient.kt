@@ -43,7 +43,7 @@ fun FeGenWeb.toEntityClientTS() = entityTypes.filter { it.exported }.join(separa
 export class $nameClient extends BaseClient<ApiClient, $nameNew, $name> {
 
     constructor(apiClient: ApiClient, requestAdapter?: RequestAdapter){
-        super("$uriREST", "$nameRest", apiClient, requestAdapter);
+        super("${uriREST(restBasePath)}", "$nameRest", apiClient, requestAdapter);
         this.readOne = this.readOne.bind(this);
         this.readProjection = this.readProjection.bind(this);
         ${
@@ -55,9 +55,9 @@ export class $nameClient extends BaseClient<ApiClient, $nameNew, $name> {
   ${buildEntityTemplate(this)}
   ${plainObjTemplate(this)}
   ${readEntityTemplate(this, projectionTypes)}
-  ${deleteEntityTemplate(this)}
+  ${deleteEntityTemplate(this, restBasePath)}
   ${associationEntityTemplate(this, projectionTypes)}
-  ${searchEntityTemplate(this)}
+  ${searchEntityTemplate(this, restBasePath)}
 }""".trimIndent()
 }
 
@@ -112,12 +112,12 @@ private fun plainObjTemplate(entityType: EntityType): String {
     }"""
 }
 
-private fun deleteEntityTemplate(entityType: EntityType) = """
+private fun deleteEntityTemplate(entityType: EntityType, restBasePath: String) = """
     ${
     entityType.entityFields.join(indent = 1, separator = "\n\n") dtField@{
         """
     public async $deleteFromAssociation(returnType: ${entityType.name}, childToDelete: ${type.name}) {
-        await this._requestAdapter.getRequest().delete(`${entityType.uriREST}/${'$'}{returnType.id}/$name/${'$'}{childToDelete.id}`);
+        await this._requestAdapter.getRequest().delete(`${entityType.uriREST(restBasePath)}/${'$'}{returnType.id}/$name/${'$'}{childToDelete.id}`);
     }""".trimIndent()
     }
 }"""
@@ -190,7 +190,7 @@ private fun associationEntityTemplate(entityType: EntityType, projectionTypes: L
     }.trimIndent()
 }"""
 
-private fun searchEntityTemplate(entityType: EntityType) = """
+private fun searchEntityTemplate(entityType: EntityType, restBasePath: String) = """
     ${
     entityType.searches.join(indent = 1, separator = "\n\n") search@{
         val configurePagingParameters = """

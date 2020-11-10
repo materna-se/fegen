@@ -24,6 +24,8 @@ package de.materna.fegen.core.generator.types
 import com.fasterxml.classmate.members.ResolvedMethod
 import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.*
+import de.materna.fegen.core.domain.ComplexType
+import de.materna.fegen.core.domain.ProjectionType
 import de.materna.fegen.core.generator.DomainMgr
 import de.materna.fegen.core.log.FeGenLogger
 import org.springframework.data.rest.core.config.Projection

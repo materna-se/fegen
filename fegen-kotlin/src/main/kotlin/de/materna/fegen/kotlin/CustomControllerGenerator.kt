@@ -24,6 +24,10 @@ package de.materna.fegen.kotlin
 import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import de.materna.fegen.core.domain.*
+import de.materna.fegen.core.domain.ComplexType
+import de.materna.fegen.core.domain.EntityType
+import de.materna.fegen.core.domain.Pojo
+import de.materna.fegen.core.domain.ProjectionType
 import de.materna.fegen.core.handleDatesAsString
 import de.materna.fegen.core.joinParameters
 import java.math.BigDecimal
