@@ -56,7 +56,7 @@ class DomainMgr(
 
     val pojoMgr = PojoMgr(feGenConfig, logger, this)
 
-    val securityMgr = SecurityMgr(feGenConfig, logger, this)
+    val securityMgr = SecurityMgr(feGenConfig, logger, this, restBasePath)
 
     private val repositorySearchMgr = RepositorySearchMgr(feGenConfig, logger, entityMgr, this)
 

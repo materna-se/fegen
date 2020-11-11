@@ -38,7 +38,8 @@ import java.lang.reflect.Method
 
 class SecurityMgr(feGenConfig: FeGenConfig,
                   private val logger: FeGenLogger,
-                  domainMgr: DomainMgr
+                  domainMgr: DomainMgr,
+                  private val restBasePath: String
 ): BaseMgr(feGenConfig, domainMgr) {
 
     private val configurerAdapterClasses
@@ -98,7 +99,7 @@ class SecurityMgr(feGenConfig: FeGenConfig,
             logger.warn("Cannot invoke: configure method threw ${e.message}")
             val stringWriter = StringWriter()
             e.printStackTrace(PrintWriter(stringWriter))
-            logger.warn(stringWriter.toString())
+            logger.debug(stringWriter.toString())
             return
         }
 
@@ -107,6 +108,7 @@ class SecurityMgr(feGenConfig: FeGenConfig,
     }
 
     private fun entitySecurity(entityType: EntityType) {
+        val url = "$restBasePath/${entityType.nameRest}"
 
     }
 
