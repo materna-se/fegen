@@ -19,10 +19,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.materna.fegen.core.generator
+package de.materna.fegen.core.generator.security
 
 import de.materna.fegen.core.FeGenConfig
-import de.materna.fegen.core.domain.EntityType
+import de.materna.fegen.core.generator.BaseMgr
+import de.materna.fegen.core.generator.DomainMgr
 import de.materna.fegen.core.log.FeGenLogger
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
@@ -30,6 +31,7 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
+import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer
 import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer
 import org.springframework.security.config.annotation.web.configurers.HttpBasicConfigurer
 import java.io.PrintWriter
@@ -46,24 +48,23 @@ class SecurityMgr(feGenConfig: FeGenConfig,
         get() = searchForComponentClassesByAnnotation(Configuration::class.java)
                 .filter { it.superclass == WebSecurityConfigurerAdapter::class.java }
 
+    private val results = mutableMapOf<Endpoint, List<String>>()
 
     @Suppress("UNCHECKED_CAST")
     fun collectConfigFromWebSecurityConfigurerAdapter() {
-        val results = mutableMapOf<Endpoint, List<String>>()
-
         val httpSecurityMock = Mockito.mock(HttpSecurity::class.java)
         val httpBasicConfigurerMock = Mockito.mock(HttpBasicConfigurer::class.java) as HttpBasicConfigurer<HttpSecurity>
         val expressionInterceptUrlRegistryMock = Mockito.mock(ExpressionUrlAuthorizationConfigurer.ExpressionInterceptUrlRegistry::class.java)
                 as ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry
+        val authorizedUrlMock = Mockito.mock(ExpressionUrlAuthorizationConfigurer.AuthorizedUrl::class.java)
+                as ExpressionUrlAuthorizationConfigurer<HttpSecurity>.AuthorizedUrl
+        val csrfConfigurerMock = Mockito.mock(CsrfConfigurer::class.java) as CsrfConfigurer<HttpSecurity>
 
-        Mockito.`when`(httpSecurityMock.httpBasic()).thenReturn(httpBasicConfigurerMock) //httpBasic()
-        Mockito.`when`(httpBasicConfigurerMock.and()).thenReturn(httpSecurityMock) //.and()
         Mockito.`when`(httpSecurityMock.authorizeRequests()).thenReturn(expressionInterceptUrlRegistryMock) //.authorizeRequests()
 
-        val authorizedUrlMock = Mockito.mock(ExpressionUrlAuthorizationConfigurer.AuthorizedUrl::class.java) as ExpressionUrlAuthorizationConfigurer<HttpSecurity>.AuthorizedUrl
-
         val antMatchersMockFun = { endpoints: List<Endpoint>  ->
-            val localAuthorizedUrlMock = Mockito.mock(ExpressionUrlAuthorizationConfigurer.AuthorizedUrl::class.java) as ExpressionUrlAuthorizationConfigurer<HttpSecurity>.AuthorizedUrl
+            val localAuthorizedUrlMock = Mockito.mock(ExpressionUrlAuthorizationConfigurer.AuthorizedUrl::class.java)
+                    as ExpressionUrlAuthorizationConfigurer<HttpSecurity>.AuthorizedUrl
             Mockito.`when`(localAuthorizedUrlMock.hasRole(ArgumentMatchers.anyString())).then{ hasRoleInvocation -> //.hasRole()
                 val hasRoleArgs = hasRoleInvocation.arguments
                 val roles = listOf(hasRoleArgs[0] as String)
@@ -75,7 +76,8 @@ class SecurityMgr(feGenConfig: FeGenConfig,
             localAuthorizedUrlMock
         }
 
-        Mockito.`when`(expressionInterceptUrlRegistryMock.antMatchers(ArgumentMatchers.any(HttpMethod::class.java), ArgumentMatchers.any())).then { antMatchersInvocation -> // .antMatchers()
+        Mockito.`when`(expressionInterceptUrlRegistryMock.antMatchers(ArgumentMatchers.any(HttpMethod::class.java), ArgumentMatchers.any()))
+                .then { antMatchersInvocation -> // .antMatchers()
             val antMatchersArgs = antMatchersInvocation.arguments
             val httpMethod = antMatchersArgs[0] as HttpMethod
             val patterns = antMatchersArgs.slice(1 until antMatchersArgs.size) as List<String>
@@ -91,6 +93,12 @@ class SecurityMgr(feGenConfig: FeGenConfig,
         }
 
         Mockito.`when`(expressionInterceptUrlRegistryMock.anyRequest()).thenReturn(authorizedUrlMock) //anyRequest
+        Mockito.`when`(authorizedUrlMock.authenticated()).thenReturn(expressionInterceptUrlRegistryMock) //authenticated
+        Mockito.`when`(httpBasicConfigurerMock.and()).thenReturn(httpSecurityMock) //.and()
+        Mockito.`when`(httpSecurityMock.httpBasic()).thenReturn(httpBasicConfigurerMock) //httpBasic()
+        Mockito.`when`(httpBasicConfigurerMock.and()).thenReturn(httpSecurityMock) //.and()
+        Mockito.`when`(httpSecurityMock.csrf()).thenReturn(csrfConfigurerMock) //csrf()
+        Mockito.`when`(csrfConfigurerMock.disable()).thenReturn(httpSecurityMock)
 
 
         try {
@@ -103,14 +111,8 @@ class SecurityMgr(feGenConfig: FeGenConfig,
             return
         }
 
-        println(results)
-
     }
 
-    private fun entitySecurity(entityType: EntityType) {
-        val url = "$restBasePath/${entityType.nameRest}"
-
-    }
 
     private fun getConfigurerAdapterClass(): Class<*> {
         if(configurerAdapterClasses.isEmpty()) {
@@ -151,28 +153,10 @@ class SecurityMgr(feGenConfig: FeGenConfig,
         return configureMethod
     }
 
-    sealed class WebSecurityConfigurerAdapterError : Exception() {
-
-        class NoWebSecurityConfigurerAdapterClassFound: WebSecurityConfigurerAdapterError() {
-            override val message
-                get() = "No WebSecurityConfigurerAdapter class found!"
-        }
-
-        class MultipleWebSecurityConfigurerAdapterClassFound: WebSecurityConfigurerAdapterError() {
-            override val message
-                get() = "Multiple WebSecurityConfigurerAdapter classes found!"
-        }
-
-        class NoDefaultWebSecurityConfigurerAdapterConstructorFound(private val name: String): WebSecurityConfigurerAdapterError() {
-            override val message
-                get() = "No default $name constructor found!"
-        }
-
-    }
-
     private data class Endpoint(
-            /** null means any method **/
-            val httpMethod: HttpMethod?,
-            val urlPattern: String)
+        /** null means any method **/
+        val httpMethod: HttpMethod?,
+        val urlPattern: String
+    )
 
 }

@@ -26,6 +26,7 @@ import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.generator.api.CustomEndpointMgr
 import de.materna.fegen.core.generator.api.CustomSearchMgr
 import de.materna.fegen.core.generator.api.RepositorySearchMgr
+import de.materna.fegen.core.generator.security.SecurityMgr
 import de.materna.fegen.core.generator.types.*
 import java.net.URL
 import java.net.URLClassLoader
@@ -56,7 +57,7 @@ class DomainMgr(
 
     val pojoMgr = PojoMgr(feGenConfig, logger, this)
 
-    val securityMgr = SecurityMgr(feGenConfig, logger, this, restBasePath)
+    private val securityMgr = SecurityMgr(feGenConfig, logger, this, restBasePath)
 
     private val repositorySearchMgr = RepositorySearchMgr(feGenConfig, logger, entityMgr, this)
 
