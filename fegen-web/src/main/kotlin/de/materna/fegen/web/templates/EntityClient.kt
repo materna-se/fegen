@@ -37,13 +37,14 @@ import de.materna.fegen.web.paramDecl
 import de.materna.fegen.web.projectionTypeInterfaceName
 import de.materna.fegen.web.readOrderByParameter
 import de.materna.fegen.web.returnDeclaration
+import org.atteo.evo.inflector.English
 
 fun FeGenWeb.toEntityClientTS() = entityTypes.filter { it.exported }.join(separator = "\n\n") domainType@{
     """
 export class $nameClient extends BaseClient<ApiClient, $nameNew, $name> {
 
     constructor(apiClient: ApiClient, requestAdapter?: RequestAdapter){
-        super("${uriREST(restBasePath)}", "$nameRest", apiClient, requestAdapter);
+        super("${uriREST(restBasePath)}", "${English.plural(name.decapitalize())}", apiClient, requestAdapter);
         this.readOne = this.readOne.bind(this);
         this.readProjection = this.readProjection.bind(this);
         ${

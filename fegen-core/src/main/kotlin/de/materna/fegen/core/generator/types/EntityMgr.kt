@@ -65,7 +65,7 @@ class EntityMgr(
             if (customPath.isNotBlank()) {
                 val entity = class2Entity[repoClass.repositoryType]
                         ?: error("Repository ${repoClass.canonicalName} refers to unknown entity ${repoClass.repositoryType}")
-                entity.nameRestOverride = customPath.removePrefix("/")
+                entity.nameRestOverride = customPath
             }
         }
     }
