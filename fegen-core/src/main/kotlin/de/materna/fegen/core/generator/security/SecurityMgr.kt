@@ -94,7 +94,7 @@ class SecurityMgr(feGenConfig: FeGenConfig,
 
         Mockito.`when`(expressionInterceptUrlRegistryMock.anyRequest()).thenReturn(authorizedUrlMock) //anyRequest
         Mockito.`when`(authorizedUrlMock.authenticated()).thenReturn(expressionInterceptUrlRegistryMock) //authenticated
-        Mockito.`when`(httpBasicConfigurerMock.and()).thenReturn(httpSecurityMock) //.and()
+        Mockito.`when`(expressionInterceptUrlRegistryMock.and()).thenReturn(httpSecurityMock) //.and()
         Mockito.`when`(httpSecurityMock.httpBasic()).thenReturn(httpBasicConfigurerMock) //httpBasic()
         Mockito.`when`(httpBasicConfigurerMock.and()).thenReturn(httpSecurityMock) //.and()
         Mockito.`when`(httpSecurityMock.csrf()).thenReturn(csrfConfigurerMock) //csrf()
