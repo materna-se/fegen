@@ -15,6 +15,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation project(':fegen-core')
     implementation "com.squareup:kotlinpoet:1.6.0"
+    implementation "org.atteo:evo-inflector:1.2.2"
 }
 
 kotlinArtifact {

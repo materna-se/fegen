@@ -25,6 +25,7 @@ import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.*
 import de.materna.fegen.core.domain.ProjectionType
 import de.materna.fegen.core.domain.Search
+import org.atteo.evo.inflector.English
 
 /**
  * Generates the ApiClient class which helps to navigate to the different clients as well as the client classes itself.
@@ -117,7 +118,7 @@ fun FeGenKotlin.toApiClientKt() = """
             ) =
                 requestAdapter.doPageRequest<T, U>(
                     url = "${uriREST(restBasePath)}",
-                    embeddedPropName = "$nameRest",
+                    embeddedPropName = "${English.plural(name.decapitalize())}",
                     projectionName = projectionName,
                     page = page,
                     size = size,
