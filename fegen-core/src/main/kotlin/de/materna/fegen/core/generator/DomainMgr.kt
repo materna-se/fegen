@@ -66,7 +66,6 @@ class DomainMgr(
     val customEndpointMgr = CustomEndpointMgr(feGenConfig, logger, entityMgr, this)
 
     fun validate() {
-        securityMgr.collectConfigFromWebSecurityConfigurerAdapter()
         entityMgr.addFields()
         entityMgr.addNameRestOverride()
         entityMgr.warnIfEmpty()
@@ -88,5 +87,7 @@ class DomainMgr(
 
         customEndpointMgr.warnIfNoCustomControllers()
         customEndpointMgr.warnIfNoControllerMethods()
+
+        securityMgr.collectConfigFromWebSecurityConfigurerAdapter()
     }
 }
