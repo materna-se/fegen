@@ -24,9 +24,8 @@ package de.materna.fegen.core.domain
 import org.atteo.evo.inflector.English
 
 sealed class DomainType: Type {
-    val nameRest by lazy {
-        nameRestOverride ?: English.plural(name.decapitalize())!!
-    }
+    val nameRest
+        get() = nameRestOverride ?: English.plural(name.decapitalize())!!
 
     var nameRestOverride: String? = null
 }
