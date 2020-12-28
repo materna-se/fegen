@@ -64,6 +64,9 @@ class FeGenKotlinMojo: AbstractMojo() {
     @Parameter(property = "fegenKotlin.allowImplicitNullable", defaultValue = "ERROR")
     private var implicitNullable: String? = null
 
+    @Parameter(property = "fegenKotlin.backendGeneratedPath")
+    private var backendGeneratedPath: String? = null
+
     override fun execute() {
         val logger = MavenFeGenLogger(log)
 
@@ -75,7 +78,8 @@ class FeGenKotlinMojo: AbstractMojo() {
                 classPath(scanPath, logger),
                 scanPkg,
                 entityPkg,
-                repositoryPkg
+                repositoryPkg,
+                backendGeneratedPath
         )
 
         FeGenKotlin(

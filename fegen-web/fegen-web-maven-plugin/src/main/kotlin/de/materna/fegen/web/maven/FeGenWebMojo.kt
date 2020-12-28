@@ -61,6 +61,9 @@ class FeGenWebMojo: AbstractMojo() {
     @Parameter(property = "fegenWeb.implicitNullable", defaultValue = "error")
     private var implicitNullable: String? = null
 
+    @Parameter(property = "fegenWeb.backendGeneratedPath")
+    private var backendGeneratedPath: String? = null
+
     override fun execute() {
         val logger = MavenFeGenLogger(log)
 
@@ -72,7 +75,8 @@ class FeGenWebMojo: AbstractMojo() {
                 classPath(scanPath, logger),
                 scanPkg,
                 entityPkg,
-                repositoryPkg
+                repositoryPkg,
+                backendGeneratedPath
         )
 
         FeGenWeb(

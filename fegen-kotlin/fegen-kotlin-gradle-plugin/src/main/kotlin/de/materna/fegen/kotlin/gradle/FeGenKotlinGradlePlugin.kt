@@ -49,7 +49,8 @@ open class FeGenKotlinGradlePlugin : FeGenGradlePlugin<FeGenKotlinGradlePluginEx
                 classpath,
                 extension.scanPkg,
                 extension.entityPkg,
-                extension.repositoryPkg
+                extension.repositoryPkg,
+                extension.backendGeneratedPath
         )
 
         return FeGenKotlin(
