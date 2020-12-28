@@ -21,6 +21,8 @@
  */
 package de.materna.fegen.core.domain
 
-import org.springframework.http.HttpMethod
-
-class EntitySecurity(val crud: Map<HttpMethod, List<String>>)
+class EntitySecurity(val method: String, val roles: List<String>) {
+	override fun toString(): String {
+		return "EntitySecurity(method='$method', roles=$roles)"
+	}
+}
