@@ -29,6 +29,7 @@ dependencies {
     implementation "javax.servlet:javax.servlet-api:4.0.1"
     implementation "org.springframework.security.extensions:spring-security-saml2-core:2.0.0.M31"
     implementation "org.mockito:mockito-core:3.6.0"
+    implementation "com.squareup:kotlinpoet:1.6.0"
 
 
     // Used to generate plural forms of entities for repository URIs

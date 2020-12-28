@@ -27,11 +27,11 @@ import de.materna.fegen.core.log.FeGenLogger
 import java.io.File
 
 class FeGenKotlin(
-        feGenConfig: FeGenConfig,
-        projectDir: File,
-        frontendPath: String?,
-        frontendPkg: String?,
-        logger: FeGenLogger
+    feGenConfig: FeGenConfig,
+    private val projectDir: File,
+    frontendPath: String?,
+    frontendPkg: String?,
+    logger: FeGenLogger
 ) : FeGen(feGenConfig, logger) {
 
     private val frontendPath = frontendPath ?: throw IllegalStateException("frontendPath must be specified")
@@ -76,6 +76,19 @@ class FeGenKotlin(
         generateFile("ApiClient.kt", toApiClientKt())
         for (customEndpoint in customControllers) {
             CustomControllerGenerator(this, customEndpoint).generate()
+        }
+    }
+
+    override fun generateSecurityController() {
+        val path = this.feGenConfig.backendGeneratedPath
+        if (path != null) {
+            val backendDirGen: File = projectDir.resolve(path)
+            if (!backendDirGen.isDirectory) {
+                throw IllegalStateException("backendGeneratedPath \"${backendDirGen.absolutePath}\" does not exist")
+            }
+            super.generateController(backendDirGen)
+        } else {
+            logger.info("Skipping security feature")
         }
     }
 }

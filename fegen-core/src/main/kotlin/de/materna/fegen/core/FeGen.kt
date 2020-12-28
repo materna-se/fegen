@@ -23,8 +23,9 @@ package de.materna.fegen.core
 
 import de.materna.fegen.core.domain.DomainType
 import de.materna.fegen.core.domain.Pojo
-import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.generator.DomainMgr
+import de.materna.fegen.core.generator.security.SecurityControllerGen
+import de.materna.fegen.core.log.FeGenLogger
 import java.io.File
 import java.io.FileReader
 import java.util.*
@@ -113,9 +114,16 @@ abstract class FeGen(
 
     abstract fun generateApiClient()
 
+    abstract fun generateSecurityController()
+
+    fun generateController(dir: File) {
+       SecurityControllerGen(dir, entityTypes).generateController()
+    }
+
     fun generate() {
         logConfiguration()
         cleanGenerated()
+        generateSecurityController()
         generateEntities()
         generateApiClient()
     }
