@@ -84,7 +84,8 @@ abstract class FeGen(
                 }
             }
         }
-        return properties.getProperty("spring.data.rest.basePath") ?: ""
+        // since Spring Boot 2.x spring.data.rest.base-path (not spring.data.rest.basePath) is used
+        return properties.getProperty("spring.data.rest.base-path") ?: ""
     }
 
     protected open fun logConfiguration() {
