@@ -164,7 +164,7 @@ class SecurityMgr(feGenConfig: FeGenConfig,
 
     private fun retrieveEntityType(urlPattern: String): EntityType? {
         return domainMgr.entityMgr.entities.firstOrNull { entityType ->
-            val entityTypeBaseUrlRegExp = "(.+?)${entityType.nameRest}[/]?[*]?[/]?[a-z]*".toRegex()
+            val entityTypeBaseUrlRegExp = "[/]?$restBasePath/${entityType.nameRest}[/]?[*]?[/]?[a-z]*".toRegex()
             urlPattern.matches(entityTypeBaseUrlRegExp)
         }
     }
@@ -173,22 +173,24 @@ class SecurityMgr(feGenConfig: FeGenConfig,
         val roles = results[endpoint]!!
         val urlPattern = endpoint.urlPattern
         val httpMethod = endpoint.httpMethod
+        val entityTypeProperties = entityType.entityFields.map { it.name }
+        // method is not specified, so try to retrieve operation names from the url
         if(httpMethod != null) {
-            val pattern = Pattern.compile("(.+?)${entityType.nameRest}[/]?[*]?")
+            val pattern = Pattern.compile("[/]?$restBasePath/${entityType.nameRest}[/]?[*]?")
             if(pattern.matcher(urlPattern).matches()) {
                 val methodNameEnumObject = transformHttpMethodName(httpMethod, entityType.nameRest, urlPattern)
                 entityType.security += EntitySecurity(methodNameEnumObject.name, roles)
             }
-            val entityTypeProperties = entityType.entityFields.map { it.name }
             entityTypeProperties.forEach {
-                val entityPropertiesPattern = Pattern.compile("(.+?)${entityType.nameRest}[/][*][/]$it")
+                val entityPropertiesPattern = Pattern.compile("[/]?$restBasePath/${entityType.nameRest}[/][*][/]$it")
                 if(entityPropertiesPattern.matcher(urlPattern).matches()) {
                     val methodName = transformHttpMethodName(httpMethod, it)
                     entityType.security += EntitySecurity(methodName, roles)
                 }
             }
-        } else {
-            val singleRequestPattern = Pattern.compile("(.+?)${entityType.nameRest}[/][*]+")
+        }
+        else {
+            val singleRequestPattern = Pattern.compile("[/]?$restBasePath/${entityType.nameRest}[/][*]+")
             val pattern = Pattern.compile("(.+?)${entityType.nameRest}")
             if (singleRequestPattern.matcher(urlPattern).matches()) {
                 mutableListOf(MethodName.READ_ONE, MethodName.UPDATE, MethodName.DELETE).forEach {
@@ -200,9 +202,8 @@ class SecurityMgr(feGenConfig: FeGenConfig,
                     entityType.security += EntitySecurity(it.name, roles)
                 }
             }
-            val entityTypeProperties = entityType.entityFields.map { it.name }
             entityTypeProperties.forEach {
-                val entityPropertiesPattern = Pattern.compile("(.+?)${entityType.nameRest}[/][*][/]$it")
+                val entityPropertiesPattern = Pattern.compile("[/]?$restBasePath/${entityType.nameRest}[/][*][/]$it")
                 if(entityPropertiesPattern.matcher(urlPattern).matches()) {
                     listOf("read${it.capitalize()}", "set${it.capitalize()}", "delete${it.capitalize()}").forEach {method ->
                         entityType.security += EntitySecurity(method, roles)
@@ -213,7 +214,7 @@ class SecurityMgr(feGenConfig: FeGenConfig,
     }
 
     private fun transformHttpMethodName(httpMethod: HttpMethod, nameRest: String, url: String): MethodName {
-        val singleGetRequestPattern = Pattern.compile("(.+?)$nameRest[/][*]\"")
+        val singleGetRequestPattern = Pattern.compile("[/]?$restBasePath/$nameRest[/][*]\"")
         if(singleGetRequestPattern.matcher(url).matches() && httpMethod == HttpMethod.GET) {
             return MethodName.READ_ONE
         }
