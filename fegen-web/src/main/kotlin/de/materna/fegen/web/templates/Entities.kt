@@ -108,7 +108,7 @@ private fun ProjectionType.toDeclaration() = """
 
 private fun EnumType.toDeclaration() = """
     export enum $name {
-        ${constants.join(indent = 2, separator = ",\n") { "${this} = \"${this}\"" }}
+        ${constants.join(indent = 2, separator = ",\n") { "$this = \"${this}\"" }}
     }
 """.trimIndent()
 
@@ -125,7 +125,3 @@ private fun Pojo.toDeclaration() = """
 private fun EntitySecurity.toDeclaration() = """
     ${method.capitalize()} = "${method.toUpperCase()}"
 """.trimIndent()
-
-private fun securityDeclaration(entityType: EntityType) = """
-
-"""
