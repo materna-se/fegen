@@ -59,6 +59,7 @@ export class $nameClient extends BaseClient<ApiClient, $nameNew, $name> {
   ${deleteEntityTemplate(this, restBasePath)}
   ${associationEntityTemplate(this, projectionTypes)}
   ${searchEntityTemplate(this, restBasePath)}
+  ${if(this.security.isNotEmpty()) securityEntityTemplate(this) else ""}
 }""".trimIndent()
 }
 
@@ -228,4 +229,16 @@ private fun searchEntityTemplate(entityType: EntityType, restBasePath: String) =
     }""".trimIndent()
     }.trimIndent()
 }"""
+
+private fun securityEntityTemplate(entityType: EntityType) = """
+    
+    public async getSecurityConfig() {
+        const request = this._requestAdapter.getRequest();
+        const params = {};
+        const url = stringHelper.appendParams('security/${entityType.nameRest}', params);
+        const response = await request.get(url);
+        const responseObj = ((await response.json()) as SecurityConfig${entityType.nameRest.capitalize()}[]);
+        return responseObj;
+    } 
+"""
 

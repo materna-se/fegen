@@ -80,6 +80,18 @@ private fun EntityType.toDeclaration() = """
     export interface $name extends $nameDto {
         id: number
     }
+    
+    ${if(security.isNotEmpty()) """
+    /** 
+     * Use this enum to retrieve response from security endpoint
+     */
+    export enum SecurityConfig${nameRest.capitalize()} {
+        ${security.join(indent = 2, separator = ",\n") {
+            toDeclaration()
+        }}
+    } 
+    """
+    else ""}
 """.trimIndent()
 
 private fun EmbeddableType.toDeclaration() = """
@@ -109,3 +121,11 @@ private fun Pojo.toDeclaration() = """
         ${fields.join(indent = 2) { toDeclaration() }}
     }
 """.trimIndent()
+
+private fun EntitySecurity.toDeclaration() = """
+    ${method.capitalize()} = "${method.toUpperCase()}"
+""".trimIndent()
+
+private fun securityDeclaration(entityType: EntityType) = """
+
+"""

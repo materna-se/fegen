@@ -179,7 +179,7 @@ class SecurityMgr(feGenConfig: FeGenConfig,
             val pattern = Pattern.compile("[/]?$restBasePath/${entityType.nameRest}[/]?[*]?")
             if(pattern.matcher(urlPattern).matches()) {
                 val methodNameEnumObject = transformHttpMethodName(httpMethod, entityType.nameRest, urlPattern)
-                entityType.security += EntitySecurity(methodNameEnumObject.name, roles)
+                entityType.security += EntitySecurity(methodNameEnumObject.value, roles)
             }
             entityTypeProperties.forEach {
                 val entityPropertiesPattern = Pattern.compile("[/]?$restBasePath/${entityType.nameRest}[/][*][/]$it")
@@ -194,12 +194,12 @@ class SecurityMgr(feGenConfig: FeGenConfig,
             val pattern = Pattern.compile("(.+?)${entityType.nameRest}")
             if (singleRequestPattern.matcher(urlPattern).matches()) {
                 mutableListOf(MethodName.READ_ONE, MethodName.UPDATE, MethodName.DELETE).forEach {
-                    entityType.security += EntitySecurity(it.name, roles)
+                    entityType.security += EntitySecurity(it.value, roles)
                 }
             }
             if(pattern.matcher(urlPattern).matches()) {
                 mutableListOf(MethodName.CREATE, MethodName.READ_ALL).forEach {
-                    entityType.security += EntitySecurity(it.name, roles)
+                    entityType.security += EntitySecurity(it.value, roles)
                 }
             }
             entityTypeProperties.forEach {
@@ -246,12 +246,12 @@ class SecurityMgr(feGenConfig: FeGenConfig,
         val urlPattern: String
     )
 
-    private enum class MethodName {
-        CREATE,
-        UPDATE,
-        DELETE,
-        READ_ONE,
-        READ_ALL
+    private enum class MethodName(val value: String) {
+        CREATE("create"),
+        UPDATE("update"),
+        DELETE("delete"),
+        READ_ONE("readOne"),
+        READ_ALL("readAll")
     }
 
 }

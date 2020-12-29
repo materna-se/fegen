@@ -48,6 +48,10 @@ fun FeGenWeb.toApiClientTS() = """
     import { ${entityTypes.filter { it.exported }.join(separator = ", ") { "$nameNew, $nameDto, $name" }} } from './Entities';
     import { ${enumTypes.join(separator = ", ") { name }} } from './Entities';
     import { ${projectionTypes.join(separator = ", ") { projectionTypeInterfaceName }} } from './Entities';
+    import { ${
+    entityTypes.filter { it.security.isNotEmpty() }
+        .joinToString(separator = ", ") { "SecurityConfig${it.nameRest.capitalize()}" }
+    } } from './Entities';
     ${customControllers.join(indent = 1) { "import { $nameClient } from './controller/$nameClient';" }}
 
     export class ApiClient {
