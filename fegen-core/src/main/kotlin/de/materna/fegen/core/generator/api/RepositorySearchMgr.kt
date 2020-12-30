@@ -118,7 +118,8 @@ class RepositorySearchMgr(
                                             ) as ValueDTField
                                         }.toList(),
                                 returnType = domainType,
-                                inRepo = true
+                                inRepo = true,
+                                preAuth = null
                         )
             }
         }

@@ -29,6 +29,7 @@ import de.materna.fegen.core.generator.FieldMgr
 import de.materna.fegen.core.generator.types.EntityMgr
 import de.materna.fegen.core.log.FeGenLogger
 import org.springframework.data.rest.webmvc.BasePathAwareController
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import java.lang.reflect.Method
@@ -94,6 +95,7 @@ class CustomSearchMgr(
 
     fun addSearchesToEntities() {
         for ((controller, searches) in controller2Searches) {
+            val preAuthorizeClassLevel = controller.getAnnotation(PreAuthorize::class.java)?.value
             for (search in searches) {
                 val requestMapping = search.getAnnotation(RequestMapping::class.java) ?: break
 
@@ -108,20 +110,21 @@ class CustomSearchMgr(
                 }
                 domainType.searches +=
                         Search(
-                                name = requestMapping.value.firstOrNull() ?: requestMapping.path.first(),
-                                paging = search.paging,
-                                list = search.list,
-                                parameters = search.requestParams.map { p ->
-                                    val requestParam = p.getAnnotation(RequestParam::class.java)
-                                    domainMgr.fieldMgr.dtFieldFromType(
-                                            name = p.nameREST,
-                                            type = p.type,
-                                            optional = !requestParam.required,
-                                            context = FieldMgr.FieldContext(controller)
-                                    ) as ValueDTField // TODO split typeToDTReference into two parts in order to omit cast...
-                                }.toList(),
-                                returnType = domainType,
-                                inRepo = false
+                            name = requestMapping.value.firstOrNull() ?: requestMapping.path.first(),
+                            paging = search.paging,
+                            list = search.list,
+                            parameters = search.requestParams.map { p ->
+                                val requestParam = p.getAnnotation(RequestParam::class.java)
+                                domainMgr.fieldMgr.dtFieldFromType(
+                                    name = p.nameREST,
+                                    type = p.type,
+                                    optional = !requestParam.required,
+                                    context = FieldMgr.FieldContext(controller)
+                                ) as ValueDTField // TODO split typeToDTReference into two parts in order to omit cast...
+                            }.toList(),
+                            returnType = domainType,
+                            inRepo = false,
+                            preAuth = search.getAnnotation(PreAuthorize::class.java)?.value ?: preAuthorizeClassLevel
                         )
             }
         }

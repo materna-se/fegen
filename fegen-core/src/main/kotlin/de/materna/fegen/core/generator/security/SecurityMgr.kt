@@ -276,7 +276,15 @@ class SecurityMgr(feGenConfig: FeGenConfig,
     }
 
     fun collectConfigFromCustomSearches() {
-        //TODO("Not yet implemented")
+        domainMgr.entityMgr.entities
+            .filter { it.searches.isNotEmpty() }
+            .forEach { entityType ->
+                entityType.searches
+                    .filter { it.preAuth != null && it.preAuth.contains("Role") }
+                    .forEach { search ->
+                        entityType.security += EntitySecurity(search.name, retrieveRolesFromPreAuthorizeAnnotation(search.preAuth!!))
+                }
+            }
     }
 
     fun collectConfigFromRepositories() {
