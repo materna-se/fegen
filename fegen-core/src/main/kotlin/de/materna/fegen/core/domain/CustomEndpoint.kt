@@ -45,7 +45,8 @@ data class CustomEndpoint(
         val requestParams: List<ValueDTField>,
         val body: ComplexDTField?,
         val returnValue: ReturnValue?,
-        val canReceiveProjection: Boolean
+        val canReceiveProjection: Boolean,
+        val preAuth: String?
 ) {
 
     override fun toString(): String {

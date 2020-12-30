@@ -31,6 +31,7 @@ import org.springframework.hateoas.CollectionModel
 import org.springframework.hateoas.EntityModel
 import org.springframework.hateoas.PagedModel
 import org.springframework.http.ResponseEntity
+import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
@@ -52,8 +53,10 @@ class CustomEndpointMgr(
 
     private fun createCustomController(clazz: Class<*>): CustomController {
         val requestMapping = clazz.getAnnotation(RequestMapping::class.java)
+        val preAuthorize = clazz.getAnnotation(PreAuthorize::class.java)
+        val preAuthorizeValue = preAuthorize?.value
         val basePath = requestMapping.value.firstOrNull() ?: requestMapping.path.firstOrNull()
-        val result = CustomController(clazz.simpleName, basePath)
+        val result = CustomController(name = clazz.simpleName, baseUri = basePath, preAuth = preAuthorizeValue)
         result.endpoints.addAll(controllerMethods(clazz, result))
         return result
     }
@@ -66,6 +69,8 @@ class CustomEndpointMgr(
 
     private fun customEndpoint(controller: CustomController, method: Method): CustomEndpoint {
         val (url, endpointMethod) = method.requestMapping!!
+        val preAuthorize = method.getAnnotation(PreAuthorize::class.java)
+        val preAuthorizeValue = preAuthorize?.value
         return CustomEndpoint(
                 parentController = controller,
                 name = method.name,
@@ -95,7 +100,8 @@ class CustomEndpointMgr(
                 ) as? ComplexDTField
                 },
                 returnValue = resolveReturnType(method),
-                canReceiveProjection = canReceiveProjection(method)
+                canReceiveProjection = canReceiveProjection(method),
+                preAuth = preAuthorizeValue
         )
     }
 

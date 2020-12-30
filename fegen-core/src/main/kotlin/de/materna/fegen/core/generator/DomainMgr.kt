@@ -89,5 +89,8 @@ class DomainMgr(
         customEndpointMgr.warnIfNoControllerMethods()
 
         securityMgr.collectConfigFromWebSecurityConfigurerAdapter()
+        securityMgr.collectConfigFromCustomControllers()
+        securityMgr.collectConfigFromCustomSearches()
+        securityMgr.collectConfigFromRepositories()
     }
 }

@@ -240,6 +240,49 @@ class SecurityMgr(feGenConfig: FeGenConfig,
         }
     }
 
+    fun collectConfigFromCustomControllers() {
+        val customControllers = domainMgr.customEndpointMgr.controllers
+        val entitySecurity = mutableMapOf<String, List<String>>()
+        customControllers.forEach { customController ->
+            val entityType = domainMgr.entityMgr.entities.firstOrNull { entityType ->
+                val entityTypeBaseUrlRegExp = "(.+?)/${entityType.nameRest}".toRegex()
+                customController.baseUri!!.matches(entityTypeBaseUrlRegExp)
+            }
+            if(entityType != null) {
+                //look at hasRole(...) and hasAnyRole(...) Spring EL expressions
+                if(customController.preAuth != null && customController.preAuth.contains("Role")) {
+                    val roles = retrieveRolesFromPreAuthorizeAnnotation(customController.preAuth)
+                    //class level PreAuthorize annotation, expose config for all endpoints
+                    customController.endpoints.forEach { endpoint ->
+                        entitySecurity[endpoint.name] = roles
+                    }
+                }
+                //check for method level annotations
+                customController.endpoints
+                    .filter { it.preAuth != null && it.preAuth.contains("Role") }
+                    .forEach{ endpoint ->
+                        val roles = retrieveRolesFromPreAuthorizeAnnotation(endpoint.preAuth!!)
+                        entitySecurity[endpoint.name] = roles
+                    }
+                entityType.security += entitySecurity.map { EntitySecurity(it.key, it.value) }
+            } else {
+                logger.info("Couldn't retrieve entity type for the custom controller ${customController.name} while collecting information for security endpoint")
+            }
+        }
+    }
+
+    private fun retrieveRolesFromPreAuthorizeAnnotation(annotation: String): List<String> {
+        return annotation.substringAfter('(').substringBefore(')').split(',')
+    }
+
+    fun collectConfigFromCustomSearches() {
+        //TODO("Not yet implemented")
+    }
+
+    fun collectConfigFromRepositories() {
+        //TODO("Not yet implemented")
+    }
+
     private data class Endpoint(
         /** null means any method **/
         val httpMethod: HttpMethod?,
