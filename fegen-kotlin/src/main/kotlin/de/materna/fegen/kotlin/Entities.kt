@@ -192,6 +192,18 @@ private fun EntityType.toDeclaration(restBasePath: String) = """
                 _links = _links
             )
     }
+    
+    ${if(security.isNotEmpty()) """
+    /** 
+     * Use this enum to retrieve response from security endpoint
+     */
+    enum class SecurityConfig${nameRest.capitalize()} {
+        ${security.join(indent = 2, separator = ",\n") {
+            toDeclaration()
+        }}
+    } 
+    """
+    else ""}
 """.trimIndent()
 
 private fun EnumType.toDeclaration() = """
@@ -226,4 +238,8 @@ private fun Pojo.toDeclaration() = """
             toDeclaration()
         }}
     )
+""".trimIndent()
+
+private fun EntitySecurity.toDeclaration() = """
+   ${method.toUpperCase()}
 """.trimIndent()

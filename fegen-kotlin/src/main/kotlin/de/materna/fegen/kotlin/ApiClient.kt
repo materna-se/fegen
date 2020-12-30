@@ -221,7 +221,20 @@ fun FeGenKotlin.toApiClientKt() = """
         }}
             """
     }}
-
+        ${if(this.security.isNotEmpty())
+        """
+            suspend fun getSecurityConfiguration(): List<SecurityConfig${this.nameRest.capitalize()}> {
+                val url = ""${'"'}/security/${this.nameRest}""${'"'}.appendParams()
+                return requestAdapter.doListRequestSimple(
+                    url = url,
+                    method = "GET",
+                    body = null,
+                    ignoreBasePath = true
+                )
+            }
+        """
+        else ""
+        }
         }
     """.trimIndent()
 }}
