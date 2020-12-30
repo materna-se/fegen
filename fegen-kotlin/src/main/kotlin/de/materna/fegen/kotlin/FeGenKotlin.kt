@@ -42,6 +42,8 @@ class FeGenKotlin(
 
     private val frontendGenDir: File = frontendDir.resolve(this.frontendPkg.replace('.', '/'))
 
+    private val generateSecurity: Boolean = this.feGenConfig.backendGeneratedPath != null
+
     init {
         if (this.frontendPath.contains("\\")) {
             logger.warn("Use \"/\" instead of \"\\\" to maintain platform independence")
@@ -69,11 +71,11 @@ class FeGenKotlin(
     }
 
     override fun generateEntities() {
-        generateFile("Entities.kt", toEntitiesKt())
+        generateFile("Entities.kt", toEntitiesKt(generateSecurity))
     }
 
     override fun generateApiClient() {
-        generateFile("ApiClient.kt", toApiClientKt())
+        generateFile("ApiClient.kt", toApiClientKt(generateSecurity))
         for (customEndpoint in customControllers) {
             CustomControllerGenerator(this, customEndpoint).generate()
         }
@@ -81,8 +83,8 @@ class FeGenKotlin(
 
     override fun generateSecurityController() {
         val path = this.feGenConfig.backendGeneratedPath
-        if (path != null) {
-            val backendDirGen: File = projectDir.resolve(path)
+        if (generateSecurity) {
+            val backendDirGen: File = projectDir.resolve(path!!)
             if (!backendDirGen.isDirectory) {
                 throw IllegalStateException("backendGeneratedPath \"${backendDirGen.absolutePath}\" does not exist")
             }

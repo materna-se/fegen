@@ -24,7 +24,7 @@ package de.materna.fegen.kotlin
 import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.*
 
-fun FeGenKotlin.toEntitiesKt() = """
+fun FeGenKotlin.toEntitiesKt(generateSecurity: Boolean) = """
     package $frontendPkg
 
     import java.time.*
@@ -42,11 +42,11 @@ fun FeGenKotlin.toEntitiesKt() = """
         separator = "\n\n"
 ) {
 
-    toDeclaration(restBasePath) }}
+    toDeclaration(restBasePath, generateSecurity) }}
 """.trimIndent()
 
-private fun DomainType.toDeclaration(restBasePath: String) = when (this) {
-    is EntityType -> toDeclaration(restBasePath)
+private fun DomainType.toDeclaration(restBasePath: String, generateSecurity: Boolean) = when (this) {
+    is EntityType -> toDeclaration(restBasePath, generateSecurity)
     is EmbeddableType -> toDeclaration()
     is ProjectionType -> if (baseProjection) "" else toDeclaration()
     is EnumType -> toDeclaration()
@@ -89,7 +89,7 @@ private fun ProjectionType.toDeclaration() = """
     }
 """.trimIndent()
 
-private fun EntityType.toDeclaration(restBasePath: String) = """
+private fun EntityType.toDeclaration(restBasePath: String, generateSecurity: Boolean) = """
 
     /**
      * This type is used as a basis for the different variants of this domain type. It can be created in the frontend
@@ -193,7 +193,7 @@ private fun EntityType.toDeclaration(restBasePath: String) = """
             )
     }
     
-    ${if(security.isNotEmpty()) """
+    ${if(generateSecurity && security.isNotEmpty()) """
     /** 
      * Use this enum to retrieve response from security endpoint
      */

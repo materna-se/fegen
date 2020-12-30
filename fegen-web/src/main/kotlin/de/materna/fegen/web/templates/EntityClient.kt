@@ -39,7 +39,7 @@ import de.materna.fegen.web.readOrderByParameter
 import de.materna.fegen.web.returnDeclaration
 import org.atteo.evo.inflector.English
 
-fun FeGenWeb.toEntityClientTS() = entityTypes.filter { it.exported }.join(separator = "\n\n") domainType@{
+fun FeGenWeb.toEntityClientTS(generateSecurity: Boolean) = entityTypes.filter { it.exported }.join(separator = "\n\n") domainType@{
     """
 export class $nameClient extends BaseClient<ApiClient, $nameNew, $name> {
 
@@ -59,7 +59,7 @@ export class $nameClient extends BaseClient<ApiClient, $nameNew, $name> {
   ${deleteEntityTemplate(this, restBasePath)}
   ${associationEntityTemplate(this, projectionTypes)}
   ${searchEntityTemplate(this, restBasePath)}
-  ${if(this.security.isNotEmpty()) securityEntityTemplate(this) else ""}
+  ${if(generateSecurity && this.security.isNotEmpty()) securityEntityTemplate(this) else ""}
 }""".trimIndent()
 }
 

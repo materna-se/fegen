@@ -36,7 +36,7 @@ import org.atteo.evo.inflector.English
  * projections or configurations in rest repositories as well as expects the REST API to respect a whole bunch of
  * naming conventions. This will change in future implementations.
  */
-fun FeGenKotlin.toApiClientKt() = """
+fun FeGenKotlin.toApiClientKt(generateSecurity: Boolean) = """
     package $frontendPkg
 
     import java.math.BigDecimal
@@ -221,7 +221,7 @@ fun FeGenKotlin.toApiClientKt() = """
         }}
             """
     }}
-        ${if(this.security.isNotEmpty())
+        ${if(generateSecurity && this.security.isNotEmpty())
         """
             suspend fun getSecurityConfiguration(): List<SecurityConfig${this.nameRest.capitalize()}> {
                 val url = ""${'"'}/security/${this.nameRest}""${'"'}.appendParams()
