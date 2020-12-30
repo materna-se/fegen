@@ -90,7 +90,6 @@ class DomainMgr(
 
         securityMgr.collectConfigFromWebSecurityConfigurerAdapter()
         securityMgr.collectConfigFromCustomControllers()
-        securityMgr.collectConfigFromCustomSearches()
-        securityMgr.collectConfigFromRepositories()
+        securityMgr.collectConfigFromSearches()
     }
 }

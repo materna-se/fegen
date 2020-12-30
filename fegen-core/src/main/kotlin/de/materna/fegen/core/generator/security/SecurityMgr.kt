@@ -275,7 +275,7 @@ class SecurityMgr(feGenConfig: FeGenConfig,
         return annotation.substringAfter('(').substringBefore(')').split(',')
     }
 
-    fun collectConfigFromCustomSearches() {
+    fun collectConfigFromSearches() {
         domainMgr.entityMgr.entities
             .filter { it.searches.isNotEmpty() }
             .forEach { entityType ->
@@ -285,10 +285,6 @@ class SecurityMgr(feGenConfig: FeGenConfig,
                         entityType.security += EntitySecurity(search.name, retrieveRolesFromPreAuthorizeAnnotation(search.preAuth!!))
                 }
             }
-    }
-
-    fun collectConfigFromRepositories() {
-        //TODO("Not yet implemented")
     }
 
     private data class Endpoint(
