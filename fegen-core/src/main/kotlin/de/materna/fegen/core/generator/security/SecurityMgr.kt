@@ -107,7 +107,7 @@ class SecurityMgr(feGenConfig: FeGenConfig,
         try {
             getConfigurerMethod().invoke(getConfigurerAdapterInstance(), httpSecurityMock)
         } catch (e: Exception) {
-            logger.warn("Cannot invoke: configure method threw ${e.message}")
+            logger.warn("SecurityMgr: Cannot invoke: configure method threw ${e.message}")
             val stringWriter = StringWriter()
             e.printStackTrace(PrintWriter(stringWriter))
             logger.debug(stringWriter.toString())
