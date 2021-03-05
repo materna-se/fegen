@@ -37,12 +37,6 @@ internal val EntityType.nameClient
 internal val CustomController.nameClient
     get() = "${name}Client"
 
-internal val ProjectionType.projectionTypeInterfaceName
-    get() = if(baseProjection) "${parentType.name}$name" else name
-
-internal val EntityDTField.declarationDto
-    get() = "${type.nameDto}${if(list) { "[]" } else { "" }}"
-
 internal val DTField.declaration
     get() = "${when(this) {
         is SimpleDTField -> type.declaration
@@ -77,7 +71,7 @@ internal val ComplexType.declaration
     get() = name
 
 internal val ProjectionType.declaration
-    get() = projectionTypeInterfaceName
+    get() = fullProjectionName
 
 internal val Pojo.declaration
     get() = typeName

@@ -27,7 +27,6 @@ import de.materna.fegen.web.FeGenWeb
 import de.materna.fegen.web.nameNew
 import de.materna.fegen.web.nameClient
 import de.materna.fegen.web.nameDto
-import de.materna.fegen.web.projectionTypeInterfaceName
 
 /**
  * Generates the ApiClient class which helps to navigate to the different clients as well as the client classes itself.
@@ -48,7 +47,7 @@ fun FeGenWeb.toApiClientTS(generateSecurity: Boolean) = """
     } from '@materna-se/fegen-runtime';
     import { ${entityTypes.filter { it.exported }.join(separator = ", ") { "$nameNew, $nameDto, $name" }} } from './Entities';
     import { ${enumTypes.join(separator = ", ") { name }} } from './Entities';
-    import { ${projectionTypes.join(separator = ", ") { projectionTypeInterfaceName }} } from './Entities';
+    import { ${projectionTypes.join(separator = ", ") { fullProjectionName }} } from './Entities';
     ${customControllers.join(indent = 1) { "import { $nameClient } from './controller/$nameClient';" }}
     ${if(generateSecurity) securityEnumsImportDeclaration(entityTypes) else ""}
 

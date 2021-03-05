@@ -74,6 +74,7 @@ data class ProjectionType(
         override var name: String,
         val projectionName: String,
         val baseProjection: Boolean,
+        val fullProjectionName: String,
         /**
          * The type this type is a projection of.
          */

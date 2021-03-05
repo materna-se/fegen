@@ -34,7 +34,6 @@ import de.materna.fegen.web.nameNew
 import de.materna.fegen.web.nameClient
 import de.materna.fegen.web.nameDto
 import de.materna.fegen.web.paramDecl
-import de.materna.fegen.web.projectionTypeInterfaceName
 import de.materna.fegen.web.readOrderByParameter
 import de.materna.fegen.web.returnDeclaration
 import org.atteo.evo.inflector.English
@@ -89,12 +88,12 @@ private fun buildEntityTemplate(entityType: EntityType): String {
 private fun readEntityTemplate(entityType: EntityType, projectionTypes: List<ProjectionType>) = """
     ${
     projectionTypes.filter { it.parentType == entityType }.join(separator = "\n\n") {
-        """public async readProjections$projectionTypeInterfaceName(page?: number, size?: number${if (mayHaveSortParameter) readOrderByParameter else ""}) : Promise<PagedItems<$projectionTypeInterfaceName>> {
-        return this.readProjections<$projectionTypeInterfaceName>("$projectionName", page, size${if (mayHaveSortParameter) ", sort" else ""});
+        """public async readProjections$fullProjectionName(page?: number, size?: number${if (mayHaveSortParameter) readOrderByParameter else ""}) : Promise<PagedItems<$fullProjectionName>> {
+        return this.readProjections<$fullProjectionName>("$projectionName", page, size${if (mayHaveSortParameter) ", sort" else ""});
     }
             
-    public async readProjection$projectionTypeInterfaceName(id: number): Promise<$projectionTypeInterfaceName| undefined> {
-        return this.readProjection<$projectionTypeInterfaceName>(id, "$projectionName");
+    public async readProjection$fullProjectionName(id: number): Promise<$fullProjectionName| undefined> {
+        return this.readProjection<$fullProjectionName>(id, "$projectionName");
     }
     """
     }
@@ -135,8 +134,8 @@ private fun associationEntityTemplate(entityType: EntityType, projectionTypes: L
     ${
             projectionTypes.filter { it.parentType == type }.join(indent = 1, separator = "\n\n") {
                 """
-    public async ${this@dtField.readAssociation}Projection$projectionTypeInterfaceName(obj: ${entityType.nameDto}): Promise<${if (this@dtField.list) "$projectionTypeInterfaceName[]" else "$projectionTypeInterfaceName | undefined"}> {
-        return this.${this@dtField.readAssociation}Projection<$projectionTypeInterfaceName>(obj, "$projectionName");
+    public async ${this@dtField.readAssociation}Projection$fullProjectionName(obj: ${entityType.nameDto}): Promise<${if (this@dtField.list) "$fullProjectionName[]" else "$fullProjectionName | undefined"}> {
+        return this.${this@dtField.readAssociation}Projection<$fullProjectionName>(obj, "$projectionName");
     }
     """
             }
