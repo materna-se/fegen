@@ -61,11 +61,11 @@ class FeGenWeb(
     }
 
     override fun generateEntities() {
-        frontendDir.resolve("Entities.ts").writeText(toEntitiesTS())
+        frontendDir.resolve("Entities.ts").writeText(toEntitiesTS(feGenConfig.backendGeneratedPath != null))
     }
 
     override fun generateApiClient() {
-        val templates = listOf(toApiClientTS(), toEntityClientTS())
+        val templates = listOf(toApiClientTS(generateSecurity), toEntityClientTS(generateSecurity))
         frontendDir.resolve("ApiClient.ts").writeText(templates.joinToString(separator = "\n\n"))
         frontendDir.resolve("controller").mkdir()
         for (controller in customControllers) {

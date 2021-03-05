@@ -66,6 +66,8 @@ abstract class FeGen(
     val customEndpoints
         get() = customControllers.flatMap { it.endpoints }
 
+    val generateSecurity = this.feGenConfig.backendGeneratedPath != null
+
     init {
         handleDatesAsString = feGenConfig.datesAsString
     }

@@ -42,8 +42,6 @@ class FeGenKotlin(
 
     private val frontendGenDir: File = frontendDir.resolve(this.frontendPkg.replace('.', '/'))
 
-    private val generateSecurity: Boolean = this.feGenConfig.backendGeneratedPath != null
-
     init {
         if (this.frontendPath.contains("\\")) {
             logger.warn("Use \"/\" instead of \"\\\" to maintain platform independence")
