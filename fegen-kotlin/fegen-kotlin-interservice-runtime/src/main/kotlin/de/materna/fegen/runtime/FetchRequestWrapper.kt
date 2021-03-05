@@ -120,7 +120,7 @@ open class FetchRequestWrapper(
             }
             var pathStart = baseUrl.indexOf("/", domainStart)
             if (pathStart == -1) {
-                pathStart = 0
+                pathStart = baseUrl.length
             }
             baseUrl = baseUrl.substring(0, pathStart)
         }
