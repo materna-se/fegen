@@ -45,7 +45,7 @@ class SecurityMgr(feGenConfig: FeGenConfig,
                   private val logger: FeGenLogger,
                   domainMgr: DomainMgr,
                   private val restBasePath: String
-): BaseMgr(feGenConfig, domainMgr) {
+) : BaseMgr(feGenConfig, domainMgr) {
 
     private val configurerAdapterClasses
         get() = searchForComponentClassesByAnnotation(Configuration::class.java)
@@ -69,10 +69,10 @@ class SecurityMgr(feGenConfig: FeGenConfig,
 
         Mockito.`when`(httpSecurityMock.authorizeRequests()).thenReturn(expressionInterceptUrlRegistryMock) //.authorizeRequests()
 
-        val antMatchersMockFun = { endpoints: List<Endpoint>  ->
+        val antMatchersMockFun = { endpoints: List<Endpoint> ->
             val localAuthorizedUrlMock = Mockito.mock(ExpressionUrlAuthorizationConfigurer.AuthorizedUrl::class.java)
                     as ExpressionUrlAuthorizationConfigurer<HttpSecurity>.AuthorizedUrl
-            Mockito.`when`(localAuthorizedUrlMock.hasRole(ArgumentMatchers.anyString())).then{ hasRoleInvocation -> //.hasRole()
+            Mockito.`when`(localAuthorizedUrlMock.hasRole(ArgumentMatchers.anyString())).then { hasRoleInvocation -> //.hasRole()
                 val hasRoleArgs = hasRoleInvocation.arguments
                 val roles = listOf(hasRoleArgs[0] as String)
                 endpoints.forEach {
@@ -85,12 +85,12 @@ class SecurityMgr(feGenConfig: FeGenConfig,
 
         Mockito.`when`(expressionInterceptUrlRegistryMock.antMatchers(ArgumentMatchers.any(HttpMethod::class.java), ArgumentMatchers.any()))
                 .then { antMatchersInvocation -> // .antMatchers()
-            val antMatchersArgs = antMatchersInvocation.arguments
-            val httpMethod = antMatchersArgs[0] as HttpMethod
-            val patterns = antMatchersArgs.slice(1 until antMatchersArgs.size) as List<String>
-            val endpoints = patterns.map { Endpoint(httpMethod, it) }
-            antMatchersMockFun(endpoints)
-        }
+                    val antMatchersArgs = antMatchersInvocation.arguments
+                    val httpMethod = antMatchersArgs[0] as HttpMethod
+                    val patterns = antMatchersArgs.slice(1 until antMatchersArgs.size) as List<String>
+                    val endpoints = patterns.map { Endpoint(httpMethod, it) }
+                    antMatchersMockFun(endpoints)
+                }
 
         Mockito.`when`(expressionInterceptUrlRegistryMock.antMatchers(ArgumentMatchers.any<String>())).then { antMatchersInvocation -> // .antMatchers()
             val antMatchersArgs = antMatchersInvocation.arguments
@@ -109,18 +109,19 @@ class SecurityMgr(feGenConfig: FeGenConfig,
 
 
         try {
-            getConfigurerMethod().invoke(getConfigurerAdapterInstance(), httpSecurityMock)
+            val configurerMethod = getConfigurerMethod()
+            configurerMethod.invoke(getConfigurerAdapterInstance(), httpSecurityMock)
         } catch (e: Exception) {
-            logger.warn("SecurityMgr: Cannot invoke: configure method threw ${e.message}")
+            logger.warn("FeGen Security: Failed to invoke configuration method: ${e.message}")
             val stringWriter = StringWriter()
             e.printStackTrace(PrintWriter(stringWriter))
-            logger.debug(stringWriter.toString())
+            logger.info(stringWriter.toString())
             return
         }
 
         results.keys.forEach { endpoint ->
             val entityType = retrieveEntityType(endpoint.urlPattern)
-            if(entityType != null) {
+            if (entityType != null) {
                 addEntitySecurityToCorrespondingEntityType(entityType, endpoint)
             }
         }
@@ -128,16 +129,16 @@ class SecurityMgr(feGenConfig: FeGenConfig,
     }
 
     private fun getConfigurerAdapterClass(): Class<*> {
-        if(configurerAdapterClasses.isEmpty()) {
+        if (configurerAdapterClasses.isEmpty()) {
             logger.info("No WebSecurityConfigurerAdapter class found!")
             throw WebSecurityConfigurerAdapterError.NoWebSecurityConfigurerAdapterClassFound()
         }
 
         val configurerAdapterClass = configurerAdapterClasses.singleOrNull()
 
-        if(configurerAdapterClass == null) {
-            logger.warn("Multiple WebSecurityConfigurerAdapter classes found!")
-            logger.warn("Security generation is not supported!")
+        if (configurerAdapterClass == null) {
+            logger.warn("FeGen Security: Multiple WebSecurityConfigurerAdapter classes found!")
+            logger.warn("FeGen Security: Security generation is not supported!")
             throw WebSecurityConfigurerAdapterError.MultipleWebSecurityConfigurerAdapterClassFound()
         }
 
@@ -148,11 +149,11 @@ class SecurityMgr(feGenConfig: FeGenConfig,
 
         val configurerAdapterClass = getConfigurerAdapterClass()
 
-        val constructor = configurerAdapterClass.declaredConstructors.singleOrNull{ it.genericParameterTypes.isEmpty() }
+        val constructor = configurerAdapterClass.declaredConstructors.singleOrNull { it.genericParameterTypes.isEmpty() }
 
-        if(constructor == null) {
-            logger.warn("No default ${configurerAdapterClass.canonicalName} constructor found!")
-            logger.warn("Security generation is not supported!")
+        if (constructor == null) {
+            logger.warn("FeGen Security: No default ${configurerAdapterClass.canonicalName} constructor found!")
+            logger.warn("FeGen Security: Security generation is not supported!")
             throw WebSecurityConfigurerAdapterError.NoDefaultWebSecurityConfigurerAdapterConstructorFound(configurerAdapterClass.canonicalName)
         }
 
@@ -160,10 +161,11 @@ class SecurityMgr(feGenConfig: FeGenConfig,
     }
 
     private fun getConfigurerMethod(): Method {
-        val configureMethod = getConfigurerAdapterClass().declaredMethods
-            .single { method -> method.name == "configure" && method.parameters.map{it.type} == listOf(HttpSecurity::class.java) }
-        configureMethod.isAccessible = true
-        return configureMethod
+        val result = getConfigurerAdapterClass().declaredMethods
+                .singleOrNull { method -> method.name == "configure" && method.parameters.map { it.type } == listOf(HttpSecurity::class.java) }
+                ?: throw WebSecurityConfigurerAdapterError.NoConfigureMethodFound()
+        result.isAccessible = true
+        return result
     }
 
     private fun retrieveEntityType(urlPattern: String): EntityType? {
@@ -179,21 +181,20 @@ class SecurityMgr(feGenConfig: FeGenConfig,
         val httpMethod = endpoint.httpMethod
         val entityTypeProperties = entityType.entityFields.map { it.name }
         // method is not specified, so try to retrieve operation names from the url
-        if(httpMethod != null) {
+        if (httpMethod != null) {
             val pattern = Pattern.compile("[/]?$restBasePath/${entityType.nameRest}[/]?[*]?")
-            if(pattern.matcher(urlPattern).matches()) {
+            if (pattern.matcher(urlPattern).matches()) {
                 val methodNameEnumObject = transformHttpMethodName(httpMethod, entityType.nameRest, urlPattern)
                 entityType.security += EntitySecurity(methodNameEnumObject.value, roles)
             }
             entityTypeProperties.forEach {
                 val entityPropertiesPattern = Pattern.compile("[/]?$restBasePath/${entityType.nameRest}[/][*][/]$it")
-                if(entityPropertiesPattern.matcher(urlPattern).matches()) {
+                if (entityPropertiesPattern.matcher(urlPattern).matches()) {
                     val methodName = transformHttpMethodName(httpMethod, it)
                     entityType.security += EntitySecurity(methodName, roles)
                 }
             }
-        }
-        else {
+        } else {
             val singleRequestPattern = Pattern.compile("[/]?$restBasePath/${entityType.nameRest}[/][*]+")
             val pattern = Pattern.compile("(.+?)${entityType.nameRest}")
             if (singleRequestPattern.matcher(urlPattern).matches()) {
@@ -201,15 +202,15 @@ class SecurityMgr(feGenConfig: FeGenConfig,
                     entityType.security += EntitySecurity(it.value, roles)
                 }
             }
-            if(pattern.matcher(urlPattern).matches()) {
+            if (pattern.matcher(urlPattern).matches()) {
                 mutableListOf(MethodName.CREATE, MethodName.READ_ALL).forEach {
                     entityType.security += EntitySecurity(it.value, roles)
                 }
             }
             entityTypeProperties.forEach {
                 val entityPropertiesPattern = Pattern.compile("[/]?$restBasePath/${entityType.nameRest}[/][*][/]$it")
-                if(entityPropertiesPattern.matcher(urlPattern).matches()) {
-                    listOf("read${it.capitalize()}", "set${it.capitalize()}", "delete${it.capitalize()}").forEach {method ->
+                if (entityPropertiesPattern.matcher(urlPattern).matches()) {
+                    listOf("read${it.capitalize()}", "set${it.capitalize()}", "delete${it.capitalize()}").forEach { method ->
                         entityType.security += EntitySecurity(method, roles)
                     }
                 }
@@ -219,7 +220,7 @@ class SecurityMgr(feGenConfig: FeGenConfig,
 
     private fun transformHttpMethodName(httpMethod: HttpMethod, nameRest: String, url: String): MethodName {
         val singleGetRequestPattern = Pattern.compile("[/]?$restBasePath/$nameRest[/][*]\"")
-        if(singleGetRequestPattern.matcher(url).matches() && httpMethod == HttpMethod.GET) {
+        if (singleGetRequestPattern.matcher(url).matches() && httpMethod == HttpMethod.GET) {
             return MethodName.READ_ONE
         }
         return when (httpMethod) {
@@ -252,9 +253,9 @@ class SecurityMgr(feGenConfig: FeGenConfig,
                 val entityTypeBaseUrlRegExp = "(.+?)/${entityType.nameRest}".toRegex()
                 customController.baseUri!!.matches(entityTypeBaseUrlRegExp)
             }
-            if(entityType != null) {
+            if (entityType != null) {
                 //look at hasRole(...) and hasAnyRole(...) Spring EL expressions
-                if(customController.preAuth != null && customController.preAuth.contains("Role")) {
+                if (customController.preAuth != null && customController.preAuth.contains("Role")) {
                     val roles = retrieveRolesFromPreAuthorizeAnnotation(customController.preAuth)
                     //class level PreAuthorize annotation, expose config for all endpoints
                     customController.endpoints.forEach { endpoint ->
@@ -263,11 +264,11 @@ class SecurityMgr(feGenConfig: FeGenConfig,
                 }
                 //check for method level annotations
                 customController.endpoints
-                    .filter { it.preAuth != null && it.preAuth.contains("Role") }
-                    .forEach{ endpoint ->
-                        val roles = retrieveRolesFromPreAuthorizeAnnotation(endpoint.preAuth!!)
-                        entitySecurity[endpoint.name] = roles
-                    }
+                        .filter { it.preAuth != null && it.preAuth.contains("Role") }
+                        .forEach { endpoint ->
+                            val roles = retrieveRolesFromPreAuthorizeAnnotation(endpoint.preAuth!!)
+                            entitySecurity[endpoint.name] = roles
+                        }
                 entityType.security += entitySecurity.map { EntitySecurity(it.key, it.value) }
             } else {
                 logger.info("Couldn't retrieve entity type for the custom controller ${customController.name} while collecting information for security endpoint")
@@ -281,20 +282,20 @@ class SecurityMgr(feGenConfig: FeGenConfig,
 
     fun collectConfigFromSearches() {
         domainMgr.entityMgr.entities
-            .filter { it.searches.isNotEmpty() }
-            .forEach { entityType ->
-                entityType.searches
-                    .filter { it.preAuth != null && it.preAuth.contains("Role") }
-                    .forEach { search ->
-                        entityType.security += EntitySecurity(search.name, retrieveRolesFromPreAuthorizeAnnotation(search.preAuth!!))
+                .filter { it.searches.isNotEmpty() }
+                .forEach { entityType ->
+                    entityType.searches
+                            .filter { it.preAuth != null && it.preAuth.contains("Role") }
+                            .forEach { search ->
+                                entityType.security += EntitySecurity(search.name, retrieveRolesFromPreAuthorizeAnnotation(search.preAuth!!))
+                            }
                 }
-            }
     }
 
     private data class Endpoint(
-        /** null means any method **/
-        val httpMethod: HttpMethod?,
-        val urlPattern: String
+            /** null means any method **/
+            val httpMethod: HttpMethod?,
+            val urlPattern: String
     )
 
     private enum class MethodName(val value: String) {

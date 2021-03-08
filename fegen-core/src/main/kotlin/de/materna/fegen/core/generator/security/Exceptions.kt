@@ -38,6 +38,11 @@ sealed class WebSecurityConfigurerAdapterError : Exception() {
             get() = "No default $name constructor found!"
     }
 
+    class NoConfigureMethodFound: WebSecurityConfigurerAdapterError() {
+        override val message
+            get() = "No configure method accepting a HttpSecurity parameter found in WebSecurityConfigurerAdapter"
+    }
+
 }
 
 class MethodTransformationException(override val message: String): Exception(message)
