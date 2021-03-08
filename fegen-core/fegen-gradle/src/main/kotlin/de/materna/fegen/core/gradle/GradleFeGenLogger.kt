@@ -25,22 +25,27 @@ import de.materna.fegen.core.log.FeGenLogger
 import org.gradle.api.logging.Logger
 
 class GradleFeGenLogger(
-        private val logger: Logger
-): FeGenLogger() {
+        private val logger: Logger,
+        context: String = "FeGen"
+): FeGenLogger(context) {
 
-    override fun debug(msg: String) {
+    override fun printDebug(msg: String) {
         logger.debug(msg)
     }
 
-    override fun info(msg: String) {
+    override fun printInfo(msg: String) {
         logger.info(msg)
     }
 
-    override fun  warn(msg: String) {
+    override fun printWarn(msg: String) {
         logger.warn(msg)
     }
 
     override fun printError(msg: String) {
         logger.error(msg)
+    }
+
+    override fun withContext(context: String): FeGenLogger {
+        return GradleFeGenLogger(logger, context)
     }
 }

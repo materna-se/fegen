@@ -112,7 +112,7 @@ class SecurityMgr(feGenConfig: FeGenConfig,
             val configurerMethod = getConfigurerMethod()
             configurerMethod.invoke(getConfigurerAdapterInstance(), httpSecurityMock)
         } catch (e: Exception) {
-            logger.warn("FeGen Security: Failed to invoke configuration method: ${e.message}")
+            logger.warn("Failed to invoke configuration method: ${e.message}")
             val stringWriter = StringWriter()
             e.printStackTrace(PrintWriter(stringWriter))
             logger.info(stringWriter.toString())
@@ -137,8 +137,8 @@ class SecurityMgr(feGenConfig: FeGenConfig,
         val configurerAdapterClass = configurerAdapterClasses.singleOrNull()
 
         if (configurerAdapterClass == null) {
-            logger.warn("FeGen Security: Multiple WebSecurityConfigurerAdapter classes found!")
-            logger.warn("FeGen Security: Security generation is not supported!")
+            logger.warn("Multiple WebSecurityConfigurerAdapter classes found!")
+            logger.warn("Security generation is not supported!")
             throw WebSecurityConfigurerAdapterError.MultipleWebSecurityConfigurerAdapterClassFound()
         }
 
@@ -152,8 +152,8 @@ class SecurityMgr(feGenConfig: FeGenConfig,
         val constructor = configurerAdapterClass.declaredConstructors.singleOrNull { it.genericParameterTypes.isEmpty() }
 
         if (constructor == null) {
-            logger.warn("FeGen Security: No default ${configurerAdapterClass.canonicalName} constructor found!")
-            logger.warn("FeGen Security: Security generation is not supported!")
+            logger.warn("No default ${configurerAdapterClass.canonicalName} constructor found!")
+            logger.warn("Security generation is not supported!")
             throw WebSecurityConfigurerAdapterError.NoDefaultWebSecurityConfigurerAdapterConstructorFound(configurerAdapterClass.canonicalName)
         }
 

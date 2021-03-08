@@ -47,23 +47,23 @@ class DomainMgr(
 
     val fieldMgr = FieldMgr(this)
 
-    val entityMgr = EntityMgr(feGenConfig, logger, this)
+    val entityMgr = EntityMgr(feGenConfig, logger.withContext("FeGen EntityMgr"), this)
 
-    val projectionMgr = ProjectionMgr(feGenConfig, logger, entityMgr, this)
+    val projectionMgr = ProjectionMgr(feGenConfig, logger.withContext("FeGen ProjectionMgr"), entityMgr, this)
 
-    val embeddableMgr = EmbeddableMgr(feGenConfig, logger, this)
+    val embeddableMgr = EmbeddableMgr(feGenConfig, logger.withContext("FeGen EmbeddableMgr"), this)
 
     val enumMgr = EnumMgr()
 
-    val pojoMgr = PojoMgr(feGenConfig, logger, this)
+    val pojoMgr = PojoMgr(feGenConfig, logger.withContext("FeGen PojoMgr"), this)
 
-    private val securityMgr = SecurityMgr(feGenConfig, logger, this, restBasePath)
+    private val securityMgr = SecurityMgr(feGenConfig, logger.withContext("FeGen SecurityMgr"), this, restBasePath)
 
-    private val repositorySearchMgr = RepositorySearchMgr(feGenConfig, logger, entityMgr, this)
+    private val repositorySearchMgr = RepositorySearchMgr(feGenConfig, logger.withContext("FeGen RepositorySearchMgr"), entityMgr, this)
 
-    private val customSearchMgr = CustomSearchMgr(feGenConfig, logger, entityMgr, this)
+    private val customSearchMgr = CustomSearchMgr(feGenConfig, logger.withContext("FeGen CustomSearchMgr"), entityMgr, this)
 
-    val customEndpointMgr = CustomEndpointMgr(feGenConfig, logger, entityMgr, this)
+    val customEndpointMgr = CustomEndpointMgr(feGenConfig, logger.withContext("FeGen CustomEndpointMgr"), entityMgr, this)
 
     fun validate() {
         entityMgr.addFields()

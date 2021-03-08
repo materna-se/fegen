@@ -25,21 +25,41 @@ package de.materna.fegen.core.log
  * For logging within FeGen.
  * This is an abstraction for the different logging methods of maven and gradle
  */
-abstract class FeGenLogger {
+abstract class FeGenLogger(
+        private val context: String
+) {
 
   var errorsEncountered: Boolean = false
     private set
 
-  abstract fun debug(msg: String)
+  fun debug(msg: String) {
+    printDebug(prependContext(msg))
+  }
 
-  abstract fun info(msg: String)
+  protected abstract fun printDebug(msg: String)
 
-  abstract fun warn(msg: String)
+  fun info(msg: String) {
+    printInfo(prependContext(msg))
+  }
 
-  protected abstract fun printError(msg: String);
+  protected abstract fun printInfo(msg: String)
+
+  fun warn(msg: String) {
+    printWarn(prependContext(msg))
+  }
+
+  abstract fun printWarn(msg: String)
 
   fun error(msg: String) {
     this.errorsEncountered = true
-    printError(msg)
+    printError(prependContext(msg))
+  }
+
+  protected abstract fun printError(msg: String)
+
+  abstract fun withContext(context: String): FeGenLogger
+
+  private fun prependContext(msg: String): String {
+    return msg.prependIndent("[$context] ")
   }
 }
