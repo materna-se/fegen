@@ -53,6 +53,10 @@ class SecurityMgr(feGenConfig: FeGenConfig,
 
     private val results = mutableMapOf<Endpoint, List<String>>()
 
+    init {
+        ByteBuddyUtil(logger).installAgent()
+    }
+
     @Suppress("UNCHECKED_CAST")
     fun collectConfigFromWebSecurityConfigurerAdapter() {
         val httpSecurityMock = Mockito.mock(HttpSecurity::class.java)
