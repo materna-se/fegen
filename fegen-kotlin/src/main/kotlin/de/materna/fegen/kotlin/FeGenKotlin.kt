@@ -28,11 +28,11 @@ import java.io.File
 
 class FeGenKotlin(
     feGenConfig: FeGenConfig,
-    private val projectDir: File,
+    projectDir: File,
     frontendPath: String?,
     frontendPkg: String?,
     logger: FeGenLogger
-) : FeGen(feGenConfig, logger) {
+) : FeGen(feGenConfig, logger, projectDir) {
 
     private val frontendPath = frontendPath ?: throw IllegalStateException("frontendPath must be specified")
 
@@ -79,16 +79,7 @@ class FeGenKotlin(
         }
     }
 
-    override fun generateSecurityController() {
-        val path = this.feGenConfig.backendGeneratedPath
-        if (generateSecurity) {
-            val backendDirGen: File = projectDir.resolve(path!!)
-            if (!backendDirGen.isDirectory) {
-                throw IllegalStateException("backendGeneratedPath \"${backendDirGen.absolutePath}\" does not exist")
-            }
-            super.generateController(backendDirGen)
-        } else {
-            logger.info("Skipping security feature")
-        }
+    override fun generateSecurityController(backendDirGen: File) {
+        SecurityControllerGen(backendDirGen, entityTypes).generateController()
     }
 }

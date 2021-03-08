@@ -32,7 +32,7 @@ import java.net.URL
 import java.net.URLClassLoader
 
 class DomainMgr(
-        feGenConfig: FeGenConfig,
+        private val feGenConfig: FeGenConfig,
         logger: FeGenLogger,
         restBasePath: String
 ) {

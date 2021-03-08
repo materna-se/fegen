@@ -113,6 +113,7 @@ class SecurityMgr(feGenConfig: FeGenConfig,
             configurerMethod.invoke(getConfigurerAdapterInstance(), httpSecurityMock)
         } catch (e: Exception) {
             logger.warn("Failed to invoke configuration method: ${e.message}")
+            logger.warn("Security features will not be available in the generated code")
             val stringWriter = StringWriter()
             e.printStackTrace(PrintWriter(stringWriter))
             logger.info(stringWriter.toString())
