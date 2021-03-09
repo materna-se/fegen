@@ -29,6 +29,7 @@ import de.materna.fegen.core.generator.DomainMgr
 import de.materna.fegen.core.log.FeGenLogger
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
+import org.mockito.stubbing.Answer
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -38,6 +39,7 @@ import org.springframework.security.config.annotation.web.configurers.Expression
 import org.springframework.security.config.annotation.web.configurers.HttpBasicConfigurer
 import java.io.PrintWriter
 import java.io.StringWriter
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import java.util.regex.Pattern
 
@@ -59,67 +61,57 @@ class SecurityMgr(feGenConfig: FeGenConfig,
 
     @Suppress("UNCHECKED_CAST")
     fun collectConfigFromWebSecurityConfigurerAdapter() {
-        val httpSecurityMock = Mockito.mock(HttpSecurity::class.java)
-        val httpBasicConfigurerMock = Mockito.mock(HttpBasicConfigurer::class.java) as HttpBasicConfigurer<HttpSecurity>
-        val expressionInterceptUrlRegistryMock = Mockito.mock(ExpressionUrlAuthorizationConfigurer.ExpressionInterceptUrlRegistry::class.java)
-                as ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry
-        val authorizedUrlMock = Mockito.mock(ExpressionUrlAuthorizationConfigurer.AuthorizedUrl::class.java)
-                as ExpressionUrlAuthorizationConfigurer<HttpSecurity>.AuthorizedUrl
-        val csrfConfigurerMock = Mockito.mock(CsrfConfigurer::class.java) as CsrfConfigurer<HttpSecurity>
+        val unknownResponse = Answer<Any> { throw WebSecurityConfigurerAdapterError.UnknownMethodCalled(it) }
 
-        Mockito.`when`(httpSecurityMock.authorizeRequests()).thenReturn(expressionInterceptUrlRegistryMock) //.authorizeRequests()
+        val httpSecurityMock = Mockito.mock(HttpSecurity::class.java, unknownResponse)
+        val httpBasicConfigurerMock = Mockito.mock(HttpBasicConfigurer::class.java, unknownResponse) as HttpBasicConfigurer<HttpSecurity>
+        val expressionInterceptUrlRegistryMock = Mockito.mock(ExpressionUrlAuthorizationConfigurer.ExpressionInterceptUrlRegistry::class.java, unknownResponse)
+                as ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry
+        val authorizedUrlMock = Mockito.mock(ExpressionUrlAuthorizationConfigurer.AuthorizedUrl::class.java, unknownResponse)
+                as ExpressionUrlAuthorizationConfigurer<HttpSecurity>.AuthorizedUrl
+        val csrfConfigurerMock = Mockito.mock(CsrfConfigurer::class.java, unknownResponse) as CsrfConfigurer<HttpSecurity>
+
+        Mockito.doReturn(expressionInterceptUrlRegistryMock).`when`(httpSecurityMock).authorizeRequests() //.authorizeRequests()
 
         val antMatchersMockFun = { endpoints: List<Endpoint> ->
-            val localAuthorizedUrlMock = Mockito.mock(ExpressionUrlAuthorizationConfigurer.AuthorizedUrl::class.java)
+            val localAuthorizedUrlMock = Mockito.mock(ExpressionUrlAuthorizationConfigurer.AuthorizedUrl::class.java, unknownResponse)
                     as ExpressionUrlAuthorizationConfigurer<HttpSecurity>.AuthorizedUrl
-            Mockito.`when`(localAuthorizedUrlMock.hasRole(ArgumentMatchers.anyString())).then { hasRoleInvocation -> //.hasRole()
+            Mockito.doAnswer {  hasRoleInvocation -> //.hasRole()
                 val hasRoleArgs = hasRoleInvocation.arguments
                 val roles = listOf(hasRoleArgs[0] as String)
                 endpoints.forEach {
                     results[it] = roles
                 }
                 expressionInterceptUrlRegistryMock
-            }
+            }.`when`(localAuthorizedUrlMock).hasRole(ArgumentMatchers.anyString())
             localAuthorizedUrlMock
         }
 
-        Mockito.`when`(expressionInterceptUrlRegistryMock.antMatchers(ArgumentMatchers.any(HttpMethod::class.java), ArgumentMatchers.any()))
-                .then { antMatchersInvocation -> // .antMatchers()
-                    val antMatchersArgs = antMatchersInvocation.arguments
-                    val httpMethod = antMatchersArgs[0] as HttpMethod
-                    val patterns = antMatchersArgs.slice(1 until antMatchersArgs.size) as List<String>
-                    val endpoints = patterns.map { Endpoint(httpMethod, it) }
-                    antMatchersMockFun(endpoints)
-                }
+        Mockito.doAnswer { antMatchersInvocation -> // .antMatchers()
+            val antMatchersArgs = antMatchersInvocation.arguments
+            val httpMethod = antMatchersArgs[0] as HttpMethod
+            val patterns = antMatchersArgs.slice(1 until antMatchersArgs.size) as List<String>
+            val endpoints = patterns.map { Endpoint(httpMethod, it) }
+            antMatchersMockFun(endpoints)
+        }.`when`(expressionInterceptUrlRegistryMock).antMatchers(ArgumentMatchers.any(HttpMethod::class.java))
 
-        Mockito.`when`(expressionInterceptUrlRegistryMock.antMatchers(ArgumentMatchers.any<String>())).then { antMatchersInvocation -> // .antMatchers()
+        Mockito.doAnswer { antMatchersInvocation -> // .antMatchers()
             val antMatchersArgs = antMatchersInvocation.arguments
             val patterns = antMatchersArgs.toList() as List<String>
             val endpoints = patterns.map { Endpoint(null, it) }
             antMatchersMockFun(endpoints)
-        }
+        }.`when`(expressionInterceptUrlRegistryMock).antMatchers(ArgumentMatchers.any<String>())
 
-        Mockito.`when`(expressionInterceptUrlRegistryMock.anyRequest()).thenReturn(authorizedUrlMock) //anyRequest
-        Mockito.`when`(authorizedUrlMock.authenticated()).thenReturn(expressionInterceptUrlRegistryMock) //authenticated
-        Mockito.`when`(expressionInterceptUrlRegistryMock.and()).thenReturn(httpSecurityMock) //.and()
-        Mockito.`when`(httpSecurityMock.httpBasic()).thenReturn(httpBasicConfigurerMock) //httpBasic()
-        Mockito.`when`(httpBasicConfigurerMock.disable()).thenReturn(httpSecurityMock) //disable()
-        Mockito.`when`(httpBasicConfigurerMock.and()).thenReturn(httpSecurityMock) //.and()
-        Mockito.`when`(httpSecurityMock.csrf()).thenReturn(csrfConfigurerMock) //csrf()
-        Mockito.`when`(csrfConfigurerMock.disable()).thenReturn(httpSecurityMock) //disable()
+        Mockito.doReturn(authorizedUrlMock).`when`(expressionInterceptUrlRegistryMock).anyRequest()
+        Mockito.doReturn(expressionInterceptUrlRegistryMock).`when`(authorizedUrlMock).authenticated()
+        Mockito.doReturn(httpSecurityMock).`when`(expressionInterceptUrlRegistryMock).and()
+        Mockito.doReturn(httpBasicConfigurerMock).`when`(httpSecurityMock).httpBasic()
+        Mockito.doReturn(httpSecurityMock).`when`(httpBasicConfigurerMock).disable()
+        Mockito.doReturn(httpSecurityMock).`when`(httpBasicConfigurerMock).and()
+        Mockito.doReturn(csrfConfigurerMock).`when`(httpSecurityMock).csrf()
+        Mockito.doReturn(httpSecurityMock).`when`(csrfConfigurerMock).disable()
 
-
-        try {
-            val configurerMethod = getConfigurerMethod()
-            configurerMethod.invoke(getConfigurerAdapterInstance(), httpSecurityMock)
-        } catch (e: Exception) {
-            logger.warn("Failed to invoke configuration method: ${e.message}")
-            logger.warn("Security features will not be available in the generated code")
-            val stringWriter = StringWriter()
-            e.printStackTrace(PrintWriter(stringWriter))
-            logger.info(stringWriter.toString())
-            return
-        }
+        callConfigurerMethod(httpSecurityMock)
 
         results.keys.forEach { endpoint ->
             val entityType = retrieveEntityType(endpoint.urlPattern)
@@ -127,7 +119,34 @@ class SecurityMgr(feGenConfig: FeGenConfig,
                 addEntitySecurityToCorrespondingEntityType(entityType, endpoint)
             }
         }
+    }
 
+    private fun callConfigurerMethod(httpSecurityMock: HttpSecurity) {
+        var configurerMethod: Method? = null
+        try {
+            configurerMethod = getConfigurerMethod()
+            configurerMethod.invoke(getConfigurerAdapterInstance(), httpSecurityMock)
+        } catch (e: Exception) {
+            failInvocation(e, configurerMethod)
+            return
+        }
+    }
+
+    private fun failInvocation(exception: Throwable, configurerMethod: Method?) {
+        val relevantEx = if (exception is InvocationTargetException) exception.cause!! else exception
+        logger.warn("Your security configuration is currently not supported by FeGen:")
+        if (configurerMethod != null) {
+            val methodName = "${configurerMethod.declaringClass.canonicalName}::${configurerMethod.name}"
+            logger.warn("Failed to invoke configuration method $methodName:")
+        }
+        logger.warn(relevantEx.message ?: "Exception did not contain a message")
+        logger.warn("Security features will not be available in the generated code")
+        if (relevantEx !is WebSecurityConfigurerAdapterError) {
+            val stringWriter = StringWriter()
+            exception.printStackTrace(PrintWriter(stringWriter))
+            logger.info(stringWriter.toString())
+        }
+        return
     }
 
     private fun getConfigurerAdapterClass(): Class<*> {

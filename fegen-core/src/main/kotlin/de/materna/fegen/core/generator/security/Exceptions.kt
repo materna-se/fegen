@@ -21,7 +21,12 @@
  */
 package de.materna.fegen.core.generator.security
 
+import org.mockito.invocation.InvocationOnMock
+
 sealed class WebSecurityConfigurerAdapterError : Exception() {
+
+    // Make message not nullable
+    abstract override val message: String
 
     class NoWebSecurityConfigurerAdapterClassFound: WebSecurityConfigurerAdapterError() {
         override val message
@@ -41,6 +46,24 @@ sealed class WebSecurityConfigurerAdapterError : Exception() {
     class NoConfigureMethodFound: WebSecurityConfigurerAdapterError() {
         override val message
             get() = "No configure method accepting a HttpSecurity parameter found in WebSecurityConfigurerAdapter"
+    }
+
+    class UnknownMethodCalled(private val invocation: InvocationOnMock) : WebSecurityConfigurerAdapterError() {
+
+        private val declaringClassName
+            get() = invocation.method.declaringClass.simpleName
+
+        private val methodName
+            get() = invocation.method.name
+
+        private val args
+            get() = invocation.arguments.joinToString(", ")
+
+        private val method
+            get() = "$declaringClassName::$methodName($args)"
+
+        override val message
+            get() = "Your WebSecurityConfigurerAdapter::configure method called an unsupported method: $method"
     }
 
 }
