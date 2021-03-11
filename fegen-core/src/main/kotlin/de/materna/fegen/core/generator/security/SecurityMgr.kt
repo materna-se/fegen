@@ -27,16 +27,10 @@ import de.materna.fegen.core.domain.EntityType
 import de.materna.fegen.core.generator.BaseMgr
 import de.materna.fegen.core.generator.DomainMgr
 import de.materna.fegen.core.log.FeGenLogger
-import org.mockito.ArgumentMatchers
-import org.mockito.Mockito
-import org.mockito.stubbing.Answer
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter
-import org.springframework.security.config.annotation.web.configurers.CsrfConfigurer
-import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer
-import org.springframework.security.config.annotation.web.configurers.HttpBasicConfigurer
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.lang.reflect.InvocationTargetException
@@ -53,70 +47,19 @@ class SecurityMgr(feGenConfig: FeGenConfig,
         get() = searchForComponentClassesByAnnotation(Configuration::class.java)
                 .filter { it.superclass == WebSecurityConfigurerAdapter::class.java }
 
-    private val results = mutableMapOf<Endpoint, List<String>>()
-
     init {
         ByteBuddyUtil(logger).installAgent()
     }
 
-    @Suppress("UNCHECKED_CAST")
     fun collectConfigFromWebSecurityConfigurerAdapter() {
-        val unknownResponse = Answer<Any> { throw WebSecurityConfigurerAdapterError.UnknownMethodCalled(it) }
+        val mocker = HttpSecurityMocker()
 
-        val httpSecurityMock = Mockito.mock(HttpSecurity::class.java, unknownResponse)
-        val httpBasicConfigurerMock = Mockito.mock(HttpBasicConfigurer::class.java, unknownResponse) as HttpBasicConfigurer<HttpSecurity>
-        val expressionInterceptUrlRegistryMock = Mockito.mock(ExpressionUrlAuthorizationConfigurer.ExpressionInterceptUrlRegistry::class.java, unknownResponse)
-                as ExpressionUrlAuthorizationConfigurer<HttpSecurity>.ExpressionInterceptUrlRegistry
-        val authorizedUrlMock = Mockito.mock(ExpressionUrlAuthorizationConfigurer.AuthorizedUrl::class.java, unknownResponse)
-                as ExpressionUrlAuthorizationConfigurer<HttpSecurity>.AuthorizedUrl
-        val csrfConfigurerMock = Mockito.mock(CsrfConfigurer::class.java, unknownResponse) as CsrfConfigurer<HttpSecurity>
+        callConfigurerMethod(mocker.httpSecurityMock)
 
-        Mockito.doReturn(expressionInterceptUrlRegistryMock).`when`(httpSecurityMock).authorizeRequests() //.authorizeRequests()
-
-        val antMatchersMockFun = { endpoints: List<Endpoint> ->
-            val localAuthorizedUrlMock = Mockito.mock(ExpressionUrlAuthorizationConfigurer.AuthorizedUrl::class.java, unknownResponse)
-                    as ExpressionUrlAuthorizationConfigurer<HttpSecurity>.AuthorizedUrl
-            Mockito.doAnswer {  hasRoleInvocation -> //.hasRole()
-                val hasRoleArgs = hasRoleInvocation.arguments
-                val roles = listOf(hasRoleArgs[0] as String)
-                endpoints.forEach {
-                    results[it] = roles
-                }
-                expressionInterceptUrlRegistryMock
-            }.`when`(localAuthorizedUrlMock).hasRole(ArgumentMatchers.anyString())
-            localAuthorizedUrlMock
-        }
-
-        Mockito.doAnswer { antMatchersInvocation -> // .antMatchers()
-            val antMatchersArgs = antMatchersInvocation.arguments
-            val httpMethod = antMatchersArgs[0] as HttpMethod
-            val patterns = antMatchersArgs.slice(1 until antMatchersArgs.size) as List<String>
-            val endpoints = patterns.map { Endpoint(httpMethod, it) }
-            antMatchersMockFun(endpoints)
-        }.`when`(expressionInterceptUrlRegistryMock).antMatchers(ArgumentMatchers.any(HttpMethod::class.java))
-
-        Mockito.doAnswer { antMatchersInvocation -> // .antMatchers()
-            val antMatchersArgs = antMatchersInvocation.arguments
-            val patterns = antMatchersArgs.toList() as List<String>
-            val endpoints = patterns.map { Endpoint(null, it) }
-            antMatchersMockFun(endpoints)
-        }.`when`(expressionInterceptUrlRegistryMock).antMatchers(ArgumentMatchers.any<String>())
-
-        Mockito.doReturn(authorizedUrlMock).`when`(expressionInterceptUrlRegistryMock).anyRequest()
-        Mockito.doReturn(expressionInterceptUrlRegistryMock).`when`(authorizedUrlMock).authenticated()
-        Mockito.doReturn(httpSecurityMock).`when`(expressionInterceptUrlRegistryMock).and()
-        Mockito.doReturn(httpBasicConfigurerMock).`when`(httpSecurityMock).httpBasic()
-        Mockito.doReturn(httpSecurityMock).`when`(httpBasicConfigurerMock).disable()
-        Mockito.doReturn(httpSecurityMock).`when`(httpBasicConfigurerMock).and()
-        Mockito.doReturn(csrfConfigurerMock).`when`(httpSecurityMock).csrf()
-        Mockito.doReturn(httpSecurityMock).`when`(csrfConfigurerMock).disable()
-
-        callConfigurerMethod(httpSecurityMock)
-
-        results.keys.forEach { endpoint ->
+        mocker.endpoint2Roles.entries.forEach { (endpoint, roles) ->
             val entityType = retrieveEntityType(endpoint.urlPattern)
             if (entityType != null) {
-                addEntitySecurityToCorrespondingEntityType(entityType, endpoint)
+                addEntitySecurityToCorrespondingEntityType(entityType, endpoint, roles)
             }
         }
     }
@@ -196,8 +139,7 @@ class SecurityMgr(feGenConfig: FeGenConfig,
         }
     }
 
-    private fun addEntitySecurityToCorrespondingEntityType(entityType: EntityType, endpoint: Endpoint) {
-        val roles = results[endpoint]!!
+    private fun addEntitySecurityToCorrespondingEntityType(entityType: EntityType, endpoint: Endpoint, roles: List<String>) {
         val urlPattern = endpoint.urlPattern
         val httpMethod = endpoint.httpMethod
         val entityTypeProperties = entityType.entityFields.map { it.name }
@@ -312,19 +254,4 @@ class SecurityMgr(feGenConfig: FeGenConfig,
                             }
                 }
     }
-
-    private data class Endpoint(
-            /** null means any method **/
-            val httpMethod: HttpMethod?,
-            val urlPattern: String
-    )
-
-    private enum class MethodName(val value: String) {
-        CREATE("create"),
-        UPDATE("update"),
-        DELETE("delete"),
-        READ_ONE("readOne"),
-        READ_ALL("readAll")
-    }
-
 }
