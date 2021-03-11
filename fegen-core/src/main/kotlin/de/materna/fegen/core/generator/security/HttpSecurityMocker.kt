@@ -9,6 +9,10 @@ import org.springframework.security.config.annotation.web.configurers.CsrfConfig
 import org.springframework.security.config.annotation.web.configurers.ExpressionUrlAuthorizationConfigurer
 import org.springframework.security.config.annotation.web.configurers.HttpBasicConfigurer
 
+/**
+ * Contains a mock for HttpSecurity that records calls to antMatchers
+ * to provide a mapping from endpoints to roles that may call theses endpoints
+ */
 class HttpSecurityMocker {
 
     val endpoint2Roles = mutableMapOf<Endpoint, List<String>>()
@@ -51,16 +55,22 @@ class HttpSecurityMocker {
     }
 
     private fun initExpressionInterceptUrlRegistryMock() {
-        Mockito.doAnswer { antMatchersInvocation -> // .antMatchers()
+        Mockito.doAnswer { antMatchersInvocation -> // .antMatchers(HttpMethod)
+            val antMatchersArgs = antMatchersInvocation.arguments
+            val httpMethod = antMatchersArgs[0] as HttpMethod
+            antMatchersMockFun(listOf(Endpoint(httpMethod, "/**")))
+        }.`when`(expressionInterceptUrlRegistryMock).antMatchers(ArgumentMatchers.any(HttpMethod::class.java))
+
+        Mockito.doAnswer { antMatchersInvocation -> // .antMatchers(HttpMethod, patterns...)
             val antMatchersArgs = antMatchersInvocation.arguments
             val httpMethod = antMatchersArgs[0] as HttpMethod
             @Suppress("UNCHECKED_CAST")
             val patterns = antMatchersArgs.slice(1 until antMatchersArgs.size) as List<String>
             val endpoints = patterns.map { Endpoint(httpMethod, it) }
             antMatchersMockFun(endpoints)
-        }.`when`(expressionInterceptUrlRegistryMock).antMatchers(ArgumentMatchers.any(HttpMethod::class.java))
+        }.`when`(expressionInterceptUrlRegistryMock).antMatchers(ArgumentMatchers.any(HttpMethod::class.java), ArgumentMatchers.any<String>())
 
-        Mockito.doAnswer { antMatchersInvocation -> // .antMatchers()
+        Mockito.doAnswer { antMatchersInvocation -> // .antMatchers(patterns...)
             val antMatchersArgs = antMatchersInvocation.arguments
             @Suppress("UNCHECKED_CAST")
             val patterns = antMatchersArgs.toList() as List<String>
