@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.materna.fegen.core.generator.security
+package de.materna.fegen.core.domain
 
 enum class MethodName(val value: String) {
     CREATE("create"),

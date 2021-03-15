@@ -21,6 +21,7 @@
  */
 package de.materna.fegen.core.generator.security
 
+import de.materna.fegen.core.domain.Endpoint
 import org.mockito.ArgumentMatchers
 import org.mockito.Mockito
 import org.mockito.stubbing.Answer
@@ -100,12 +101,13 @@ class HttpSecurityMocker {
         }.`when`(expressionInterceptUrlRegistryMock).antMatchers(ArgumentMatchers.any<String>())
 
         Mockito.doReturn(authorizedUrlMock).`when`(expressionInterceptUrlRegistryMock).anyRequest()
-        Mockito.doReturn(expressionInterceptUrlRegistryMock).`when`(authorizedUrlMock).authenticated()
         Mockito.doReturn(httpSecurityMock).`when`(expressionInterceptUrlRegistryMock).and()
     }
 
     private fun initAuthorizedUrlMock() {
         Mockito.doReturn(expressionInterceptUrlRegistryMock).`when`(authorizedUrlMock).authenticated()
+        Mockito.doReturn(expressionInterceptUrlRegistryMock).`when`(authorizedUrlMock).anonymous()
+        Mockito.doReturn(expressionInterceptUrlRegistryMock).`when`(authorizedUrlMock).permitAll()
     }
 
     private fun initCsrfConfigurerMock() {

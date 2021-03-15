@@ -22,8 +22,10 @@
 package de.materna.fegen.core.generator.security
 
 import de.materna.fegen.core.FeGenConfig
+import de.materna.fegen.core.domain.Endpoint
 import de.materna.fegen.core.domain.EntitySecurity
 import de.materna.fegen.core.domain.EntityType
+import de.materna.fegen.core.domain.MethodName
 import de.materna.fegen.core.generator.BaseMgr
 import de.materna.fegen.core.generator.DomainMgr
 import de.materna.fegen.core.log.FeGenLogger
