@@ -24,6 +24,7 @@ package de.materna.fegen.core
 import de.materna.fegen.core.domain.DomainType
 import de.materna.fegen.core.domain.Pojo
 import de.materna.fegen.core.generator.DomainMgr
+import de.materna.fegen.core.generator.security.SecurityControllerGen
 import de.materna.fegen.core.log.FeGenLogger
 import java.io.File
 import java.io.FileReader
@@ -33,8 +34,7 @@ var handleDatesAsString: Boolean = false
 
 abstract class FeGen(
         val feGenConfig: FeGenConfig,
-        val logger: FeGenLogger,
-        protected val projectDir: File
+        val logger: FeGenLogger
 ) {
 
     val restBasePath = initRestBasePath()
@@ -116,25 +116,16 @@ abstract class FeGen(
 
     abstract fun generateApiClient()
 
-    abstract fun generateSecurityController(backendDirGen: File)
+    abstract fun generateSecurityController()
 
-    private fun generateSecurity() {
-        val path = this.feGenConfig.backendGeneratedPath
-        if (generateSecurity) {
-            val backendDirGen: File = projectDir.resolve(path!!)
-            if (!backendDirGen.isDirectory) {
-                throw IllegalStateException("backendGeneratedPath \"${backendDirGen.absolutePath}\" does not exist")
-            }
-            generateSecurityController(backendDirGen)
-        } else {
-            logger.info("Skipping security feature because backendGeneratedPath was not specified")
-        }
+    fun generateController(dir: File) {
+       SecurityControllerGen(dir, entityTypes).generateController()
     }
 
     fun generate() {
         logConfiguration()
         cleanGenerated()
-        generateSecurity()
+        generateSecurityController()
         generateEntities()
         generateApiClient()
     }

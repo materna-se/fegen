@@ -32,10 +32,10 @@ import java.io.File
 
 class FeGenWeb(
         feGenConfig: FeGenConfig,
-        projectDir: File,
+        private val projectDir: File,
         frontendPath: String?,
         logger: FeGenLogger
-) : FeGen(feGenConfig, logger, projectDir) {
+) : FeGen(feGenConfig, logger) {
 
     private val frontendPath = frontendPath ?: throw IllegalStateException("frontendPath must be specified")
 
@@ -74,7 +74,16 @@ class FeGenWeb(
         }
     }
 
-    override fun generateSecurityController(backendDirGen: File) {
-        logger.warn("Security generation is not yet implemented for web target")
+    override fun generateSecurityController() {
+        val path = this.feGenConfig.backendGeneratedPath
+        if(path != null) {
+            val backendDirGen: File = projectDir.resolve(path)
+            if (!backendDirGen.isDirectory) {
+                throw IllegalStateException("backendGeneratedPath \"${backendDirGen.absolutePath}\" does not exist")
+            }
+            super.generateController(backendDirGen)
+        } else {
+            logger.info("Skipping security feature")
+        }
     }
 }
