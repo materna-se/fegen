@@ -184,7 +184,7 @@ class SecurityMgr(feGenConfig: FeGenConfig,
     }
 
     private fun transformHttpMethodName(httpMethod: HttpMethod, nameRest: String, url: String): MethodName {
-        val singleGetRequestPattern = Pattern.compile("[/]?$restBasePath/$nameRest[/][*]\"")
+        val singleGetRequestPattern = Pattern.compile("[/]?$restBasePath/$nameRest[/][*]")
         if (singleGetRequestPattern.matcher(url).matches() && httpMethod == HttpMethod.GET) {
             return MethodName.READ_ONE
         }
