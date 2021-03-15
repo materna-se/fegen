@@ -65,7 +65,13 @@ class CustomEndpointMgr(
             clazz.declaredMethods
                     .filter { hasRequestMapping(clazz, it) }
                     .sortedBy { it.name }
-                    .mapNotNull { customEndpoint(controller, it) }
+                    .mapNotNull {
+                        try {
+                            customEndpoint(controller, it)
+                        } catch (ex: Exception) {
+                            throw RuntimeException("Failed to process custom endpoint ${clazz.canonicalName}::${it.name}", ex)
+                        }
+                    }
 
     private fun customEndpoint(controller: CustomController, method: Method): CustomEndpoint {
         val (url, endpointMethod) = method.requestMapping!!
