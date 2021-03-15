@@ -67,7 +67,7 @@ abstract class FeGenGradlePlugin<E : FeGenGradlePluginExtension> : Plugin<Projec
                 val targetProject = extension.targetProject ?: p
                 // Make sure the build task is available on the target project
                 targetProject.pluginManager.apply(LifecycleBasePlugin::class.java)
-                task.dependsOn(targetProject.tasks.named("build"))
+                task.dependsOn(targetProject.tasks.named("assemble"))
             }
 
             task.doLast {
