@@ -154,6 +154,8 @@ class CustomControllerGenerator(
     private fun returnDeclarationSingle(type: Type): TypeName {
         return if (type is ProjectionType && type.baseProjection) {
             ClassName(feGenKotlin.frontendPkg, type.parentTypeName)
+        } else if (type is SimpleType) {
+            type.kotlinType
         } else {
             ClassName(feGenKotlin.frontendPkg, type.name)
         }
@@ -190,39 +192,39 @@ class CustomControllerGenerator(
 
     private fun listRequest(endpoint: CustomEndpoint): CodeBlock {
         val returnType = returnDeclarationSingle(endpoint.returnValue!!.type)
-        val dtoType = ClassName(feGenKotlin.frontendPkg, (endpoint.returnValue!!.type as ComplexType).nameDto)
-        val typeReference = ClassName("com.fasterxml.jackson.core.type", "TypeReference")
-        val apiHateoasList = ClassName("de.materna.fegen.runtime", "ApiHateoasList")
-        val paramsEntityReturnValue = listOfNotNull(
+
+        return if (endpoint.returnValue!!.type.isPlain) {
+            buildMethodBody(endpoint, returnType)
+        } else {
+            val dtoType = ClassName(feGenKotlin.frontendPkg, (endpoint.returnValue!!.type as ComplexType).nameDto)
+            val typeReference = ClassName("com.fasterxml.jackson.core.type", "TypeReference")
+            val apiHateoasList = ClassName("de.materna.fegen.runtime", "ApiHateoasList")
+            val paramsEntityReturnValue = listOfNotNull(
                 CodeBlock.of("url = url"),
                 CodeBlock.of("method = %S", endpoint.method),
                 if (endpoint.body != null) CodeBlock.of("body = body") else null,
                 CodeBlock.of("embeddedPropName = %S", (endpoint.returnValue!!.type as? EntityType)?.nameRest ?: ""),
                 CodeBlock.of("ignoreBasePath = true"),
                 CodeBlock.of("type = object : %T<%T<%T, %T>>() {}", typeReference, apiHateoasList, dtoType, returnType)
-        )
-
-        return if (endpoint.returnValue!!.type is Pojo) {
-            buildMethodBody(endpoint, returnType)
-        } else {
+            )
             "return requestAdapter.doListRequest(%C)".formatCode(paramsEntityReturnValue.joinCode())
         }
     }
 
     private fun singleRequest(endpoint: CustomEndpoint): CodeBlock {
         val returnType = returnDeclarationSingle(endpoint.returnValue!!.type)
-        val dtoType = ClassName(feGenKotlin.frontendPkg, (endpoint.returnValue!!.type as ComplexType).nameDto)
         val bodyType = endpoint.body?.type?.let { paramDeclaration(it) }
-        val typeParams = listOfNotNull(returnType, dtoType, bodyType)
         val params = listOfNotNull(
                 CodeBlock.of("url = url"),
                 CodeBlock.of("method = %S", endpoint.method),
                 if (endpoint.body != null) CodeBlock.of("body = body") else null,
                 CodeBlock.of("ignoreBasePath = true")
         )
-        return if (endpoint.returnValue!!.type is Pojo) {
+        return if (endpoint.returnValue!!.type.isPlain) {
             "return requestAdapter.doSingleRequestWithoutReturnValueTransformation<%C>(%C)".formatCode(listOfNotNull(bodyType, returnType).joinToCode(), params.joinCode())
         } else {
+            val dtoType = ClassName(feGenKotlin.frontendPkg, (endpoint.returnValue!!.type as ComplexType).nameDto)
+            val typeParams = listOfNotNull(returnType, dtoType, bodyType)
             "return requestAdapter.doSingleRequest<%C>(%C)".formatCode(typeParams.joinToCode(), params.joinCode())
         }
     }

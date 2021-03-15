@@ -64,11 +64,17 @@ data class EntityType(
         var searches: List<Search> = emptyList(),
         var exported: Boolean = true,
         var security: List<EntitySecurity> = emptyList()
-): ComplexType()
+): ComplexType() {
+    override val isPlain: Boolean
+        get() = false
+}
 
 data class EmbeddableType(
         override var name: String
-): ComplexType()
+): ComplexType() {
+    override val isPlain: Boolean
+        get() = false
+}
 
 data class ProjectionType(
         override var name: String,
@@ -80,6 +86,9 @@ data class ProjectionType(
          */
         val parentType: EntityType
 ): ComplexType() {
+
+    override val isPlain: Boolean
+        get() = false
 
     /**
      * This is for spEL fueled fields in projections. It does not contain
@@ -138,11 +147,17 @@ data class ProjectionType(
 data class EnumType(
         override var name: String,
         val constants: List<String>
-): DomainType(), ValueType
+): DomainType(), ValueType {
+    override val isPlain: Boolean
+        get() = true
+}
 
 data class Pojo(override val name: String, val typeName: String): ComplexType() {
     override fun toString(): String {
         return "Pojo(name=$name, typeName=$typeName, fields=$fields"
     }
+
+    override val isPlain: Boolean
+        get() = true
 }
 

@@ -21,12 +21,20 @@
  */
 package de.materna.fegen.core.domain
 
+import com.fasterxml.jackson.databind.node.BooleanNode
+import com.fasterxml.jackson.databind.node.NumericNode
+import com.fasterxml.jackson.databind.node.TextNode
 import java.math.BigDecimal
 import java.net.URI
 import java.time.*
 
 interface Type {
     val name: String
+
+    /**
+     * Whether this is a simple type, an enum or a pojo.
+     */
+    val isPlain: Boolean
 }
 
 interface ValueType: Type
@@ -49,7 +57,12 @@ enum class SimpleType: ValueType {
                 OffsetDateTime::class.java -> OFFSET_DATETIME
                 Duration::class.java -> DURATION
                 String::class.java, URI::class.java -> STRING
+                NumericNode::class.java -> DOUBLE
+                BooleanNode::class.java -> BOOLEAN
+                TextNode::class.java -> STRING
                 else -> null
             }
     }
+
+    override val isPlain = true
 }

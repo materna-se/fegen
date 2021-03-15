@@ -26,6 +26,7 @@ import de.materna.fegen.core.domain.ComplexType
 import de.materna.fegen.core.domain.EntityType
 import de.materna.fegen.core.domain.Pojo
 import de.materna.fegen.core.join
+import de.materna.fegen.web.declaration
 import de.materna.fegen.web.nameNew
 import de.materna.fegen.web.parameter
 import de.materna.fegen.web.readOrderByParameter
@@ -83,7 +84,11 @@ class CustomControllerGenerator(
 
     private fun collectTypeImports(): Set<String> {
         return customController.endpoints
-                .map { listOfNotNull(it.returnValue?.type?.name, collectTypeImportFromBody(it)) }
+                .map {
+                    val returnType = it.returnValue?.type
+                    val returnImport = if (returnType != null && returnType !is SimpleType) returnType.name else null
+                    listOfNotNull(returnImport, collectTypeImportFromBody(it))
+                }
                 .flatten()
                 .toSet()
     }
@@ -124,8 +129,8 @@ class CustomControllerGenerator(
             ${
             if (returnValue != null) """
             ${
-            if (returnValue.type is Pojo && returnValue.multiplicity == RestMultiplicity.LIST) """
-            return (await response.json()) as ${returnValue.type.name}[];
+            if (returnValue.type.isPlain) """
+            return (await response.json()) as ${clientMethodReturnType(endpoint)};
             """
             else """
             const responseObj = (await response.json()) as ${responseType(returnValue.multiplicity, returnValue.type.name)};
@@ -140,10 +145,10 @@ class CustomControllerGenerator(
 
 private fun clientMethodReturnType(endpoint: CustomEndpoint): String {
     val returnValue = endpoint.returnValue ?: return "void"
-    val singleType = returnValue.type.name
-    val endpointMultiplicity = endpoint.returnValue?.multiplicity
+    val returnType = returnValue.type
+    val singleType = if (returnType is SimpleType) returnType.declaration else returnType.name
+    val endpointMultiplicity = returnValue.multiplicity
     return when  {
-        endpointMultiplicity == null -> "void"
         endpointMultiplicity == RestMultiplicity.LIST && returnValue.type is Pojo -> "$singleType[]"
         endpointMultiplicity == RestMultiplicity.LIST  -> "Items<$singleType>"
         endpointMultiplicity == RestMultiplicity.PAGED -> "PagedItems<$singleType>"

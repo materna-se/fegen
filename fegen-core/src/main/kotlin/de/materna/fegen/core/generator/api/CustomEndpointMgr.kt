@@ -146,8 +146,9 @@ class CustomEndpointMgr(
                     throw CustomEndpointReturnTypeError.NoResponseEntity(methodReturnType)
                 }
                 when (val responseType = methodReturnType.actualTypeArguments.first()) {
+                    String::class.java -> throw CustomEndpointReturnTypeError.StringReturned()
                     is Class<*> -> resolveSimpleReturnType(responseType)
-                    is ParameterizedType -> resolveEntityReturnType(responseType)
+                    is ParameterizedType -> resolveParameterizedReturnType(responseType)
                     else -> throw CustomEndpointReturnTypeError.UnknownResponseEntityContent(responseType)
                 }
             }
@@ -160,7 +161,7 @@ class CustomEndpointMgr(
         return ReturnValue(simpleType, RestMultiplicity.SINGLE)
     }
 
-    private fun resolveEntityReturnType(type: ParameterizedType): ReturnValue {
+    private fun resolveParameterizedReturnType(type: ParameterizedType): ReturnValue {
         val multiplicity = when  {
             type.rawType == PagedModel::class.java -> RestMultiplicity.PAGED
             type.rawType == CollectionModel::class.java || java.lang.Iterable::class.java.isAssignableFrom(type.rawType as Class<*>) -> RestMultiplicity.LIST
@@ -171,7 +172,8 @@ class CustomEndpointMgr(
         if (entityClass !is Class<*>) {
             throw CustomEndpointReturnTypeError.NotEntity(entityClass)
         }
-        val entityType = if(entityClass.isEntity) {
+        val simpleType = SimpleType.fromType(entityClass)
+        val entityType = simpleType ?: if (entityClass.isEntity) {
             entityMgr.class2Entity[entityClass]
         } else {
             domainMgr.pojoMgr.resolvePojo(entityClass)
@@ -194,6 +196,11 @@ class CustomEndpointMgr(
         class NotEntity(private val clazz: Type) : CustomEndpointReturnTypeError() {
             override val message
                 get() = "Only entities may be returned from custom endpoints. ${clazz.typeName} is not an entity"
+        }
+
+        class StringReturned : CustomEndpointReturnTypeError() {
+            override val message
+                get() = "String may not be returned from custom endpoints, since it is returned plain by default and not as a JSON string. Use TextNode instead"
         }
     }
 

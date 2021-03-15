@@ -21,8 +21,14 @@
  */
 package de.materna.fegen.kotlin
 
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.asTypeName
 import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.*
+import java.math.BigDecimal
+import java.time.*
+import java.util.*
 
 
 internal val EntityType.nameBase
@@ -83,20 +89,27 @@ internal val DTField.baseDeclaration
         is PojoDTField -> type.declaration
     }}${if (list) ">" else ""}"
 
+val string = ClassName("kotlin", "String")
+
+internal val SimpleType.kotlinType
+    get(): TypeName = when (this) {
+        SimpleType.STRING -> string
+        SimpleType.BOOLEAN -> Boolean::class.java.asTypeName()
+        SimpleType.DATE -> if (handleDatesAsString) string else LocalDate::class.java.asTypeName()
+        SimpleType.DATETIME -> if (handleDatesAsString) string else LocalDateTime::class.java.asTypeName()
+        SimpleType.ZONED_DATETIME -> if (handleDatesAsString) string else ZonedDateTime::class.java.asTypeName()
+        SimpleType.OFFSET_DATETIME -> if (handleDatesAsString) string else OffsetDateTime::class.java.asTypeName()
+        SimpleType.DURATION -> if (handleDatesAsString) string else Duration::class.java.asTypeName()
+        SimpleType.LONG -> Long::class.java.asTypeName()
+        SimpleType.INTEGER -> Int::class.java.asTypeName()
+        SimpleType.DOUBLE -> Double::class.java.asTypeName()
+        SimpleType.BIGDECIMAL -> BigDecimal::class.java.asTypeName()
+        SimpleType.UUID -> UUID::class.java.asTypeName()
+    }
+
 internal val SimpleType.declaration
-    get() = when (this) {
-        SimpleType.STRING -> "String"
-        SimpleType.BOOLEAN -> "Boolean"
-        SimpleType.DATE -> if (handleDatesAsString) "String" else "LocalDate"
-        SimpleType.DATETIME -> if (handleDatesAsString) "String" else "LocalDateTime"
-        SimpleType.ZONED_DATETIME -> if (handleDatesAsString) "String" else "ZonedDateTime"
-        SimpleType.OFFSET_DATETIME -> if (handleDatesAsString) "String" else "OffsetDateTime"
-        SimpleType.DURATION -> if (handleDatesAsString) "String" else "Duration"
-        SimpleType.LONG -> "Long"
-        SimpleType.INTEGER -> "Int"
-        SimpleType.DOUBLE -> "Double"
-        SimpleType.BIGDECIMAL -> "BigDecimal"
-        SimpleType.UUID -> "UUID"
+    get() = kotlinType.let {
+        if (it is ClassName) it.simpleName else it.toString()
     }
 
 internal val EnumType.declaration
