@@ -27,6 +27,7 @@ import de.materna.fegen.core.generator.DomainMgr
 import de.materna.fegen.core.generator.FieldMgr
 import de.materna.fegen.core.generator.types.EntityMgr
 import de.materna.fegen.core.log.FeGenLogger
+import de.materna.fegen.util.spring.annotation.FegenIgnore
 import org.springframework.hateoas.CollectionModel
 import org.springframework.hateoas.EntityModel
 import org.springframework.hateoas.PagedModel
@@ -48,6 +49,7 @@ class CustomEndpointMgr(
 
     val controllers by lazy {
         searchForComponentClassesByAnnotation(RestController::class.java)
+                .filter { it.getAnnotation(FegenIgnore::class.java) == null }
                 .map { createCustomController(it) }
     }
 
@@ -63,7 +65,7 @@ class CustomEndpointMgr(
 
     private fun controllerMethods(clazz: Class<*>, controller: CustomController) =
             clazz.declaredMethods
-                    .filter { hasRequestMapping(clazz, it) }
+                    .filter { isCustomControllerMethod(clazz, it) }
                     .sortedBy { it.name }
                     .mapNotNull {
                         try {
@@ -111,13 +113,13 @@ class CustomEndpointMgr(
         )
     }
 
-    private fun hasRequestMapping(controller: Class<*>, method: Method): Boolean =
-            try {
-                method.requestMapping != null
-            } catch (e: Exception) {
-                logger.warn("Method ${controller.canonicalName}::${method.name} will be ignored: ${e.message}")
-                false
-            }
+    private fun isCustomControllerMethod(controller: Class<*>, method: Method): Boolean =
+        try {
+            method.getAnnotation(FegenIgnore::class.java) == null && method.requestMapping != null
+        } catch (e: Exception) {
+            logger.warn("Method ${controller.canonicalName}::${method.name} will be ignored: ${e.message}")
+            false
+        }
 
     fun warnIfNoCustomControllers() {
         if (controllers.isEmpty()) {

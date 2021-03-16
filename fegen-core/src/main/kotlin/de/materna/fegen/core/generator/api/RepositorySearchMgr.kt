@@ -28,6 +28,7 @@ import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.generator.DomainMgr
 import de.materna.fegen.core.generator.FieldMgr
 import de.materna.fegen.core.generator.types.EntityMgr
+import de.materna.fegen.util.spring.annotation.FegenIgnore
 import org.springframework.data.domain.Pageable
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import org.springframework.data.rest.core.annotation.RestResource
@@ -43,6 +44,7 @@ class RepositorySearchMgr(
 
     private val entity2Repository by lazy {
         searchForClasses(feGenConfig.repositoryPkg, RepositoryRestResource::class.java)
+                .filter { it.getAnnotation(FegenIgnore::class.java) == null }
                 .associateBy { it.repositoryType }
     }
 
@@ -54,6 +56,7 @@ class RepositorySearchMgr(
 
     private fun methodsInRepo(repo: Class<*>) =
             repo.declaredMethods
+                    .filter { it.getAnnotation(FegenIgnore::class.java) == null }
                     .filter { isMethodExported(it) }
                     .filter { isSearchMethod(it) }
                     .filter { hasOnlySupportedParameters(repo, it) }
