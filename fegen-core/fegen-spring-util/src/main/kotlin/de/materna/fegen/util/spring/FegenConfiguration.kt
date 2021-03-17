@@ -19,7 +19,11 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.materna.fegen.util.spring.annotation
+package de.materna.fegen.util.spring
 
-@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-annotation class FegenIgnore
+import org.springframework.context.annotation.ComponentScan
+import org.springframework.context.annotation.Configuration
+
+@Configuration
+@ComponentScan
+open class FegenConfiguration

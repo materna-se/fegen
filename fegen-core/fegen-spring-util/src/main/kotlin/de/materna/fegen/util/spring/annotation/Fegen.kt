@@ -21,5 +21,14 @@
  */
 package de.materna.fegen.util.spring.annotation
 
-@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-annotation class FegenIgnore
+import de.materna.fegen.util.spring.FegenConfiguration
+import org.springframework.context.annotation.Import
+
+/**
+ * Use this annotation on the same class as SpringBootApplication to improve support for code generated with FeGen.
+ * In particular, this enables the FeGen security meta controller that can be used to query data about which
+ * operations are allowed to be called on entities and which endpoints may be called.
+ */
+@Target(AnnotationTarget.CLASS)
+@Import(FegenConfiguration::class)
+annotation class Fegen
