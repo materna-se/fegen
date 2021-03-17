@@ -26,15 +26,13 @@ import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.generator.api.CustomEndpointMgr
 import de.materna.fegen.core.generator.api.CustomSearchMgr
 import de.materna.fegen.core.generator.api.RepositorySearchMgr
-import de.materna.fegen.core.generator.security.SecurityMgr
 import de.materna.fegen.core.generator.types.*
 import java.net.URL
 import java.net.URLClassLoader
 
 class DomainMgr(
         feGenConfig: FeGenConfig,
-        logger: FeGenLogger,
-        restBasePath: String
+        logger: FeGenLogger
 ) {
 
     val classLoader by lazy {
@@ -56,8 +54,6 @@ class DomainMgr(
     val enumMgr = EnumMgr()
 
     val pojoMgr = PojoMgr(feGenConfig, logger.withContext("FeGen PojoMgr"), this)
-
-    private val securityMgr = SecurityMgr(feGenConfig, logger.withContext("FeGen SecurityMgr"), this, restBasePath)
 
     private val repositorySearchMgr = RepositorySearchMgr(feGenConfig, logger.withContext("FeGen RepositorySearchMgr"), entityMgr, this)
 
@@ -87,9 +83,5 @@ class DomainMgr(
 
         customEndpointMgr.warnIfNoCustomControllers()
         customEndpointMgr.warnIfNoControllerMethods()
-
-        securityMgr.collectConfigFromWebSecurityConfigurerAdapter()
-        securityMgr.collectConfigFromCustomControllers()
-        securityMgr.collectConfigFromSearches()
     }
 }

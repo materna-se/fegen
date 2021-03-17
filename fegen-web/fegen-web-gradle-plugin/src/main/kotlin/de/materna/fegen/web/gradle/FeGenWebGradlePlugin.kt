@@ -48,8 +48,7 @@ open class FeGenWebGradlePlugin : FeGenGradlePlugin<FeGenWebGradlePluginExtensio
                 classpath,
                 extension.scanPkg,
                 extension.entityPkg,
-                extension.repositoryPkg,
-                extension.backendGeneratedPath
+                extension.repositoryPkg
         )
 
         return FeGenWeb(

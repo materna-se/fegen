@@ -29,8 +29,7 @@ data class Search(
         val list: Boolean,
         val paging: Boolean,
         val returnType: EntityType,
-        val inRepo: Boolean,
-        val preAuth: String?
+        val inRepo: Boolean
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

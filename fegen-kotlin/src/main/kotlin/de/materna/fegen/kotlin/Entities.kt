@@ -24,7 +24,7 @@ package de.materna.fegen.kotlin
 import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.*
 
-fun FeGenKotlin.toEntitiesKt(generateSecurity: Boolean) = """
+fun FeGenKotlin.toEntitiesKt() = """
     package $frontendPkg
 
     import java.time.*
@@ -42,11 +42,11 @@ fun FeGenKotlin.toEntitiesKt(generateSecurity: Boolean) = """
         separator = "\n\n"
 ) {
 
-    toDeclaration(restBasePath, generateSecurity) }}
+    toDeclaration(restBasePath) }}
 """.trimIndent()
 
-private fun DomainType.toDeclaration(restBasePath: String, generateSecurity: Boolean) = when (this) {
-    is EntityType -> toDeclaration(restBasePath, generateSecurity)
+private fun DomainType.toDeclaration(restBasePath: String) = when (this) {
+    is EntityType -> toDeclaration(restBasePath)
     is EmbeddableType -> toDeclaration()
     is ProjectionType -> if (baseProjection) "" else toDeclaration()
     is EnumType -> toDeclaration()
@@ -89,7 +89,7 @@ private fun ProjectionType.toDeclaration() = """
     }
 """.trimIndent()
 
-private fun EntityType.toDeclaration(restBasePath: String, generateSecurity: Boolean) = """
+private fun EntityType.toDeclaration(restBasePath: String) = """
 
     /**
      * This type is used as a basis for the different variants of this domain type. It can be created in the frontend
@@ -193,17 +193,6 @@ private fun EntityType.toDeclaration(restBasePath: String, generateSecurity: Boo
             )
     }
     
-    ${if(generateSecurity && security.isNotEmpty()) """
-    /** 
-     * Use this enum to retrieve response from security endpoint
-     */
-    enum class SecurityConfig${nameRest.capitalize()} {
-        ${security.join(indent = 2, separator = ",\n") {
-            toDeclaration()
-        }}
-    } 
-    """
-    else ""}
 """.trimIndent()
 
 private fun EnumType.toDeclaration() = """
@@ -238,8 +227,4 @@ private fun Pojo.toDeclaration() = """
             toDeclaration()
         }}
     )
-""".trimIndent()
-
-private fun EntitySecurity.toDeclaration() = """
-   ${method.toUpperCase()}
 """.trimIndent()

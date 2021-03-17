@@ -30,7 +30,6 @@ import de.materna.fegen.core.generator.types.EntityMgr
 import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.util.spring.annotation.FegenIgnore
 import org.springframework.data.rest.webmvc.BasePathAwareController
-import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import java.lang.reflect.Method
@@ -100,7 +99,6 @@ class CustomSearchMgr(
 
     fun addSearchesToEntities() {
         for ((controller, searches) in controller2Searches) {
-            val preAuthorizeClassLevel = controller.getAnnotation(PreAuthorize::class.java)?.value
             for (search in searches) {
                 val requestMapping = search.getAnnotation(RequestMapping::class.java) ?: break
 
@@ -128,8 +126,7 @@ class CustomSearchMgr(
                                 ) as ValueDTField // TODO split typeToDTReference into two parts in order to omit cast...
                             }.toList(),
                             returnType = domainType,
-                            inRepo = false,
-                            preAuth = search.getAnnotation(PreAuthorize::class.java)?.value ?: preAuthorizeClassLevel
+                            inRepo = false
                         )
             }
         }

@@ -28,7 +28,7 @@ import java.io.File
 
 class FeGenKotlin(
     feGenConfig: FeGenConfig,
-    private val projectDir: File,
+    projectDir: File,
     frontendPath: String?,
     frontendPkg: String?,
     logger: FeGenLogger
@@ -69,26 +69,13 @@ class FeGenKotlin(
     }
 
     override fun generateEntities() {
-        generateFile("Entities.kt", toEntitiesKt(generateSecurity))
+        generateFile("Entities.kt", toEntitiesKt())
     }
 
     override fun generateApiClient() {
-        generateFile("ApiClient.kt", toApiClientKt(generateSecurity))
+        generateFile("ApiClient.kt", toApiClientKt())
         for (customEndpoint in customControllers) {
             CustomControllerGenerator(this, customEndpoint).generate()
-        }
-    }
-
-    override fun generateSecurityController() {
-        val path = this.feGenConfig.backendGeneratedPath
-        if (generateSecurity) {
-            val backendDirGen: File = projectDir.resolve(path!!)
-            if (!backendDirGen.isDirectory) {
-                throw IllegalStateException("backendGeneratedPath \"${backendDirGen.absolutePath}\" does not exist")
-            }
-            super.generateController(backendDirGen)
-        } else {
-            logger.info("Skipping security feature")
         }
     }
 }

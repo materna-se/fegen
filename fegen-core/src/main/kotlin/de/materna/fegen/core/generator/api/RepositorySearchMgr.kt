@@ -32,7 +32,6 @@ import de.materna.fegen.util.spring.annotation.FegenIgnore
 import org.springframework.data.domain.Pageable
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import org.springframework.data.rest.core.annotation.RestResource
-import org.springframework.security.access.prepost.PreAuthorize
 import java.lang.reflect.Method
 
 class RepositorySearchMgr(
@@ -103,7 +102,6 @@ class RepositorySearchMgr(
 
     fun addSearchesToEntities() {
         for ((repository, searches) in repository2Searches) {
-            val preAuthorizeClassLevel = repository.getAnnotation(PreAuthorize::class.java)?.value
             for (search in searches) {
                 val resultType = search.declaringClass.repositoryType
                 val domainType = entityMgr.class2Entity[resultType]
@@ -123,8 +121,7 @@ class RepositorySearchMgr(
                                             ) as ValueDTField
                                         }.toList(),
                                 returnType = domainType,
-                                inRepo = true,
-                                preAuth = search.getAnnotation(PreAuthorize::class.java)?.value ?: preAuthorizeClassLevel
+                                inRepo = true
                         )
             }
         }

@@ -24,7 +24,6 @@ package de.materna.fegen.core
 import de.materna.fegen.core.domain.DomainType
 import de.materna.fegen.core.domain.Pojo
 import de.materna.fegen.core.generator.DomainMgr
-import de.materna.fegen.core.generator.security.SecurityControllerGen
 import de.materna.fegen.core.log.FeGenLogger
 import java.io.File
 import java.io.FileReader
@@ -66,8 +65,6 @@ abstract class FeGen(
     val customEndpoints
         get() = customControllers.flatMap { it.endpoints }
 
-    val generateSecurity = this.feGenConfig.backendGeneratedPath != null
-
     init {
         handleDatesAsString = feGenConfig.datesAsString
     }
@@ -102,7 +99,7 @@ abstract class FeGen(
     }
 
     private fun initDomainMgr(): DomainMgr {
-        val result = DomainMgr(feGenConfig, logger, restBasePath)
+        val result = DomainMgr(feGenConfig, logger)
         result.validate()
         return result
     }
@@ -116,16 +113,9 @@ abstract class FeGen(
 
     abstract fun generateApiClient()
 
-    abstract fun generateSecurityController()
-
-    fun generateController(dir: File) {
-       SecurityControllerGen(dir, entityTypes).generateController()
-    }
-
     fun generate() {
         logConfiguration()
         cleanGenerated()
-        generateSecurityController()
         generateEntities()
         generateApiClient()
     }

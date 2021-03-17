@@ -38,7 +38,6 @@ open class FeGenGradlePluginExtension {
     var frontendPath: String? = null
     var datesAsString: Boolean = false
     var implicitNullable: DiagnosticsLevel = DiagnosticsLevel.ERROR
-    var backendGeneratedPath: String? = null
 }
 
 abstract class FeGenGradlePlugin<E : FeGenGradlePluginExtension> : Plugin<Project> {

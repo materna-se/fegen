@@ -62,8 +62,7 @@ sealed class ComplexType: DomainType() {
 data class EntityType(
         override var name: String,
         var searches: List<Search> = emptyList(),
-        var exported: Boolean = true,
-        var security: List<EntitySecurity> = emptyList()
+        var exported: Boolean = true
 ): ComplexType() {
     override val isPlain: Boolean
         get() = false

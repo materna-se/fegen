@@ -32,7 +32,7 @@ import java.io.File
 
 class FeGenWeb(
         feGenConfig: FeGenConfig,
-        private val projectDir: File,
+        projectDir: File,
         frontendPath: String?,
         logger: FeGenLogger
 ) : FeGen(feGenConfig, logger) {
@@ -61,29 +61,16 @@ class FeGenWeb(
     }
 
     override fun generateEntities() {
-        frontendDir.resolve("Entities.ts").writeText(toEntitiesTS(feGenConfig.backendGeneratedPath != null))
+        frontendDir.resolve("Entities.ts").writeText(toEntitiesTS())
     }
 
     override fun generateApiClient() {
-        val templates = listOf(toApiClientTS(generateSecurity), toEntityClientTS(generateSecurity))
+        val templates = listOf(toApiClientTS(), toEntityClientTS())
         frontendDir.resolve("ApiClient.ts").writeText(templates.joinToString(separator = "\n\n"))
         frontendDir.resolve("controller").mkdir()
         for (controller in customControllers) {
             val generator = CustomControllerGenerator(controller)
             frontendDir.resolve("controller/${generator.clientName}.ts").writeText(generator.generateContent())
-        }
-    }
-
-    override fun generateSecurityController() {
-        val path = this.feGenConfig.backendGeneratedPath
-        if(path != null) {
-            val backendDirGen: File = projectDir.resolve(path)
-            if (!backendDirGen.isDirectory) {
-                throw IllegalStateException("backendGeneratedPath \"${backendDirGen.absolutePath}\" does not exist")
-            }
-            super.generateController(backendDirGen)
-        } else {
-            logger.info("Skipping security feature")
         }
     }
 }

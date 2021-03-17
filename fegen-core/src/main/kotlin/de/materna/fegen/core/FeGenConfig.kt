@@ -35,8 +35,7 @@ open class FeGenConfig(
         val classpath: List<File>,
         scanPkg: String?,
         entityPkg: String?,
-        repositoryPkg: String?,
-        val backendGeneratedPath: String?
+        repositoryPkg: String?
 ) {
     val datesAsString: Boolean = datesAsString ?: false
     val implicitNullable: DiagnosticsLevel = implicitNullable ?: DiagnosticsLevel.ERROR
