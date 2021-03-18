@@ -21,7 +21,6 @@
  */
 package de.materna.fegen.web.templates
 
-import de.materna.fegen.core.domain.EntityType
 import de.materna.fegen.core.join
 import de.materna.fegen.web.FeGenWeb
 import de.materna.fegen.web.nameNew
@@ -43,7 +42,7 @@ fun FeGenWeb.toApiClientTS() = """
     import {
         BaseClient, RequestAdapter,
         ApiHateoasObjectBase, ApiHateoasObjectReadMultiple, Items, PagedItems, ApiNavigationLinks,
-        apiHelper, stringHelper, Dto, Entity
+        apiHelper, stringHelper, Dto, Entity, EntitySecurity
     } from '@materna-se/fegen-runtime';
     import { ${entityTypes.filter { it.exported }.join(separator = ", ") { "$nameNew, $nameDto, $name" }} } from './Entities';
     import { ${enumTypes.join(separator = ", ") { name }} } from './Entities';

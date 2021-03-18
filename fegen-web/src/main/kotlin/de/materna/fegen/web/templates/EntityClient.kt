@@ -56,6 +56,7 @@ export class $nameClient extends BaseClient<ApiClient, $nameNew, $name> {
   ${plainObjTemplate(this)}
   ${readEntityTemplate(this, projectionTypes)}
   ${deleteEntityTemplate(this, restBasePath)}
+  ${allowedMethodsTemplate(this, restBasePath)}
   ${associationEntityTemplate(this, projectionTypes)}
   ${searchEntityTemplate(this, restBasePath)}
 }""".trimIndent()
@@ -121,6 +122,12 @@ private fun deleteEntityTemplate(entityType: EntityType, restBasePath: String) =
     }""".trimIndent()
     }
 }"""
+
+private fun allowedMethodsTemplate(entityType: EntityType, restBasePath: String): String = """
+    public allowedMethods(): Promise<EntitySecurity> {
+        return EntitySecurity.fetch(this._requestAdapter.getRequest(), "/${entityType.uriREST(restBasePath)}");
+    }
+"""
 
 private fun associationEntityTemplate(entityType: EntityType, projectionTypes: List<ProjectionType>) = """
     ${
