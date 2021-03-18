@@ -148,6 +148,8 @@ fun FeGenKotlin.toApiClientKt() = """
             suspend fun delete(obj: $name) = requestAdapter.deleteObject(obj)
 
             suspend fun delete(id: Long) = requestAdapter.deleteObject(id, "${uriREST(restBasePath)}")
+            
+            suspend fun allowedMethods(): EntitySecurity = EntitySecurity.fetch(requestAdapter.request, "/${uriREST(restBasePath)}")
 
 
             ${entityFields.join(indent = 3, separator = "\n\n") dtField@{
@@ -260,6 +262,8 @@ fun FeGenKotlin.toApiClientKt() = """
 
             fun delete(id: Long) =
                 runBlocking { client.delete(id) }
+                
+            fun allowedMethods() = runBlocking { client.allowedMethods() }
 
 
             ${entityFields.join(indent = 3, separator = "\n\n") dtField@{
