@@ -215,10 +215,14 @@ fun FeGenKotlin.toApiClientKt() = """
             ${searches.join(indent = 3, separator = "\n\n") search@{
         """
                 ${buildFunction(restBasePath = restBasePath).doIndent(4)}
+                
+                ${buildIsAllowedFunction(restBasePath = restBasePath).doIndent(4)}
 
                 ${projectionTypes.filter { !it.baseProjection }.filter { it.parentType == this@domainType }.join(indent = 4, separator = "\n\n") {
             """
                     ${buildFunction(projection = this, restBasePath = restBasePath).doIndent(5)}
+                    
+                    ${buildIsAllowedFunction(projection = this, restBasePath = restBasePath).doIndent(5)}
                 """
         }}
             """
@@ -302,10 +306,14 @@ fun FeGenKotlin.toApiClientKt() = """
             ${searches.join(indent = 3, separator = "\n\n") search@{
         """
                 ${buildBlockingFunction().doIndent(4)}
+                
+                ${buildBlockingIsAllowedFunction().doIndent(4)}
 
                 ${projectionTypes.filter { !it.baseProjection }.filter { it.parentType == this@domainType }.join(indent = 4, separator = "\n\n") {
             """
                     ${buildBlockingFunction(projection = this).doIndent(5)}
+                    
+                    ${buildBlockingIsAllowedFunction(projection = this).doIndent(5)}
                 """
         }}
             """
@@ -356,6 +364,12 @@ if (paging) """
     }
 """.trimIndent()
 
+private fun Search.buildIsAllowedFunction(projection: ProjectionType? = null, restBasePath: String) = """
+    suspend fun isSearch${name.capitalize()}${projection?.projectionTypeInterfaceName ?: ""}Allowed(): Boolean {
+        return isEndpointCallAllowed(requestAdapter.request, "GET", "/$restBasePath/$path")
+    }
+""".trimIndent()
+
 private fun Search.buildBlockingFunction(projection: ProjectionType? = null) = """
     fun search${name.capitalize()}${projection?.projectionTypeInterfaceName
         ?: ""}(${parameters.paramDecl}${if (parameters.isEmpty() || !paging) "" else ", "}${
@@ -367,6 +381,12 @@ if (paging) """
 if (paging) """
                 page, size, sort
             """.doIndent(2) else ""}) }
+""".trimIndent()
+
+private fun Search.buildBlockingIsAllowedFunction(projection: ProjectionType? = null) = """
+    suspend fun isSearch${name.capitalize()}${projection?.projectionTypeInterfaceName ?: ""}Allowed(): Boolean {
+        return runBlocking { client.isSearch${name.capitalize()}${projection?.projectionTypeInterfaceName ?: ""}Allowed() }
+    }
 """.trimIndent()
 
 private val Search.path
