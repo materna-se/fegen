@@ -231,6 +231,10 @@ private fun searchEntityTemplate(entityType: EntityType, restBasePath: String) =
         const responseObj = ((await response.json()) as $responseType);
         
         $responseHandling
+    }
+    
+    public async isSearch${name.capitalize()}Allowed(): Promise<boolean> {
+        return isEndpointCallAllowed(this._requestAdapter.getRequest(), "GET", "/$restBasePath/$path");
     }""".trimIndent()
     }.trimIndent()
 }"""

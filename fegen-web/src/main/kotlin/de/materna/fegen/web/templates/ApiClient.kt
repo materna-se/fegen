@@ -42,7 +42,7 @@ fun FeGenWeb.toApiClientTS() = """
     import {
         BaseClient, RequestAdapter,
         ApiHateoasObjectBase, ApiHateoasObjectReadMultiple, Items, PagedItems, ApiNavigationLinks,
-        apiHelper, stringHelper, Dto, Entity, EntitySecurity
+        apiHelper, stringHelper, Dto, Entity, EntitySecurity, isEndpointCallAllowed
     } from '@materna-se/fegen-runtime';
     import { ${entityTypes.filter { it.exported }.join(separator = ", ") { "$nameNew, $nameDto, $name" }} } from './Entities';
     import { ${enumTypes.join(separator = ", ") { name }} } from './Entities';

@@ -40,6 +40,7 @@ import {FetchRequestWrapper} from "./api/FetchRequestWrapperReactNative"
 import ITokenAuthenticationHelper from "./api/ITokenAuthenticationHelper";
 import RequestAdapter from "./api/RequestAdapter";
 import EntitySecurity from "./api/EntitySecurity";
+import { isEndpointCallAllowed } from "./api/EndpointSecurity";
 
 export {
     stringHelper,
@@ -60,5 +61,6 @@ export {
     RequestAdapter,
     Dto,
     Entity,
-    EntitySecurity
+    EntitySecurity,
+    isEndpointCallAllowed
 };
