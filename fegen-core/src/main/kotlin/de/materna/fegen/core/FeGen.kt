@@ -85,7 +85,8 @@ abstract class FeGen(
             }
         }
         // since Spring Boot 2.x spring.data.rest.base-path (not spring.data.rest.basePath) is used
-        return properties.getProperty("spring.data.rest.base-path") ?: ""
+        val property = properties.getProperty("spring.data.rest.base-path") ?: ""
+        return property.removePrefix("/").removeSuffix("/")
     }
 
     protected open fun logConfiguration() {

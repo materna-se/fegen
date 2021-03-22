@@ -366,7 +366,7 @@ if (paging) """
 
 private fun Search.buildIsAllowedFunction(projection: ProjectionType? = null, restBasePath: String) = """
     suspend fun isSearch${name.capitalize()}${projection?.projectionTypeInterfaceName ?: ""}Allowed(): Boolean {
-        return isEndpointCallAllowed(requestAdapter.request, "GET", "/$restBasePath/$path")
+        return isEndpointCallAllowed(requestAdapter.request, "/$restBasePath", "GET", "/$restBasePath/$path")
     }
 """.trimIndent()
 

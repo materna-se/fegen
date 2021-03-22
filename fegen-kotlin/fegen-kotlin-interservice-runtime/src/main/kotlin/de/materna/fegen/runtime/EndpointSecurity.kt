@@ -24,8 +24,8 @@ package de.materna.fegen.runtime
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 
-suspend fun isEndpointCallAllowed(fetchRequest: FetchRequest, method: String, path: String): Boolean {
-    val url = "/api/fegen/security/isAllowed?method=$method&path=$path"
+suspend fun isEndpointCallAllowed(fetchRequest: FetchRequest, basePath: String, method: String, path: String): Boolean {
+    val url = "$basePath/fegen/security/isAllowed?method=$method&path=$path"
     try {
         val response = fetchRequest.get(url)
         if (!response.isSuccessful) {
