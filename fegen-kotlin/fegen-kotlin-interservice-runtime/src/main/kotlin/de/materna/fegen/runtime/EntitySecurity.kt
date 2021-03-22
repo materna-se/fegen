@@ -35,9 +35,9 @@ data class EntitySecurity(
 
         private val objectMapper = ObjectMapper()
 
-        suspend fun fetch(fetchRequest: FetchRequest, entityPath: String): EntitySecurity {
-            val generalSecurity = fetchAllowedMethods(fetchRequest, entityPath)
-            val specificSecurity = fetchAllowedMethods(fetchRequest, "$entityPath/1")
+        suspend fun fetch(fetchRequest: FetchRequest, basePath: String, entityPath: String): EntitySecurity {
+            val generalSecurity = fetchAllowedMethods(fetchRequest, basePath, entityPath)
+            val specificSecurity = fetchAllowedMethods(fetchRequest, basePath, "$entityPath/1")
 
             return EntitySecurity(
                 readOne = specificSecurity.contains("GET"),
@@ -48,8 +48,8 @@ data class EntitySecurity(
             )
         }
 
-        private suspend fun fetchAllowedMethods(fetchRequest: FetchRequest, path: String): List<String> {
-            val url = "/api/fegen/security/allowedMethods?path=$path"
+        private suspend fun fetchAllowedMethods(fetchRequest: FetchRequest, basePath: String, path: String): List<String> {
+            val url = "$basePath/fegen/security/allowedMethods?path=$path"
             try {
                 val response = fetchRequest.get(url)
                 if (!response.isSuccessful) {
