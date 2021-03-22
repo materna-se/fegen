@@ -62,8 +62,26 @@ class CustomControllerGenerator(
         return TypeSpec.classBuilder(clientName)
                 .primaryConstructor(constructor)
                 .addProperty(requestAdapterProperty)
-                .addFunctions(controller.endpoints.map { method(it) })
+                .addFunctions(controller.endpoints.flatMap { endpointMethods(it) })
                 .build()
+    }
+
+    private fun endpointMethods(endpoint: CustomEndpoint): List<FunSpec> {
+        return listOf(method(endpoint), isAllowedMethod(endpoint))
+    }
+
+    private fun isAllowedMethod(endpoint: CustomEndpoint): FunSpec {
+        val name = "is${endpoint.name.capitalize()}Allowed"
+        val path = "${endpoint.parentController.baseUri}/${uriPatternString(endpoint)}"
+        val isEndpointCallAllowed = MemberName("de.materna.fegen.runtime", "isEndpointCallAllowed")
+        return FunSpec.builder(name)
+            .addModifiers(KModifier.SUSPEND)
+            .addParameters(endpoint.pathVariables.map { parameter(it) })
+            .addAnnotation(AnnotationSpec.Companion.builder(Suppress::class).addMember("%S", "UNUSED").build())
+            .returns(Boolean::class)
+            .addStatement("val url = %P", path)
+            .addStatement("return %M(requestAdapter.request, %S, url)", isEndpointCallAllowed, endpoint.method)
+            .build()
     }
 
     private fun method(endpoint: CustomEndpoint): FunSpec =
