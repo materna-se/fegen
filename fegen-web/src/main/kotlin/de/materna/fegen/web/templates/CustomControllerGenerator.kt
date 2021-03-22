@@ -27,13 +27,15 @@ import de.materna.fegen.core.domain.ComplexType
 import de.materna.fegen.core.domain.EntityType
 import de.materna.fegen.core.domain.Pojo
 import de.materna.fegen.core.join
+import de.materna.fegen.web.*
 import de.materna.fegen.web.declaration
 import de.materna.fegen.web.nameNew
 import de.materna.fegen.web.parameter
 import de.materna.fegen.web.readOrderByParameter
 
 class CustomControllerGenerator(
-        private val customController: CustomController
+        private val customController: CustomController,
+        private val feGenWeb: FeGenWeb
 ) {
 
     val clientName = "${customController.name}Client"
@@ -112,7 +114,7 @@ class CustomControllerGenerator(
         return """
             public is${name}Allowed($paramDecl): Promise<boolean> {
                 const url = `${endpoint.parentController.baseUri}/${endpoint.uriPatternString}`;
-                return isEndpointCallAllowed(this.requestAdapter.getRequest(), "${endpoint.method}", url);
+                return isEndpointCallAllowed(this.requestAdapter.getRequest(), "/${feGenWeb.restBasePath}", "${endpoint.method}", url);
             }
         """.trimIndent()
     }

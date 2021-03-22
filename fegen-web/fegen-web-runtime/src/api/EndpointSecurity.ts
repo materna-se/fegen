@@ -22,8 +22,8 @@
 import {FetchRequest} from "./FetchAdapter";
 
 
-export const isEndpointCallAllowed = async (fetchRequest: FetchRequest, method: string, path: string): Promise<boolean> => {
-    const url = `/api/fegen/security/isAllowed?method=${method}&path=${path}`;
+export const isEndpointCallAllowed = async (fetchRequest: FetchRequest, basePath: string, method: string, path: string): Promise<boolean> => {
+    const url = `${basePath}/fegen/security/isAllowed?method=${method}&path=${path}`;
     let response;
     try {
         response = await fetchRequest.get(url);

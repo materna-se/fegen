@@ -234,7 +234,7 @@ private fun searchEntityTemplate(entityType: EntityType, restBasePath: String) =
     }
     
     public async isSearch${name.capitalize()}Allowed(): Promise<boolean> {
-        return isEndpointCallAllowed(this._requestAdapter.getRequest(), "GET", "/$restBasePath/$path");
+        return isEndpointCallAllowed(this._requestAdapter.getRequest(), "/$restBasePath", "GET", "/$restBasePath/$path");
     }""".trimIndent()
     }.trimIndent()
 }"""

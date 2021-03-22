@@ -69,7 +69,7 @@ class FeGenWeb(
         frontendDir.resolve("ApiClient.ts").writeText(templates.joinToString(separator = "\n\n"))
         frontendDir.resolve("controller").mkdir()
         for (controller in customControllers) {
-            val generator = CustomControllerGenerator(controller)
+            val generator = CustomControllerGenerator(controller, this)
             frontendDir.resolve("controller/${generator.clientName}.ts").writeText(generator.generateContent())
         }
     }
