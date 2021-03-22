@@ -32,9 +32,9 @@ export default class EntitySecurity {
         readonly remove: boolean
     ) {}
 
-    static async fetch(fetchRequest: FetchRequest, entityPath: string): Promise<EntitySecurity> {
-        const generalSecurity = await this.fetchAllowedMethods(fetchRequest, entityPath);
-        const specificSecurity = await this.fetchAllowedMethods(fetchRequest, `${entityPath}/1`);
+    static async fetch(fetchRequest: FetchRequest, basePath: string, entityPath: string): Promise<EntitySecurity> {
+        const generalSecurity = await this.fetchAllowedMethods(fetchRequest, basePath, entityPath);
+        const specificSecurity = await this.fetchAllowedMethods(fetchRequest, basePath, `${entityPath}/1`);
 
         return new EntitySecurity(
             specificSecurity.indexOf("GET") !== -1,
@@ -45,8 +45,8 @@ export default class EntitySecurity {
         )
     }
 
-    private static async fetchAllowedMethods(fetchRequest: FetchRequest, path: string): Promise<string[]> {
-        const url = `/api/fegen/security/allowedMethods?path=${path}`;
+    private static async fetchAllowedMethods(fetchRequest: FetchRequest, basePath: string, path: string): Promise<string[]> {
+        const url = `${basePath}/fegen/security/allowedMethods?path=${path}`;
         let response;
         try {
             response = await fetchRequest.get(url);
