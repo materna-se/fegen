@@ -21,6 +21,7 @@
  */
 package de.materna.fegen.web.templates
 
+import de.materna.fegen.core.doIndent
 import de.materna.fegen.core.domain.*
 import de.materna.fegen.core.domain.ComplexType
 import de.materna.fegen.core.domain.EntityType
@@ -38,7 +39,7 @@ class CustomControllerGenerator(
     val clientName = "${customController.name}Client"
 
     fun generateContent(): String {
-        val endpointMethods = customController.endpoints.join(indent = 4, separator = "\n\n") { method(this) }
+        val endpointMethods = customController.endpoints.join(separator = "\n\n") { endpointMethods(this) }
         val typeImports = collectTypeImports()
         val runtimeImports = collectRuntimeImports()
         val imports = buildImports(listOf(
@@ -46,7 +47,7 @@ class CustomControllerGenerator(
                 runtimeImports to "@materna-se/fegen-runtime"
         ))
         return """
-            $imports
+            ${imports.doIndent(3)}
             
             export class $clientName {
             
@@ -58,7 +59,7 @@ class CustomControllerGenerator(
                     }
                 }
                 
-                $endpointMethods
+                ${endpointMethods.doIndent(4)}
             }
         """.trimIndent()
     }
@@ -66,7 +67,7 @@ class CustomControllerGenerator(
     private fun buildImports(imports: List<Pair<Set<String>, String>>) =
             imports
                     .filter { it.first.isNotEmpty() }
-                    .join(3) { "import {${first.joinToString(", ")}} from \"${second}\";" }
+                    .join { "import {${first.joinToString(", ")}} from \"${second}\";" }
 
     private fun collectRuntimeImports(): Set<String> {
         val returnsLists = customController.endpoints.any { it.returnValue?.multiplicity == RestMultiplicity.LIST }
@@ -74,6 +75,7 @@ class CustomControllerGenerator(
         return listOfNotNull(
                 "RequestAdapter",
                 "stringHelper",
+                "isEndpointCallAllowed",
                 if (returnsLists) "Items" else null,
                 if (returnsLists) "ApiHateoasObjectBase" else null,
                 if (returnsLists || returnsPaged) "apiHelper" else null,
@@ -95,6 +97,24 @@ class CustomControllerGenerator(
 
     private fun collectTypeImportFromBody(endpoint: CustomEndpoint): String? {
         return if(endpoint.body?.type as? EntityType != null) (endpoint.body?.type as? EntityType)?.nameNew else (endpoint.body?.type as? Pojo)?.typeName
+    }
+
+    private fun endpointMethods(endpoint: CustomEndpoint): String {
+        val method = method(endpoint)
+        val isAllowedMethod = isAllowedMethod(endpoint)
+
+        return "$method\n\n$isAllowedMethod"
+    }
+
+    private fun isAllowedMethod(endpoint: CustomEndpoint): String {
+        val name = endpoint.name.capitalize()
+        val paramDecl = endpoint.pathVariables.join(separator = ", ") { parameter() }
+        return """
+            public is${name}Allowed($paramDecl): Promise<boolean> {
+                const url = `${endpoint.parentController.baseUri}/${endpoint.uriPatternString}`;
+                return isEndpointCallAllowed(this.requestAdapter.getRequest(), "${endpoint.method}", url);
+            }
+        """.trimIndent()
     }
 
     private fun method(endpoint: CustomEndpoint): String {
@@ -134,7 +154,7 @@ class CustomControllerGenerator(
             """
             else """
             const responseObj = (await response.json()) as ${responseType(returnValue.multiplicity, returnValue.type.name)};
-            ${responseHandling(returnValue.multiplicity, (returnValue.type as ComplexType).nameRest)}
+            ${responseHandling(returnValue.multiplicity, (returnValue.type as ComplexType).nameRest).doIndent(3)}
             """
             }
             """ else ""

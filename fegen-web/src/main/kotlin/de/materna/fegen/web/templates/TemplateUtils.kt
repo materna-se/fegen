@@ -83,16 +83,16 @@ fun responseHandling(multiplicity: RestMultiplicity, nameRest: String): String {
   val paging = multiplicity == RestMultiplicity.PAGED
   return if (multiplicity != RestMultiplicity.SINGLE) {
     """
-            const elements = ((responseObj._embedded && responseObj._embedded.${nameRest}) || []).map(item => (apiHelper.injectIds(item)));
-        
-            return {
-                items: elements,
-                _links: responseObj._links${if (paging) "\n, page: responseObj.page" else ""}
-            };
-        """.doIndent(2)
+      const elements = ((responseObj._embedded && responseObj._embedded.${nameRest}) || []).map(item => (apiHelper.injectIds(item)));
+  
+      return {
+          items: elements,
+          _links: responseObj._links${if (paging) ",\n          page: responseObj.page" else ""}
+      };
+    """.trimIndent()
   } else {
     """
-            return responseObj;
-        """.doIndent(2)
+      return responseObj;
+    """.trimIndent()
   }
 }
