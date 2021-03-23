@@ -26,7 +26,9 @@ import de.materna.fegen.core.domain.Search
 import de.materna.fegen.core.domain.ValueDTField
 import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.generator.DomainMgr
+import de.materna.fegen.core.generator.FieldMgr
 import de.materna.fegen.core.generator.types.EntityMgr
+import de.materna.fegen.util.spring.annotation.FegenIgnore
 import org.springframework.data.domain.Pageable
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import org.springframework.data.rest.core.annotation.RestResource
@@ -39,21 +41,28 @@ class RepositorySearchMgr(
         domainMgr: DomainMgr
 ) : ApiMgr(feGenConfig, domainMgr) {
 
-    private val repository2Searches by lazy {
+    private val entity2Repository by lazy {
         searchForClasses(feGenConfig.repositoryPkg, RepositoryRestResource::class.java)
-                .filter { isRepositorySearchExported(it) }
+                .filter { it.getAnnotation(FegenIgnore::class.java) == null }
+                .associateBy { it.repositoryType }
+    }
+
+    private val repository2Searches by lazy {
+        entity2Repository.values
+                .filter { isRepositoryExported(it) }
                 .associateWith { methodsInRepo(it) }
     }
 
     private fun methodsInRepo(repo: Class<*>) =
             repo.declaredMethods
+                    .filter { it.getAnnotation(FegenIgnore::class.java) == null }
                     .filter { isMethodExported(it) }
                     .filter { isSearchMethod(it) }
                     .filter { hasOnlySupportedParameters(repo, it) }
                     .sortedBy { it.name }
 
-    private fun isRepositorySearchExported(projectionClass: Class<*>) =
-            projectionClass.getAnnotation(RepositoryRestResource::class.java).exported
+    private fun isRepositoryExported(repoClass: Class<*>) =
+            repoClass.getAnnotation(RepositoryRestResource::class.java).exported
 
     private fun isMethodExported(method: Method) =
             method.getAnnotation(RestResource::class.java)?.exported ?: true
@@ -106,14 +115,23 @@ class RepositorySearchMgr(
                                         .filter { p -> !Pageable::class.java.isAssignableFrom(p.type) }
                                         .map { p ->
                                             domainMgr.fieldMgr.dtFieldFromType(
-                                                    className = repository.canonicalName,
                                                     name = p.nameREST,
-                                                    type = p.type
+                                                    type = p.type,
+                                                    context = FieldMgr.ParameterContext(search)
                                             ) as ValueDTField
                                         }.toList(),
                                 returnType = domainType,
                                 inRepo = true
                         )
+            }
+        }
+    }
+
+    fun markEntitiesNotExported() {
+        for ((entityClass, repository) in entity2Repository) {
+            if (!isRepositoryExported(repository)) {
+                val entity = entityMgr.class2Entity[entityClass]!!
+                entity.exported = false
             }
         }
     }

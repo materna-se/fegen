@@ -25,10 +25,12 @@ import com.fasterxml.classmate.members.ResolvedField
 import com.fasterxml.classmate.members.ResolvedMethod
 import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.*
+import de.materna.fegen.core.domain.ComplexType
 import de.materna.fegen.core.log.DiagnosticsLevel
 import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.generator.BaseMgr
 import de.materna.fegen.core.generator.DomainMgr
+import de.materna.fegen.core.generator.FieldMgr
 
 abstract class ComplexTypeMgr(
         feGenConfig: FeGenConfig,
@@ -36,19 +38,19 @@ abstract class ComplexTypeMgr(
         domainMgr: DomainMgr
 ): BaseMgr(feGenConfig, domainMgr) {
 
-    private fun candidateFields(clazz: Class<*>): List<ResolvedMethod> =
-        clazz.getters.filter { m ->
-            val field = m.field
-            if (field == null) {
-                true
-            } else {
-                if (field.notIgnored && m.notIgnored) {
+    fun candidateFields(clazz: Class<*>): List<ResolvedMethod> =
+            clazz.getters.filter { m ->
+                val field = m.field
+                if (field == null) {
                     true
                 } else {
-                    field.setter?.writable ?: false
+                    if (field.notIgnored && m.notIgnored) {
+                        true
+                    } else {
+                        field.setter?.writable ?: false
+                    }
                 }
             }
-        }
 
     private fun justSettable(method: ResolvedMethod, field: ResolvedField?): Boolean {
         if (field == null) {
@@ -104,12 +106,12 @@ abstract class ComplexTypeMgr(
         val justSettable = justSettable(method, field)
 
         return domainMgr.fieldMgr.dtFieldFromType(
-                owningClass.canonicalName,
                 name,
                 type,
                 list = false,
                 optional = field?.optional ?: parentField?.optional ?: false,
-                justSettable = justSettable
+                justSettable = justSettable,
+                context = FieldMgr.FieldContext(owningClass)
         )
     }
 

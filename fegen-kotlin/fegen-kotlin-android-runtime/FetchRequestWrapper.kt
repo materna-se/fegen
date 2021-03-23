@@ -45,12 +45,9 @@ data class BadStatusCodeException(
 class FetchRequestWrapper(
         private val baseUrl: String? = null,
         private val authHelper: ITokenAuthenticationHelper? = null,
-        private val context: Context? = null
+        private val context: Context? = null,
+        override val client: OkHttpClient = OkHttpClient.Builder().readTimeout(180, TimeUnit.SECONDS).build()
 ): FetchRequest {
-
-    private val client by lazy {
-        OkHttpClient.Builder().readTimeout(180, TimeUnit.SECONDS).build()
-    }
 
     override val mapper by lazy {
         val objectMapper = jacksonObjectMapper()
@@ -119,7 +116,7 @@ class FetchRequestWrapper(
         val urlWithoutLeadingSlash = trimStart('/')
         val baseUrlWithEndingSlash = "${this@FetchRequestWrapper.baseUrl?.trimEnd('/') ?: ""}/"
 
-        return "$baseUrlWithEndingSlash$urlWithoutLeadingSlash";
+        return "$baseUrlWithEndingSlash$urlWithoutLeadingSlash"
     }
 
     private suspend fun Headers.Builder.addAuthHeader(performRefresh: Boolean = false) {

@@ -21,21 +21,31 @@
  */
 package de.materna.fegen.core.domain
 
-import java.lang.reflect.Type
+import com.fasterxml.jackson.databind.node.BooleanNode
+import com.fasterxml.jackson.databind.node.NumericNode
+import com.fasterxml.jackson.databind.node.TextNode
 import java.math.BigDecimal
 import java.net.URI
 import java.time.*
-import java.util.*
 
-interface ValueType
+interface Type {
+    val name: String
 
-enum class SimpleType : ValueType {
+    /**
+     * Whether this is a simple type, an enum or a pojo.
+     */
+    val isPlain: Boolean
+}
+
+interface ValueType: Type
+
+enum class SimpleType: ValueType {
     STRING, INTEGER, LONG, DOUBLE, UUID, BIGDECIMAL, BOOLEAN, DATE, DATETIME, ZONED_DATETIME, OFFSET_DATETIME, DURATION;
 
     companion object {
-        fun fromType(type: Type): SimpleType? =
+        fun fromType(type: java.lang.reflect.Type): SimpleType? =
             when (type) {
-                Boolean::class.java -> BOOLEAN
+                Boolean::class.java, java.lang.Boolean::class.java -> BOOLEAN
                 java.lang.Long::class.java, 1L.javaClass -> LONG
                 java.lang.Integer::class.java, 1.javaClass -> INTEGER
                 java.lang.Double::class.java, 1.0.javaClass -> DOUBLE
@@ -47,7 +57,12 @@ enum class SimpleType : ValueType {
                 OffsetDateTime::class.java -> OFFSET_DATETIME
                 Duration::class.java -> DURATION
                 String::class.java, URI::class.java -> STRING
+                NumericNode::class.java -> DOUBLE
+                BooleanNode::class.java -> BOOLEAN
+                TextNode::class.java -> STRING
                 else -> null
             }
     }
+
+    override val isPlain = true
 }

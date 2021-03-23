@@ -21,8 +21,14 @@
  */
 package de.materna.fegen.kotlin
 
+import com.squareup.kotlinpoet.ClassName
+import com.squareup.kotlinpoet.TypeName
+import com.squareup.kotlinpoet.asTypeName
 import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.*
+import java.math.BigDecimal
+import java.time.*
+import java.util.*
 
 
 internal val EntityType.nameBase
@@ -30,9 +36,6 @@ internal val EntityType.nameBase
 
 internal val ComplexType.nameDto
     get() = "${declaration}Dto"
-
-internal val EntityType.nameEAGER
-    get() = "${name}EAGER"
 
 internal val EntityType.nameClient
     get() = "${name}Client"
@@ -44,10 +47,7 @@ internal val EntityType.nameLinks
     get() = "${name}Links"
 
 internal val ProjectionType.parentTypeName
-    get() = /*if (entityFields.map { name }.containsAll(parentType.entityFields.map { name }))
-        parentType.nameEAGER
-    else*/
-        parentType.name
+    get() = parentType.name
 
 internal val ProjectionType.projectionTypeInterfaceName
     get() = if (baseProjection) "$parentTypeName$name" else name
@@ -76,6 +76,7 @@ internal val DTField.declaration
         is EntityDTField -> type.declaration
         is EmbeddableDTField -> type.declaration
         is EnumDTField -> type.declaration
+        is PojoDTField -> type.declaration
     }}${if (list) ">" else ""}"
 
 internal val DTField.baseDeclaration
@@ -85,22 +86,30 @@ internal val DTField.baseDeclaration
         is EntityDTField -> type.nameBase
         is EmbeddableDTField -> type.name
         is EnumDTField -> type.declaration
+        is PojoDTField -> type.declaration
     }}${if (list) ">" else ""}"
 
+val string = ClassName("kotlin", "String")
+
+internal val SimpleType.kotlinType
+    get(): TypeName = when (this) {
+        SimpleType.STRING -> string
+        SimpleType.BOOLEAN -> Boolean::class.java.asTypeName()
+        SimpleType.DATE -> if (handleDatesAsString) string else LocalDate::class.java.asTypeName()
+        SimpleType.DATETIME -> if (handleDatesAsString) string else LocalDateTime::class.java.asTypeName()
+        SimpleType.ZONED_DATETIME -> if (handleDatesAsString) string else ZonedDateTime::class.java.asTypeName()
+        SimpleType.OFFSET_DATETIME -> if (handleDatesAsString) string else OffsetDateTime::class.java.asTypeName()
+        SimpleType.DURATION -> if (handleDatesAsString) string else Duration::class.java.asTypeName()
+        SimpleType.LONG -> Long::class.java.asTypeName()
+        SimpleType.INTEGER -> Int::class.java.asTypeName()
+        SimpleType.DOUBLE -> Double::class.java.asTypeName()
+        SimpleType.BIGDECIMAL -> BigDecimal::class.java.asTypeName()
+        SimpleType.UUID -> UUID::class.java.asTypeName()
+    }
+
 internal val SimpleType.declaration
-    get() = when (this) {
-        SimpleType.STRING -> "String"
-        SimpleType.BOOLEAN -> "Boolean"
-        SimpleType.DATE -> if (handleDatesAsString) "String" else "LocalDate"
-        SimpleType.DATETIME -> if (handleDatesAsString) "String" else "LocalDateTime"
-        SimpleType.ZONED_DATETIME -> if (handleDatesAsString) "String" else "ZonedDateTime"
-        SimpleType.OFFSET_DATETIME -> if (handleDatesAsString) "String" else "OffsetDateTime"
-        SimpleType.DURATION -> if (handleDatesAsString) "String" else "Duration"
-        SimpleType.LONG -> "Long"
-        SimpleType.INTEGER -> "Int"
-        SimpleType.DOUBLE -> "Double"
-        SimpleType.BIGDECIMAL -> "BigDecimal"
-        SimpleType.UUID -> "UUID"
+    get() = kotlinType.let {
+        if (it is ClassName) it.simpleName else it.toString()
     }
 
 internal val EnumType.declaration
@@ -111,6 +120,7 @@ internal val ComplexType.declaration
         is EntityType -> declaration
         is EmbeddableType -> declaration
         is ProjectionType -> declaration
+        is Pojo -> declaration
     }
 
 
@@ -183,26 +193,7 @@ internal val Search.returnDeclaration
         else -> "${returnType.name}?"
     }
 
-internal val CustomEndpoint.returnDeclarationSingle
-    get(): String = returnType?.let {
-        if (it is ProjectionType && it.baseProjection) it.parentTypeName else it.name
-    } ?: "Unit"
-
-internal val CustomEndpoint.returnDeclaration
-    get(): String = when {
-        paging -> "PagedItems<$returnDeclarationSingle>"
-        list -> "List<$returnDeclarationSingle>"
-        else -> returnDeclarationSingle
-    }
-
 internal fun Search.projectionReturnDeclaration(projection: ProjectionType) =
-        when {
-            paging -> "PagedItems<${projection.projectionTypeInterfaceName}>"
-            list -> "List<${projection.projectionTypeInterfaceName}>"
-            else -> "${projection.projectionTypeInterfaceName}?"
-        }
-
-internal fun CustomEndpoint.projectionReturnDeclaration(projection: ProjectionType) =
         when {
             paging -> "PagedItems<${projection.projectionTypeInterfaceName}>"
             list -> "List<${projection.projectionTypeInterfaceName}>"
@@ -214,6 +205,7 @@ internal val ComplexType.allSimpleFields
         is ProjectionType -> (simpleFields + parentType.simpleFields)
         is EntityType -> simpleFields
         is EmbeddableType -> simpleFields
+        is Pojo -> simpleFields
     }
 
 internal val ComplexType.allSortableFields
@@ -226,8 +218,10 @@ internal val ComplexType.mayHaveSortParameter
 internal val ComplexType.readOrderByParameter
     get() = allSortableFields.join(prefix = ", sort: ", separator = " | ") { """"${name},ASC" | "${name},DESC"""" }
 
-internal val DomainType.uriREST
-    get() = "$restBasePath/$nameRest"
+internal fun DomainType.uriREST(restBasePath: String) = "$restBasePath/$nameRest"
 
 internal val DomainType.searchResourceName
     get() = "$nameRest/search"
+
+internal val Pojo.declaration
+    get() = typeName

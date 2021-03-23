@@ -22,11 +22,8 @@
 package de.materna.fegen.core.domain
 
 import org.atteo.evo.inflector.English
-import java.util.*
 
-sealed class DomainType {
-    abstract var name: String
-
+sealed class DomainType: Type {
     val nameRest by lazy {
         nameRestOverride ?: English.plural(name.decapitalize())!!
     }
@@ -65,22 +62,32 @@ sealed class ComplexType: DomainType() {
 data class EntityType(
         override var name: String,
         var searches: List<Search> = emptyList(),
-        var customEndpoints: List<CustomEndpoint> = emptyList()
-): ComplexType()
+        var exported: Boolean = true
+): ComplexType() {
+    override val isPlain: Boolean
+        get() = false
+}
 
 data class EmbeddableType(
         override var name: String
-): ComplexType()
+): ComplexType() {
+    override val isPlain: Boolean
+        get() = false
+}
 
 data class ProjectionType(
         override var name: String,
         val projectionName: String,
         val baseProjection: Boolean,
+        val fullProjectionName: String,
         /**
          * The type this type is a projection of.
          */
         val parentType: EntityType
 ): ComplexType() {
+
+    override val isPlain: Boolean
+        get() = false
 
     /**
      * This is for spEL fueled fields in projections. It does not contain
@@ -139,30 +146,17 @@ data class ProjectionType(
 data class EnumType(
         override var name: String,
         val constants: List<String>
-): DomainType(), ValueType
-
-data class Search(
-        val name: String,
-        val parameters: List<ValueDTField>,
-        val list: Boolean,
-        val paging: Boolean,
-        val returnType: EntityType,
-        val inRepo: Boolean
-) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is Search) return false
-        return name == other.name &&
-                list == other.list &&
-                paging == other.paging &&
-                returnType.name == other.returnType.name
-    }
-
-    override fun hashCode(): Int {
-        return Objects.hash(Search::class.java, name, list, paging, returnType.name)
-    }
-
-    override fun toString(): String {
-        return "Search(name=$name, list=$list, paging=$paging, returnType=${returnType.name})"
-    }
+): DomainType(), ValueType {
+    override val isPlain: Boolean
+        get() = true
 }
+
+data class Pojo(override val name: String, val typeName: String): ComplexType() {
+    override fun toString(): String {
+        return "Pojo(name=$name, typeName=$typeName, fields=$fields"
+    }
+
+    override val isPlain: Boolean
+        get() = true
+}
+

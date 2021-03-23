@@ -22,10 +22,13 @@
 package de.materna.fegen.runtime
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import okhttp3.OkHttpClient
 import okhttp3.Response
 
 interface FetchRequest {
     val mapper: ObjectMapper
+
+    val client: OkHttpClient
 
     suspend fun fetch(url: String, method: String, contentType: String, bodyContent: String, performRefresh: Boolean = false, ignoreBasePath: Boolean = false): Response
 

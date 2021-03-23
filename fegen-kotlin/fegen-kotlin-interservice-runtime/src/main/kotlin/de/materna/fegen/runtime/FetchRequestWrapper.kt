@@ -40,14 +40,13 @@ open class FetchRequestWrapper(
             val objectMapper = ObjectMapper()
             objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             objectMapper
-        }
+        },
+        override val client: OkHttpClient = OkHttpClient.Builder()
+            .connectionPool(ConnectionPool(5, 1, TimeUnit.MINUTES))
+            .readTimeout(180, TimeUnit.SECONDS).build()
 ): FetchRequest {
 
-    private val client by lazy {
-        OkHttpClient.Builder()
-                .connectionPool(ConnectionPool(5, 1, TimeUnit.MINUTES))
-                .readTimeout(180, TimeUnit.SECONDS).build()
-    }
+
 
     override suspend fun fetch(url: String, method: String, contentType: String, bodyContent: String, performRefresh: Boolean, ignoreBasePath: Boolean): Response { //Promise<(data: Data, response: URLResponse)> {
         val fullUrl = url.createUrl(ignoreBasePath)
@@ -120,7 +119,7 @@ open class FetchRequestWrapper(
             }
             var pathStart = baseUrl.indexOf("/", domainStart)
             if (pathStart == -1) {
-                pathStart = 0
+                pathStart = baseUrl.length
             }
             baseUrl = baseUrl.substring(0, pathStart)
         }

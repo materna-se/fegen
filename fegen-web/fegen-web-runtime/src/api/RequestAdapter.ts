@@ -77,9 +77,8 @@ export default class RequestAdapter {
         fullUrl = hasSort ? `${fullUrl}${hasProjection || hasPage || hasSize ? "&" : firstConnector}sort=${sort}` : fullUrl;
 
         const response = await this.getRequest().get(fullUrl);
-        if (!response.ok) {
-            throw response;
-        }
+        await RequestAdapter.assertOk(response);
+
         const obj = ((await response.json()) as ApiHateoasObjectReadMultiple<T[]>);
         const items = (obj._embedded[embeddedPropName]).map(item => (apiHelper.injectIds(item) as T));
         return {
@@ -101,9 +100,7 @@ export default class RequestAdapter {
     public async createObject<D extends Dto>(newObject: {}, createURI: string): Promise<WithId<D>> {
         const createResponse = await this.postJsonData(createURI, JSON.stringify(newObject));
 
-        if (!createResponse.ok) {
-            throw createResponse;
-        }
+        await RequestAdapter.assertOk(createResponse);
 
         const storedEntity: D = (await createResponse.json() as D);
         return apiHelper.injectIds(storedEntity);
@@ -116,19 +113,22 @@ export default class RequestAdapter {
             },
             body: JSON.stringify(obj)
         });
-        if (!response.ok) {
-            throw response;
-        }
+        await RequestAdapter.assertOk(response);
 
         const storedEntity: T = (await response.json() as T);
         return apiHelper.injectIds(storedEntity);
     }
 
+    private static async assertOk(response: Response): Promise<void> {
+        if (!response.ok) {
+            const body = await response.text();
+            throw Error(`Received ${response.status} - ${response.statusText} response: ${body}`)
+        }
+    }
+
     public async deleteObject<T extends Entity>(existingObject: T): Promise<void> {
         const response = await this.getRequest().delete(apiHelper.removeParamsFromNavigationHref(existingObject._links.self));
-        if (!response.ok) {
-            throw response;
-        }
+        await RequestAdapter.assertOk(response);
     }
 
     public async adaptAnyToMany(
@@ -174,9 +174,7 @@ export default class RequestAdapter {
             },
             body: uris.join("\n")
         });
-        if (!associationResponse.ok) {
-            throw new Error(associationResponse.statusText + ` (${associationResponse.status})`);
-        }
+        await RequestAdapter.assertOk(associationResponse);
     }
 
     public async addToObj<TAdd extends Dto, T extends Entity, K extends keyof T["_links"]>(objToBeAdd: TAdd, objectWithCollection: T, property: K): Promise<void> {
@@ -200,9 +198,7 @@ export default class RequestAdapter {
             },
             body: hrefAdd,
         });
-        if (!associationResponse.ok) {
-            throw new Error(associationResponse.statusText + ` (${associationResponse.status})`);
-        }
+        await RequestAdapter.assertOk(associationResponse);
     }
 
     public async updateObjectCollection<TInner extends Entity, T extends Entity, K extends keyof T = keyof T>(nextCollection: TInner[], objectWithCollection: T, property: K): Promise<void> {
@@ -219,9 +215,7 @@ export default class RequestAdapter {
 
         const assocUrl = stringHelper.getStringWitoutTrailingSlash(href) + "/" + property;
         const associationResponse = await this.adaptAnyToMany(assocUrl, hrefs);
-        if (!associationResponse.ok) {
-            throw new Error(associationResponse.statusText + ` (${associationResponse.status})`);
-        }
+        await RequestAdapter.assertOk(associationResponse);
     }
 
     public async moveObjectUp<T extends Entity, TMove extends Entity>(objToBeMovedUp: TMove, objectWithCollection: T, collectionPropertyName: keyof T): Promise<void> {
@@ -299,9 +293,7 @@ export default class RequestAdapter {
 
         const response = await this.getRequest().get(apiHelper.removeParamsFromNavigationHref(link));
 
-        if (!response.ok) {
-            throw response;
-        }
+        await RequestAdapter.assertOk(response);
 
         return ((await response.json()) as ApiHateoasObjectBase<T[K]>)._embedded[embeddedName];
     }
@@ -318,9 +310,7 @@ export default class RequestAdapter {
 
         const response = await this.getRequest().get(apiHelper.removeParamsFromNavigationHref(link));
 
-        if (!response.ok) {
-            throw response;
-        }
+        await RequestAdapter.assertOk(response);
 
         return embeddedName ? ((await response.json()) as ApiHateoasObjectBase<T[K]>)._embedded[embeddedName] : ((await response.json()) as T[K]);
     }

@@ -26,10 +26,7 @@ import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.generator.api.CustomEndpointMgr
 import de.materna.fegen.core.generator.api.CustomSearchMgr
 import de.materna.fegen.core.generator.api.RepositorySearchMgr
-import de.materna.fegen.core.generator.types.EmbeddableMgr
-import de.materna.fegen.core.generator.types.EntityMgr
-import de.materna.fegen.core.generator.types.EnumMgr
-import de.materna.fegen.core.generator.types.ProjectionMgr
+import de.materna.fegen.core.generator.types.*
 import java.net.URL
 import java.net.URLClassLoader
 
@@ -48,19 +45,21 @@ class DomainMgr(
 
     val fieldMgr = FieldMgr(this)
 
-    val entityMgr = EntityMgr(feGenConfig, logger, this)
+    val entityMgr = EntityMgr(feGenConfig, logger.withContext("FeGen EntityMgr"), this)
 
-    val projectionMgr = ProjectionMgr(feGenConfig, logger, entityMgr, this)
+    val projectionMgr = ProjectionMgr(feGenConfig, logger.withContext("FeGen ProjectionMgr"), entityMgr, this)
 
-    val embeddableMgr = EmbeddableMgr(feGenConfig, logger, this)
+    val embeddableMgr = EmbeddableMgr(feGenConfig, logger.withContext("FeGen EmbeddableMgr"), this)
 
     val enumMgr = EnumMgr()
 
-    private val repositorySearchMgr = RepositorySearchMgr(feGenConfig, logger, entityMgr, this)
+    val pojoMgr = PojoMgr(feGenConfig, logger.withContext("FeGen PojoMgr"), this)
 
-    private val customSearchMgr = CustomSearchMgr(feGenConfig, logger, entityMgr, this)
+    private val repositorySearchMgr = RepositorySearchMgr(feGenConfig, logger.withContext("FeGen RepositorySearchMgr"), entityMgr, this)
 
-    private val customEndpointMgr = CustomEndpointMgr(feGenConfig, logger, entityMgr, this)
+    private val customSearchMgr = CustomSearchMgr(feGenConfig, logger.withContext("FeGen CustomSearchMgr"), entityMgr, this)
+
+    val customEndpointMgr = CustomEndpointMgr(feGenConfig, logger.withContext("FeGen CustomEndpointMgr"), entityMgr, this)
 
     fun validate() {
         entityMgr.addFields()
@@ -73,6 +72,7 @@ class DomainMgr(
 
         embeddableMgr.addFields()
 
+        repositorySearchMgr.markEntitiesNotExported()
         repositorySearchMgr.addSearchesToEntities()
         repositorySearchMgr.warnIfNoRepositoryClasses()
         repositorySearchMgr.warnIfNoSearchMethods()
@@ -81,7 +81,6 @@ class DomainMgr(
         customSearchMgr.warnIfNoControllerClasses()
         customSearchMgr.warnIfControllerEmpty()
 
-        customEndpointMgr.addCustomEndpointMethodsToEntities()
         customEndpointMgr.warnIfNoCustomControllers()
         customEndpointMgr.warnIfNoControllerMethods()
     }

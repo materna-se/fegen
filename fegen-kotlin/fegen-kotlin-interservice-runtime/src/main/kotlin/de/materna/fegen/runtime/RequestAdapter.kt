@@ -171,7 +171,46 @@ open class RequestAdapter(val request: FetchRequest) {
         }
     }
 
-    suspend inline fun <reified T : ApiObj<U>, reified U : ApiDto<T>, V : ApiBase<*, *>> doSingleRequest(
+    suspend inline fun <reified U> doListRequestSimple(
+            url: String,
+            method: String = "GET",
+            body: Any? = null,
+            ignoreBasePath: Boolean = false
+    ): List<U> {
+        return doListRequestSimple(
+                url = url,
+                method = method,
+                bodyContent = if (body != null ) request.mapper.writeValueAsString(body) else "",
+                ignoreBasePath = ignoreBasePath
+        )
+    }
+
+    suspend inline fun <reified U> doListRequestSimple(
+            url: String,
+            method: String = "GET",
+            bodyContent: String,
+            contentType: String = "application/json",
+            ignoreBasePath: Boolean = false
+    ): List<U> {
+
+        try {
+            val res = request.fetch(
+                    url = url,
+                    method = method,
+                    contentType = contentType,
+                    bodyContent = bodyContent,
+                    ignoreBasePath = ignoreBasePath
+            )
+            return request.mapper.readValue(res.body()?.string() ?: "No result", Array<U>::class.java).toList()
+        } catch (e: BadStatusCodeException) {
+            when (e.statusCode) {
+                404 -> return emptyList()
+                else -> throw e
+            }
+        }
+    }
+    
+    suspend inline fun <reified T : ApiObj<U>, reified U : ApiDto<T>, V> doSingleRequest(
             url: String,
             method: String = "GET",
             body: V,
@@ -214,7 +253,38 @@ open class RequestAdapter(val request: FetchRequest) {
         return dto.toObj()
     }
 
-    suspend inline fun <V : ApiObj<*>> doVoidRequest(
+    suspend inline fun <reified T, reified U> doSingleRequestWithoutReturnValueTransformation(
+            url: String,
+            method: String = "GET",
+            body: T,
+            ignoreBasePath: Boolean = false
+    ) = doSingleRequestWithoutReturnValueTransformation<U>(
+            url = url,
+            method = method,
+            bodyContent = request.mapper.writeValueAsString(body),
+            ignoreBasePath = ignoreBasePath
+    )
+
+    suspend inline fun <reified U> doSingleRequestWithoutReturnValueTransformation(
+            url: String,
+            method: String = "GET",
+            contentType: String = "application/json",
+            bodyContent: String = "",
+            ignoreBasePath: Boolean = false
+    ): U {
+
+        val res = request.fetch(
+                url = url,
+                method = method,
+                contentType = contentType,
+                bodyContent = if (method == "PUT" && bodyContent.isEmpty()) "{}" else bodyContent,
+                ignoreBasePath = ignoreBasePath
+        )
+
+        return request.mapper.readValue(res.body()?.string() ?: "No result", U::class.java)
+    }
+
+    suspend inline fun <V> doVoidRequest(
             url: String,
             method: String = "GET",
             body: V,

@@ -26,7 +26,6 @@ import de.materna.fegen.web.FeGenWeb
 import de.materna.fegen.web.nameNew
 import de.materna.fegen.web.nameClient
 import de.materna.fegen.web.nameDto
-import de.materna.fegen.web.projectionTypeInterfaceName
 
 /**
  * Generates the ApiClient class which helps to navigate to the different clients as well as the client classes itself.
@@ -43,14 +42,19 @@ fun FeGenWeb.toApiClientTS() = """
     import {
         BaseClient, RequestAdapter,
         ApiHateoasObjectBase, ApiHateoasObjectReadMultiple, Items, PagedItems, ApiNavigationLinks,
-        apiHelper, stringHelper, Dto, Entity
+        apiHelper, stringHelper, Dto, Entity, EntitySecurity, isEndpointCallAllowed
     } from '@materna-se/fegen-runtime';
-    import { ${entityTypes.join(separator = ", ") { "$nameNew, $nameDto, $name" }} } from './Entities'
-    import { ${enumTypes.join(separator = ", ") { name }} } from './Entities'
-    import { ${projectionTypes.join(separator = ", ") { projectionTypeInterfaceName }} } from './Entities'
+    import { ${entityTypes.filter { it.exported }.join(separator = ", ") { "$nameNew, $nameDto, $name" }} } from './Entities';
+    import { ${enumTypes.join(separator = ", ") { name }} } from './Entities';
+    import { ${projectionTypes.join(separator = ", ") { fullProjectionName }} } from './Entities';
+    ${customControllers.join(indent = 1) { "import { $nameClient } from './controller/$nameClient';" }}
 
     export class ApiClient {
-        ${entityTypes.join(indent = 2) { """
+        ${entityTypes.filter { it.exported }.join(indent = 2) { """
+            public readonly ${nameClient.decapitalize()}: $nameClient;
+        """.trimIndent()
+        }}
+        ${customControllers.join(indent = 2) { """
             public readonly ${nameClient.decapitalize()}: $nameClient;
         """.trimIndent()
         }}
@@ -60,10 +64,13 @@ fun FeGenWeb.toApiClientTS() = """
         constructor(requestAdapter?: RequestAdapter, baseUrl?: string) {
             this.baseUrl = baseUrl || "";
             const adapter = requestAdapter || new RequestAdapter(this.baseUrl);
-            ${entityTypes.join(indent = 3) {"""
+            ${entityTypes.filter { it.exported }.join(indent = 3) {"""
                 this.${nameClient.decapitalize()} = new $nameClient(this, adapter);
             """.trimIndent()
             }}
+            ${customControllers.join(indent = 3) {"""
+                this.${nameClient.decapitalize()} = new $nameClient(adapter);
+            """.trimIndent()}}
         }
     }
 """.trimIndent()

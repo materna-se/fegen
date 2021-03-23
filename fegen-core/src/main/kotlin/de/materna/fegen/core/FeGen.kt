@@ -22,8 +22,9 @@
 package de.materna.fegen.core
 
 import de.materna.fegen.core.domain.DomainType
-import de.materna.fegen.core.log.FeGenLogger
+import de.materna.fegen.core.domain.Pojo
 import de.materna.fegen.core.generator.DomainMgr
+import de.materna.fegen.core.log.FeGenLogger
 import java.io.File
 import java.io.FileReader
 import java.util.*
@@ -34,6 +35,8 @@ abstract class FeGen(
         val feGenConfig: FeGenConfig,
         val logger: FeGenLogger
 ) {
+
+    val restBasePath = initRestBasePath()
 
     private val domainMgr = initDomainMgr()
 
@@ -49,12 +52,24 @@ abstract class FeGen(
     val enumTypes
         get() = domainMgr.enumMgr.enums
 
+   val pojoTypes: List<Pojo>
+        get() = domainMgr.pojoMgr.pojos
+
     val types: List<DomainType> by lazy {
-        (entityTypes + projectionTypes + embeddableTypes + enumTypes).sortedBy { it.name }
+        (entityTypes + projectionTypes + embeddableTypes + enumTypes).sortedBy { it.name } + pojoTypes
     }
+
+    val customControllers
+        get() = domainMgr.customEndpointMgr.controllers
+
+    val customEndpoints
+        get() = customControllers.flatMap { it.endpoints }
 
     init {
         handleDatesAsString = feGenConfig.datesAsString
+    }
+
+    private fun initRestBasePath(): String {
         val properties = Properties()
         try {
             logger.info("Loading properties from: ${feGenConfig.resourcesDir}")
@@ -69,7 +84,9 @@ abstract class FeGen(
                 }
             }
         }
-        restBasePath = properties.getProperty("spring.data.rest.basePath") ?: ""
+        // since Spring Boot 2.x spring.data.rest.base-path (not spring.data.rest.basePath) is used
+        val property = properties.getProperty("spring.data.rest.base-path") ?: ""
+        return property.removePrefix("/").removeSuffix("/")
     }
 
     protected open fun logConfiguration() {
@@ -88,12 +105,18 @@ abstract class FeGen(
         return result
     }
 
+    /**
+     * Delete all generated files that may not be regenerated
+     */
+    abstract fun cleanGenerated()
+
     abstract fun generateEntities()
 
     abstract fun generateApiClient()
 
     fun generate() {
         logConfiguration()
+        cleanGenerated()
         generateEntities()
         generateApiClient()
     }

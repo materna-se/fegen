@@ -25,6 +25,7 @@ import de.materna.fegen.core.domain.*
 import de.materna.fegen.core.isEmbeddable
 import de.materna.fegen.core.isEntity
 import de.materna.fegen.core.isProjection
+import java.lang.reflect.Method
 import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 
@@ -32,13 +33,28 @@ class FieldMgr(
         private val domainMgr: DomainMgr
 ) {
 
+    /**
+     * If a field cannot be resolved, the context provides information about where the error happened
+     */
+    abstract class ErrorContext {
+        abstract fun context(): String
+    }
+
+    class FieldContext(private val clazz: Class<*>): ErrorContext() {
+        override fun context() = "while resolving field of class ${clazz.canonicalName}"
+    }
+
+    class ParameterContext(private val method: Method): ErrorContext() {
+        override fun context() = "while resolving parameter of method ${method.declaringClass.canonicalName}::${method.name}"
+    }
+
     fun dtFieldFromType(
-            className: String = "",
             name: String = "",
             type: Type,
             list: Boolean = false,
             optional: Boolean = false,
-            justSettable: Boolean = false
+            justSettable: Boolean = false,
+            context: ErrorContext
     ): DTField {
         val simpleType = SimpleType.fromType(type)
         return if (simpleType != null) {
@@ -80,23 +96,28 @@ class FieldMgr(
                             justSettable = justSettable,
                             type = domainMgr.projectionMgr.class2Projection[type]
                                     ?: throw RuntimeException("Could not resolve projection type $type")
-
                     )
-                    else -> throw RuntimeException("UNKNOWN class ${type.typeName} & ${type::class.java.name} in field $name of $className")
+                    else -> PojoDTField(
+                            name = name,
+                            list = list,
+                            optional = optional,
+                            justSettable = justSettable,
+                            type = domainMgr.pojoMgr.resolvePojo(type)
+                    )
                 }
                 is ParameterizedType -> {
                     if (!java.lang.Iterable::class.java.isAssignableFrom(type.rawType as Class<*>)) throw IllegalStateException("Cannot handle ${type}.")
                     // recursive call for list types (with boolean parameter 'list' set to true)
                     dtFieldFromType(
-                            className,
                             name,
                             type.actualTypeArguments.first(),
                             true,
                             false,
-                            justSettable
+                            justSettable,
+                            context
                     )
                 }
-                else -> throw IllegalStateException("UNKNOWN non-class '$name': ${type.typeName} & ${type::class.java.name}")
+                else -> throw IllegalStateException("UNKNOWN non-class '$name': ${type.typeName} & ${type::class.java.name} ${context.context()}")
             }
         }
     }

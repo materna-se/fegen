@@ -24,9 +24,12 @@ package de.materna.fegen.core.generator.types
 import com.fasterxml.classmate.members.ResolvedMethod
 import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.*
+import de.materna.fegen.core.domain.ComplexType
+import de.materna.fegen.core.domain.ProjectionType
 import de.materna.fegen.core.generator.DomainMgr
 import de.materna.fegen.core.log.FeGenLogger
 import org.springframework.data.rest.core.config.Projection
+
 
 class ProjectionMgr(
         feGenConfig: FeGenConfig,
@@ -42,19 +45,23 @@ class ProjectionMgr(
     }
 
     val projections by lazy {
-        class2Projection.values.sortedBy { it.name }
+        class2Projection.values.sortedBy { it.fullProjectionName }
     }
 
     private fun toProjectionType(clazz: Class<*>): ProjectionType {
         val parentType = clazz.projectionType!!
-        val result = ProjectionType(
-                name = clazz.simpleName,
-                projectionName = clazz.projectionName!!,
-                baseProjection = clazz.simpleName == "BaseProjection",
-                parentType = entityMgr.class2Entity[parentType]
-                        ?: error("Parent ${parentType.simpleName} of projection ${clazz.simpleName} is not an entity. " + "Entities: ${entityMgr.class2Entity.values.sortedBy { it.name }.joinToString(", ") { it.name }}")
+        val name = clazz.simpleName
+        val projectionName = clazz.projectionName!!
+        val isBaseProjection = clazz.simpleName == "BaseProjection"
+        val parentEntity = entityMgr.class2Entity[parentType]
+                ?: error("Parent ${parentType.simpleName} of projection ${clazz.simpleName} is not an entity. " + "Entities: ${entityMgr.class2Entity.values.sortedBy { it.name }.joinToString(", ") { it.name }}")
+        return ProjectionType(
+                name = name,
+                projectionName = projectionName,
+                fullProjectionName = if (isBaseProjection) "${parentEntity.name}$name" else name,
+                baseProjection = isBaseProjection,
+                parentType = parentEntity
         )
-        return result
     }
 
     fun addFields() {

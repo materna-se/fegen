@@ -34,16 +34,14 @@ internal val EntityType.nameDto
 internal val EntityType.nameClient
     get() = "${name}Client"
 
-internal val ProjectionType.projectionTypeInterfaceName
-    get() = if(baseProjection) "${parentType.name}$name" else name
-
-internal val EntityDTField.declarationDto
-    get() = "${type.nameDto}${if(list) { "[]" } else { "" }}"
+internal val CustomController.nameClient
+    get() = "${name}Client"
 
 internal val DTField.declaration
     get() = "${when(this) {
         is SimpleDTField -> type.declaration
         is ProjectionDTField -> type.declaration
+        is PojoDTField -> type.declaration
         is ComplexDTField -> type.declaration
         is EnumDTField -> type.declaration
     }}${if(list) "[]" else ""}"
@@ -55,6 +53,7 @@ internal val DTField.baseDeclaration
         is EntityDTField -> type.nameNew
         is EnumDTField -> type.declaration
         is EmbeddableDTField -> type.declaration
+        is PojoDTField -> type.typeName
     }}${if (list) "[]" else ""}"
 
 internal val SimpleType.declaration
@@ -72,7 +71,10 @@ internal val ComplexType.declaration
     get() = name
 
 internal val ProjectionType.declaration
-    get() = projectionTypeInterfaceName
+    get() = fullProjectionName
+
+internal val Pojo.declaration
+    get() = typeName
 
 internal val DTField.initialization
     get() = when(this) {
@@ -130,6 +132,7 @@ val ComplexType.allSimpleFields
         is ProjectionType -> (simpleFields + parentType.simpleFields)
         is EntityType -> simpleFields
         is EmbeddableType -> simpleFields
+        is Pojo -> simpleFields
     }
 
 internal val ComplexType.allSortableFields

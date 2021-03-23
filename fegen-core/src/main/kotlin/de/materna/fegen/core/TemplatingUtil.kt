@@ -35,6 +35,13 @@ fun <T> Collection<T>.join(indent: Int = 0, separator: CharSequence = "\n", pref
         return "${if(!isEmpty()) prefix else ""}${joinedStr}${if(!isEmpty()) postfix else ""}"
     }
 
+fun <T> Collection<T>.joinParameters(transform: (T) -> String = { it.toString() }): String {
+    if (isEmpty()) {
+        return ""
+    }
+    return this.joinToString(separator = ",\n    ", prefix = "\n    ", postfix = "\n", transform = transform)
+}
+
 /**
  * Helper method to do correct indentation during code generation.
  */

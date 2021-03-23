@@ -27,6 +27,8 @@ import okhttp3.Response
 interface FetchRequest {
     val mapper: ObjectMapper
 
+    val client: OkHttpClient
+
     suspend fun fetch(url: String, method: String, contentType: String, bodyContent: String, performRefresh: Boolean = false): Response
 
     suspend fun get(url: String, contentType: String = "application/json"): Response

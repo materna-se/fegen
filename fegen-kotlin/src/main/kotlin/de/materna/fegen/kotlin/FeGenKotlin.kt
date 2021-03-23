@@ -27,16 +27,16 @@ import de.materna.fegen.core.log.FeGenLogger
 import java.io.File
 
 class FeGenKotlin(
-        feGenConfig: FeGenConfig,
-        projectDir: File,
-        frontendPath: String?,
-        frontendPkg: String?,
-        logger: FeGenLogger
+    feGenConfig: FeGenConfig,
+    projectDir: File,
+    frontendPath: String?,
+    frontendPkg: String?,
+    logger: FeGenLogger
 ) : FeGen(feGenConfig, logger) {
 
     private val frontendPath = frontendPath ?: throw IllegalStateException("frontendPath must be specified")
 
-    private val frontendDir: File = projectDir.resolve(this.frontendPath)
+    val frontendDir: File = projectDir.resolve(this.frontendPath)
 
     val frontendPkg = frontendPkg ?: throw IllegalStateException("frontendPkg must be specified")
 
@@ -64,11 +64,18 @@ class FeGenKotlin(
         file.writeText(text)
     }
 
+    override fun cleanGenerated() {
+        frontendGenDir.resolve("controller").deleteRecursively()
+    }
+
     override fun generateEntities() {
         generateFile("Entities.kt", toEntitiesKt())
     }
 
     override fun generateApiClient() {
         generateFile("ApiClient.kt", toApiClientKt())
+        for (customEndpoint in customControllers) {
+            CustomControllerGenerator(this, customEndpoint).generate()
+        }
     }
 }

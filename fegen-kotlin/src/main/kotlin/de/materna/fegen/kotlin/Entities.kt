@@ -42,14 +42,15 @@ fun FeGenKotlin.toEntitiesKt() = """
         separator = "\n\n"
 ) {
 
-    toDeclaration() }}
+    toDeclaration(restBasePath) }}
 """.trimIndent()
 
-private fun DomainType.toDeclaration() = when (this) {
-    is EntityType -> toDeclaration()
+private fun DomainType.toDeclaration(restBasePath: String) = when (this) {
+    is EntityType -> toDeclaration(restBasePath)
     is EmbeddableType -> toDeclaration()
     is ProjectionType -> if (baseProjection) "" else toDeclaration()
     is EnumType -> toDeclaration()
+    is Pojo -> toDeclaration()
 }
 
 private fun EmbeddableType.toDeclaration() = """
@@ -88,7 +89,7 @@ private fun ProjectionType.toDeclaration() = """
     }
 """.trimIndent()
 
-private fun EntityType.toDeclaration() = """
+private fun EntityType.toDeclaration(restBasePath: String) = """
 
     /**
      * This type is used as a basis for the different variants of this domain type. It can be created in the frontend
@@ -136,8 +137,8 @@ private fun EntityType.toDeclaration() = """
          * Don't use this method in production code.
          */
         fun toDto(id: Long) = toDto($nameLinks(mapOf(
-            "self" to ApiNavigationLink("$uriREST/${'$'}id", false)${entityFields.join(indent = 3, separator = ",\n", prefix = ",\n\t\t\t") {
-                "\"$name\" to ApiNavigationLink(\"$uriREST/${'$'}id/$name\", false)"
+            "self" to ApiNavigationLink("${uriREST(restBasePath)}/${'$'}id", false)${entityFields.join(indent = 3, separator = ",\n", prefix = ",\n\t\t\t") {
+                "\"$name\" to ApiNavigationLink(\"${uriREST(restBasePath)}/${'$'}id/$name\", false)"
             }}
         )))
     }
@@ -146,7 +147,7 @@ private fun EntityType.toDeclaration() = """
     data class $nameLinks(
         override val linkMap: Map<String, ApiNavigationLink>
     ): BaseApiNavigationLinks(linkMap) {
-        ${entityFields.join(indent = 2) { "val $name: ApiNavigationLink by linkMap" }}
+        ${entityFields.filter { it.type.exported }.join(indent = 2) { "val $name: ApiNavigationLink by linkMap" }}
     }
 
     class ${nameLinks}Deserializer(private val vc: Class<*>? = null):  StdDeserializer<$nameLinks>(vc) {
@@ -191,6 +192,7 @@ private fun EntityType.toDeclaration() = """
                 _links = _links
             )
     }
+    
 """.trimIndent()
 
 private fun EnumType.toDeclaration() = """
@@ -218,3 +220,11 @@ private fun DTField.toObjAssignment(): String {
     val objConversion = if (list) ".map { it.toObj() }" else ".toObj()"
     return assignment + optionalQuestionMark + objConversion
 }
+
+private fun Pojo.toDeclaration() = """
+    data class $typeName (
+        ${fields.sortedBy { it.optional }.join(indent = 2, separator = ",\n") {
+            toDeclaration()
+        }}
+    )
+""".trimIndent()

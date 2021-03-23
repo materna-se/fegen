@@ -14,6 +14,7 @@ dependencies {
     compileOnly gradleApi()
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
     implementation project(':fegen-core')
+    implementation "org.atteo:evo-inflector:1.2.2"
 }
 
 kotlinArtifact {

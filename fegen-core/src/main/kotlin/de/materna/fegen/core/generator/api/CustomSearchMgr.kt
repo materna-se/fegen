@@ -25,8 +25,10 @@ import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.Search
 import de.materna.fegen.core.domain.ValueDTField
 import de.materna.fegen.core.generator.DomainMgr
+import de.materna.fegen.core.generator.FieldMgr
 import de.materna.fegen.core.generator.types.EntityMgr
 import de.materna.fegen.core.log.FeGenLogger
+import de.materna.fegen.util.spring.annotation.FegenIgnore
 import org.springframework.data.rest.webmvc.BasePathAwareController
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
@@ -55,11 +57,15 @@ class CustomSearchMgr(
     private fun isSearchController(clazz: Class<*>): Boolean {
         val annotation = clazz.getAnnotation(RequestMapping::class.java) ?: return false
         val path = annotation.value.firstOrNull() ?: annotation.path.firstOrNull() ?: return false
+        if (clazz.getAnnotation(FegenIgnore::class.java) != null) {
+            return false
+        }
         return path.endsWith("/search")
     }
 
     private fun isSearchMethod(method: Method): Boolean =
             method.getAnnotation(RequestMapping::class.java) != null
+                    && method.getAnnotation(FegenIgnore::class.java) == null
 
     private fun hasOnlySupportedParameters(controller: Class<*>, method: Method): Boolean {
         val unsupportedParameters = unsupportedParameters(method)
@@ -107,20 +113,20 @@ class CustomSearchMgr(
                 }
                 domainType.searches +=
                         Search(
-                                name = requestMapping.value.firstOrNull() ?: requestMapping.path.first(),
-                                paging = search.paging,
-                                list = search.list,
-                                parameters = search.requestParams.map { p ->
-                                    val requestParam = p.getAnnotation(RequestParam::class.java)
-                                    domainMgr.fieldMgr.dtFieldFromType(
-                                            className = controller.canonicalName,
-                                            name = p.nameREST,
-                                            type = p.type,
-                                            optional = !requestParam.required
-                                    ) as ValueDTField // TODO split typeToDTReference into two parts in order to omit cast...
-                                }.toList(),
-                                returnType = domainType,
-                                inRepo = false
+                            name = requestMapping.value.firstOrNull() ?: requestMapping.path.first(),
+                            paging = search.paging,
+                            list = search.list,
+                            parameters = search.requestParams.map { p ->
+                                val requestParam = p.getAnnotation(RequestParam::class.java)
+                                domainMgr.fieldMgr.dtFieldFromType(
+                                    name = p.nameREST,
+                                    type = p.type,
+                                    optional = !requestParam.required,
+                                    context = FieldMgr.FieldContext(controller)
+                                ) as ValueDTField // TODO split typeToDTReference into two parts in order to omit cast...
+                            }.toList(),
+                            returnType = domainType,
+                            inRepo = false
                         )
             }
         }

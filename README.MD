@@ -32,9 +32,9 @@ Code can be generated for the following target platforms:
 
 FeGen currently has some limitations such as the following which may be lifted in future versions:
 
+- Embeddables can be used, but they may only contain primitive types since references to other entities are not yet supported
 - A plugin for Swift (to use in iOS apps) exists, but is not yet publicly released
-- Only primitive types and (lists of) entities are supported as API parameters
-    - Generating code for API endpoints used to up- or download files is not supported
+- Generating code for API endpoints used to up- or download files is not supported
 - There are some tests for the generated code, however, currently no CI/CD pipeline exists
 
 ## Guide
@@ -60,8 +60,8 @@ buildscript {
     }
     dependencies {
         ...
-        classpath "com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC7" // For Typescript
-        classpath "com.github.materna-se.fegen:fegen-kotlin-gradle-plugin:1.0-RC7" // For Kotlin
+        classpath "com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC8" // For Typescript
+        classpath "com.github.materna-se.fegen:fegen-kotlin-gradle-plugin:1.0-RC8" // For Kotlin
     }
 }
 ```
@@ -96,7 +96,7 @@ This ensures that links required by FeGen will be added to the return values of 
 ```
 dependencies {
     ...
-    implementation "com.github.materna-se.fegen:fegen-spring-util:1.0-RC7"
+    implementation "com.github.materna-se.fegen:fegen-spring-util:1.0-RC8"
 }
 ```
 
@@ -106,7 +106,7 @@ If you are using maven, add a configuration like the following to the `build/plu
 <plugin>
     <groupId>com.github.materna-se.fegen</groupId>
     <artifactId>fegen-web-maven-plugin</artifactId>
-    <version>1.0-RC7</version>
+    <version>1.0-RC8</version>
     <configuration>
         <scanPkg>com.example.your.main.package</scanPkg>
         <entityPkg>com.example.your.main.package.entity</entityPkg>
@@ -122,7 +122,7 @@ To use custom endpoints with `spring-hateoas >= 1.0`, you should also add the fo
 <dependency>
     <groupId>com.github.materna-se.fegen</groupId>
     <artifactId>fegen-spring-util</artifactId>
-    <version>1.0-RC7</version>
+    <version>1.0-RC8</version>
 </dependency>
 ```
 
@@ -221,7 +221,7 @@ The other option is to create an Android library to use the Spring API in an And
 
 To make your Spring API available to other Spring applications, create a gradle project to contain the generated code and add the following dependencies to your `build.gradle`:
 
-- `com.github.materna-se.fegen:fegen-kotlin-interservice-runtime:1.0-RC7`
+- `com.github.materna-se.fegen:fegen-kotlin-interservice-runtime:1.0-RC8`
 - `org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.3`
 - `com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1`
 
@@ -526,9 +526,11 @@ open fun createOrUpdateContact(
 
 FeGen will generate a Typescript method in the API client corresponding to the class' `@RequestMapping` `path` or value if the Java or Kotlin method has a `@RequestMapping` (or `@GetMapping`, `@PostMapping`, etc.) annotation.
 
-Custom endpoints must have a void return type or return entities.
+Custom endpoints must have a void return type or return entities. 
 In the latter case, the entity class must be wrapped in an `EntityModel` (if a single entity should be returned) or in `CollectionModel` or `PagedModel` (if multiple entities should be returned).
 Those classes themselves must be wrapped in a `ResponseEntity`.
+
+Custom endpoints can also return pojos. In this case, a pojo or a list of those must be wrapped in a `ResponseEntity`.
 
 To reliably use the returned values in the frontend, make sure you added the `fegen-spring-util` dependency to your Spring project.
 

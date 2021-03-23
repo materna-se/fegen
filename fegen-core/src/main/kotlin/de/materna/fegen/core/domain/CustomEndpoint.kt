@@ -21,44 +21,34 @@
  */
 package de.materna.fegen.core.domain
 
-import java.util.*
-
 enum class EndpointMethod {
     GET, POST, PUT, PATCH, DELETE
 }
 
+enum class RestMultiplicity {
+    SINGLE,
+    LIST,
+    PAGED
+}
+
+data class ReturnValue(
+        val type: Type,
+        val multiplicity: RestMultiplicity
+)
+
 data class CustomEndpoint(
-        val baseUri: String,
+        val parentController: CustomController,
         val name: String,
-        val parentType: EntityType,
+        val url: String,
         val method: EndpointMethod,
         val pathVariables: List<ValueDTField>,
         val requestParams: List<ValueDTField>,
-        val body: EntityDTField?,
-        val list: Boolean,
-        val paging: Boolean,
-        val returnType: DomainType?,
+        val body: ComplexDTField?,
+        val returnValue: ReturnValue?,
         val canReceiveProjection: Boolean
 ) {
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is CustomEndpoint) return false
-        return name == other.name &&
-                list == other.list &&
-                parentType.name == other.parentType.name &&
-                method == other.method &&
-                pathVariables == other.pathVariables &&
-                requestParams == other.requestParams &&
-                body == other.body &&
-                paging == other.paging &&
-                returnType?.name == other.returnType?.name
-    }
-
-    override fun hashCode(): Int {
-        return Objects.hash(Search::class.java, name, parentType.name, method, pathVariables, requestParams, body, list, paging, returnType?.name)
-    }
 
     override fun toString(): String {
-        return "CustomEndpoint(name=$name, parentType=${parentType.name}, method=$method, pathVariables=$pathVariables, requestParams=$requestParams, body=$body, list=$list, paging=$paging${returnType?.let { ", returnType=${returnType.name}" } ?: ""})"
+        return "CustomEndpoint(name=$url, method=$method, pathVariables=$pathVariables, requestParams=$requestParams, body=$body${returnValue?.let { ", returnType=${returnValue.type.name}" } ?: ""})"
     }
 }

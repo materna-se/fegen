@@ -25,6 +25,7 @@ import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.EntityType
 import de.materna.fegen.core.domain.DTField
 import de.materna.fegen.core.domain.ProjectionType
+import de.materna.fegen.core.domain.RestMultiplicity
 import de.materna.fegen.web.*
 import de.materna.fegen.web.declaration
 import de.materna.fegen.web.initialization
@@ -33,28 +34,31 @@ import de.materna.fegen.web.nameNew
 import de.materna.fegen.web.nameClient
 import de.materna.fegen.web.nameDto
 import de.materna.fegen.web.paramDecl
-import de.materna.fegen.web.projectionTypeInterfaceName
 import de.materna.fegen.web.readOrderByParameter
 import de.materna.fegen.web.returnDeclaration
+import org.atteo.evo.inflector.English
 
-fun FeGenWeb.toEntityClientTS() = entityTypes.join(separator = "\n\n") domainType@{
+fun FeGenWeb.toEntityClientTS() = entityTypes.filter { it.exported }.join(separator = "\n\n") domainType@{
     """
 export class $nameClient extends BaseClient<ApiClient, $nameNew, $name> {
 
     constructor(apiClient: ApiClient, requestAdapter?: RequestAdapter){
-        super("$uriREST", "$nameRest", apiClient, requestAdapter);
+        super("${uriREST(restBasePath)}", "${English.plural(name.decapitalize())}", apiClient, requestAdapter);
         this.readOne = this.readOne.bind(this);
         this.readProjection = this.readProjection.bind(this);
-        ${entityFields.join(indent = 3, separator = "\n") {
-        "this.${readAssociation}Projection = this.${readAssociation}Projection.bind(this);"
-    }}
+        ${
+        entityFields.join(indent = 3, separator = "\n") {
+            "this.${readAssociation}Projection = this.${readAssociation}Projection.bind(this);"
+        }
+    }
     }
   ${buildEntityTemplate(this)}
+  ${plainObjTemplate(this)}
   ${readEntityTemplate(this, projectionTypes)}
-  ${deleteEntityTemplate(this)}
+  ${deleteEntityTemplate(this, restBasePath)}
+  ${allowedMethodsTemplate(this, restBasePath)}
   ${associationEntityTemplate(this, projectionTypes)}
-  ${searchEntityTemplate(this)}
-  ${customEndpointEntityTemplate(this)}
+  ${searchEntityTemplate(this, restBasePath)}
 }""".trimIndent()
 }
 
@@ -82,64 +86,66 @@ private fun buildEntityTemplate(entityType: EntityType): String {
 }
 
 private fun readEntityTemplate(entityType: EntityType, projectionTypes: List<ProjectionType>) = """
-    ${projectionTypes.filter { it.parentType == entityType }.join(separator = "\n\n") {
-    """public async readProjections$projectionTypeInterfaceName(page?: number, size?: number${if (mayHaveSortParameter) readOrderByParameter else ""}) : Promise<PagedItems<$projectionTypeInterfaceName>> {
-        return this.readProjections<$projectionTypeInterfaceName>("$projectionName", page, size${if (mayHaveSortParameter) ", sort" else ""});
+    ${
+    projectionTypes.filter { it.parentType == entityType }.join(separator = "\n\n") {
+        """public async readProjections$fullProjectionName(page?: number, size?: number${if (mayHaveSortParameter) readOrderByParameter else ""}) : Promise<PagedItems<$fullProjectionName>> {
+        return this.readProjections<$fullProjectionName>("$projectionName", page, size${if (mayHaveSortParameter) ", sort" else ""});
     }
             
-    public async readProjection$projectionTypeInterfaceName(id: number): Promise<$projectionTypeInterfaceName| undefined> {
-        return this.readProjection<$projectionTypeInterfaceName>(id, "$projectionName");
+    public async readProjection$fullProjectionName(id: number): Promise<$fullProjectionName| undefined> {
+        return this.readProjection<$fullProjectionName>(id, "$projectionName");
     }
     """
-}}
+    }
+}
     
     public async readAll(page?: number, size?: number${if (entityType.mayHaveSortParameter) entityType.readOrderByParameter else ""}) : Promise<PagedItems<${entityType.name}>> {
         return await this.readProjections<${entityType.name}>(undefined, page, size${if (entityType.mayHaveSortParameter) ", sort" else ""});
     }"""
 
-private fun updateEntityTemplate(entityType: EntityType) = """
-    public toDto(obj: ${entityType.name}): ${entityType.nameDto} {
-        ${if (entityType.fields.any { it.name == "id" }) """
-            return obj;
-        """.trimIndent()
-else """
-        const {
-          id,
-          ...${entityType.nameDto.decapitalize()}
-        } = obj
-        return ${entityType.nameDto.decapitalize()};
-  """.doIndent(4)}
-    }
-
-    public toBase<T extends ${entityType.nameNew}>(obj: T): ${entityType.nameNew} {
+private fun plainObjTemplate(entityType: EntityType): String {
+    val fields = entityType.nonComplexFields.map { it.name } + "_links"
+    return """
+    protected toPlainObj(obj: ${entityType.name}): ${entityType.name} {
         return {
-            ${entityType.nonComplexFields.filter { it.name != "id" }.join(indent = 3, separator = "\n") { "${name}: obj.${name}," }}
-            ${entityType.entityFields.join(indent = 3, separator = "\n") { "${name}: obj.${name}," }}
+            ${fields.join(indent = 3, separator = ",\n") { "$this: obj.$this" }}
         };
     }"""
+}
 
-private fun deleteEntityTemplate(entityType: EntityType) = """
-    ${entityType.entityFields.join(indent = 1, separator = "\n\n") dtField@{
-    """
+private fun deleteEntityTemplate(entityType: EntityType, restBasePath: String) = """
+    ${
+    entityType.entityFields.join(indent = 1, separator = "\n\n") dtField@{
+        """
     public async $deleteFromAssociation(returnType: ${entityType.name}, childToDelete: ${type.name}) {
-        await this._requestAdapter.getRequest().delete(`${entityType.uriREST}/${'$'}{returnType.id}/$name/${'$'}{childToDelete.id}`);
+        await this._requestAdapter.getRequest().delete(`${entityType.uriREST(restBasePath)}/${'$'}{returnType.id}/$name/${'$'}{childToDelete.id}`);
     }""".trimIndent()
-}}"""
+    }
+}"""
+
+private fun allowedMethodsTemplate(entityType: EntityType, restBasePath: String): String = """
+    public allowedMethods(): Promise<EntitySecurity> {
+        return EntitySecurity.fetch(this._requestAdapter.getRequest(), "$restBasePath", "/${entityType.uriREST(restBasePath)}");
+    }
+"""
 
 private fun associationEntityTemplate(entityType: EntityType, projectionTypes: List<ProjectionType>) = """
-    ${entityType.entityFields.join(indent = 1, separator = "\n\n") dtField@{
-    """
+    ${
+    entityType.entityFields.join(indent = 1, separator = "\n\n") dtField@{
+        """
     public async $readAssociation(obj: ${entityType.nameDto}): Promise<${if (list) declaration else "$declaration | undefined"}> {
         return this.${readAssociation}Projection<${type.declaration}>(obj);
     }
 
-    ${projectionTypes.filter { it.parentType == type }.join(indent = 1, separator = "\n\n") {
-        """
-    public async ${this@dtField.readAssociation}Projection$projectionTypeInterfaceName(obj: ${entityType.nameDto}): Promise<${if (this@dtField.list) "$projectionTypeInterfaceName[]" else "$projectionTypeInterfaceName | undefined"}> {
-        return this.${this@dtField.readAssociation}Projection<$projectionTypeInterfaceName>(obj, "$projectionName");
+    ${
+            projectionTypes.filter { it.parentType == type }.join(indent = 1, separator = "\n\n") {
+                """
+    public async ${this@dtField.readAssociation}Projection$fullProjectionName(obj: ${entityType.nameDto}): Promise<${if (this@dtField.list) "$fullProjectionName[]" else "$fullProjectionName | undefined"}> {
+        return this.${this@dtField.readAssociation}Projection<$fullProjectionName>(obj, "$projectionName");
     }
     """
-    }}
+            }
+        }
 
     public async ${readAssociation}Projection<T extends Dto>(obj: ${entityType.nameDto}, projection?: string): Promise<${if (list) "T[]" else "T | undefined"}> {
         const hasProjection = !!projection;
@@ -149,14 +155,17 @@ private fun associationEntityTemplate(entityType: EntityType, projectionTypes: L
         const response = await this._requestAdapter.getRequest().get(fullUrl);
         if(response.status === 404) { return ${if (list) "[]" else "undefined"}; }
         if(!response.ok){ throw response; }
-        ${if (list) """
+        ${
+            if (list) """
             return (((await response.json()) as ApiHateoasObjectBase<T[]>)._embedded.${type.nameRest}).map(item => (apiHelper.injectIds(item)));""".doIndent(5)
-    else """
+            else """
         const result = (await response.json()) as T;
-        return apiHelper.injectIds(result);"""}
+        return apiHelper.injectIds(result);"""
+        }
     }
 
-    ${if (list) """
+    ${
+            if (list) """
     public async $setAssociation(returnType: ${entityType.name}, children: $declaration) {
         // eslint-disable-next-line no-throw-literal
         if(!returnType._links) throw `Parent has no _links: ${'$'}{returnType.id}`;
@@ -173,7 +182,7 @@ private fun associationEntityTemplate(entityType: EntityType, projectionTypes: L
     public async $addToAssociation(returnType: ${entityType.name}, childToAdd: ${type.name}) {
         await this._requestAdapter.addToObj(childToAdd, returnType, "$name");
     }""".doIndent(1)
-    else """
+            else """
     public async $setAssociation(returnType: ${entityType.name}, child: $declaration) {
         // eslint-disable-next-line no-throw-literal
         if(!returnType._links) throw `Parent has no _links: ${'$'}{returnType.id}`;
@@ -183,29 +192,15 @@ private fun associationEntityTemplate(entityType: EntityType, projectionTypes: L
             apiHelper.removeParamsFromNavigationHref(returnType._links.$name),
             child._links.self.href
         );
-    }""".doIndent(1)}""".trimIndent()
-}.trimIndent()}"""
+    }""".doIndent(1)
+        }""".trimIndent()
+    }.trimIndent()
+}"""
 
-private fun responseHandling(list: Boolean, paging: Boolean, nameRest: String) = if (list || paging) """
-            const elements = ((responseObj._embedded && responseObj._embedded.${nameRest}) || []).map(item => (apiHelper.injectIds(item)));
-        
-            return {
-                items: elements,
-                _links: responseObj._links${if (paging) "\n, page: responseObj.page" else ""}
-            };
-        """.doIndent(2) else """
-            return responseObj;
-        """.doIndent(2)
-
-private fun responseType(paging: Boolean, list: Boolean) = when {
-    paging -> "ApiHateoasObjectReadMultiple<T[]>"
-    list -> "ApiHateoasObjectBase<T[]>"
-    else -> "T"
-}
-
-private fun searchEntityTemplate(entityType: EntityType) = """
-    ${entityType.searches.join(indent = 1, separator = "\n\n") search@{
-    val configurePagingParameters = """
+private fun searchEntityTemplate(entityType: EntityType, restBasePath: String) = """
+    ${
+    entityType.searches.join(indent = 1, separator = "\n\n") search@{
+        val configurePagingParameters = """
         if (page !== undefined) {
             parameters["page"] = `${'$'}{page}`;
         }
@@ -215,11 +210,16 @@ private fun searchEntityTemplate(entityType: EntityType) = """
         
     """.doIndent(2)
 
-    val responseType = responseType(paging, list)
 
-    val responseHandling = responseHandling(list, paging, entityType.nameRest)
+        val multiplicity = when {
+            paging -> RestMultiplicity.PAGED
+            list -> RestMultiplicity.LIST
+            else -> RestMultiplicity.SINGLE
+        }
+        val responseType = responseType(multiplicity)
+        val responseHandling = responseHandling(multiplicity, entityType.nameRest)
 
-    return@search """
+        return@search """
     public async search${name.capitalize()}<T extends ${returnType.name}>(${parameters.paramDecl}${if (parameters.isNotEmpty()) ", " else ""}$pagingParameters): Promise<$returnDeclaration> {
         const request = this._requestAdapter.getRequest();
         
@@ -231,42 +231,10 @@ private fun searchEntityTemplate(entityType: EntityType) = """
         const responseObj = ((await response.json()) as $responseType);
         
         $responseHandling
+    }
+    
+    public async isSearch${name.capitalize()}Allowed(): Promise<boolean> {
+        return isEndpointCallAllowed(this._requestAdapter.getRequest(), "/$restBasePath", "GET", "/$restBasePath/$path");
     }""".trimIndent()
-}.trimIndent()}"""
-
-private fun customEndpointEntityTemplate(entityType: EntityType) = """ 
-    ${entityType.customEndpoints.join(indent = 1, separator = "\n\n") customEndpoint@{
-    val responseType = responseType(paging, list)
-    val responseHandling = responseHandling(list, paging, entityType.nameRest)
-    """
-    public async $clientMethodName(${params.join(separator = ", ") { parameter(true) }}$pagingParams): Promise<$clientMethodReturnType>  {
-        const request = this._requestAdapter.getRequest();
-    
-        const baseUrl = `${baseUri}/${uriPatternString}`${if (canReceiveProjection) """, projection && `projection=${'$'}{projection}`""" else ""};
-        
-        const params = {${requestParams.join(separator = ", ") { name }}$pagingRequestParams};
-    
-        const url = stringHelper.appendParams(baseUrl, params);
-    
-        const response = await request.fetch(
-            url,
-            {
-                method: "${method.name}"${if (body != null) """,
-                headers: {
-                    "content-type": "application/json"
-                },
-                body:JSON.stringify(body),"""
-    else ""}
-            },
-            true);
-    
-        if(!response.ok) {
-            throw response;
-        }
-        ${if (returnType != null) """
-        const responseObj = (await response.json()) as $responseType;
-
-        $responseHandling
-        """ else ""}
-    }""".trimIndent()
-}.trimIndent()}"""
+    }.trimIndent()
+}"""
