@@ -21,16 +21,20 @@
  */
 package de.materna.fegen.core.log
 
+import java.util.concurrent.atomic.AtomicBoolean
+
 /**
  * For logging within FeGen.
  * This is an abstraction for the different logging methods of maven and gradle
  */
 abstract class FeGenLogger(
-        private val context: String
+        private val context: String,
+        protected val errorsEncounteredAtomic: AtomicBoolean
 ) {
 
-  var errorsEncountered: Boolean = false
-    private set
+  var errorsEncountered: Boolean
+    get() = errorsEncounteredAtomic.get()
+    private set(value) = errorsEncounteredAtomic.set(value)
 
   fun debug(msg: String) {
     printDebug(prependContext(msg))

@@ -23,11 +23,13 @@ package de.materna.fegen.core.gradle
 
 import de.materna.fegen.core.log.FeGenLogger
 import org.gradle.api.logging.Logger
+import java.util.concurrent.atomic.AtomicBoolean
 
 class GradleFeGenLogger(
         private val logger: Logger,
-        context: String = "FeGen"
-): FeGenLogger(context) {
+        context: String = "FeGen",
+        errorsEncounteredAtomic: AtomicBoolean = AtomicBoolean(false)
+): FeGenLogger(context, errorsEncounteredAtomic) {
 
     override fun printDebug(msg: String) {
         logger.debug(msg)
@@ -46,6 +48,6 @@ class GradleFeGenLogger(
     }
 
     override fun withContext(context: String): FeGenLogger {
-        return GradleFeGenLogger(logger, context)
+        return GradleFeGenLogger(logger, context, errorsEncounteredAtomic)
     }
 }
