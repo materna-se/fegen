@@ -40,6 +40,6 @@ open class FeGenConfig(
     val datesAsString: Boolean = datesAsString ?: false
     val implicitNullable: DiagnosticsLevel = implicitNullable ?: DiagnosticsLevel.ERROR
     val scanPkg = scanPkg ?: throw IllegalStateException("scanPkg must be specified")
-    val entityPkg = entityPkg ?: "$scanPkg.entity"
-    val repositoryPkg = repositoryPkg ?: "$scanPkg.repository"
+    val entityPkg = entityPkg ?: this.scanPkg
+    val repositoryPkg = repositoryPkg ?: this.scanPkg
 }

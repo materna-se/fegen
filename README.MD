@@ -140,8 +140,8 @@ The following configuration keys are optional:
 | Key | Default value | Description |
 | --- | --- | --- |
 | `targetProject` | The project the fegen plugin is applied to | The project that contains the spring application for which frontend code should be generated |
-| `entityPkg` | `${scanPkg}.entity` | The package that contains all entities and projections you want to generate frontend code for |
-| `repositoryPkg` | `${scanPkg}.repository` | The package that contains all repositories and custom endpoints you want to generate frontend code for |
+| `entityPkg` | Same as `scanPkg` | The package that contains all entities and projections you want to generate frontend code for |
+| `repositoryPkg` | Same as `scanPkg` | The package that contains all repositories and custom endpoints you want to generate frontend code for |
 | `datesAsString` | `false` | Whether time data such as `java.time.LocalDateTime` should be transmitted as strings |
 | `implicitNullable` | `"ERROR"` | How to treat fields of entities that are nullable, but not explicitly annotated with `@Nullable`. Possible values are `"ERROR"`, `"WARN"` and `"ALLOW"` |
 
