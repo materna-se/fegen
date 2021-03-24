@@ -19,7 +19,16 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.materna.fegen.util.spring.annotation
+package de.materna.fegen.util.spring.annotation;
 
-@Target(AnnotationTarget.CLASS, AnnotationTarget.FUNCTION)
-annotation class FegenIgnore
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * FeGen will not generate client code for controllers and methods marked with this annotation
+ */
+@Target({ElementType.TYPE, ElementType.METHOD})
+@Retention(RetentionPolicy.RUNTIME)
+public @interface FegenIgnore {}

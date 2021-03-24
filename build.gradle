@@ -177,8 +177,10 @@ apply plugin: LicensePlugin
 
 license {
     includes = [
-            "**/src/main/kotlin/**/*.kt",
-            "**/src/test/kotlin/**/*.kt",
+            "**/src/main/**/*.kt",
+            "**/src/test/**/*.kt",
+            "**/src/main/**/*.java",
+            "**/src/test/**/*.java",
             "**/*.swift",
             "fegen-kotlin/fegen-kotlin-android-runtime/**/*.kt",
             "fegen-web/fegen-web-runtime/src/**/*.ts",

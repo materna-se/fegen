@@ -19,11 +19,22 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.materna.fegen.util.spring
+package de.materna.fegen.util.spring.annotation;
 
-import org.springframework.context.annotation.ComponentScan
-import org.springframework.context.annotation.Configuration
+import de.materna.fegen.util.spring.FegenConfiguration;
+import org.springframework.context.annotation.Import;
 
-@Configuration
-@ComponentScan
-open class FegenConfiguration
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * Use this annotation on the same class as SpringBootApplication to improve support for code generated with FeGen.
+ * In particular, this enables the FeGen security meta controller that can be used to query data about which
+ * operations are allowed to be called on entities and which endpoints may be called.
+ */
+@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Import(FegenConfiguration.class)
+public @interface Fegen {}

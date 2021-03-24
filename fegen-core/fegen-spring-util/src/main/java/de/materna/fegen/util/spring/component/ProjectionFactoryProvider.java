@@ -19,16 +19,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.materna.fegen.util.spring.annotation
+package de.materna.fegen.util.spring.component;
 
-import de.materna.fegen.util.spring.FegenConfiguration
-import org.springframework.context.annotation.Import
+import org.springframework.context.annotation.Bean;
+import org.springframework.data.projection.ProjectionFactory;
+import org.springframework.data.projection.SpelAwareProxyProjectionFactory;
+import org.springframework.stereotype.Component;
 
-/**
- * Use this annotation on the same class as SpringBootApplication to improve support for code generated with FeGen.
- * In particular, this enables the FeGen security meta controller that can be used to query data about which
- * operations are allowed to be called on entities and which endpoints may be called.
- */
-@Target(AnnotationTarget.CLASS)
-@Import(FegenConfiguration::class)
-annotation class Fegen
+@Component
+public class ProjectionFactoryProvider {
+
+    @Bean
+    public ProjectionFactory projectionFactory() {
+        return new SpelAwareProxyProjectionFactory();
+    }
+}

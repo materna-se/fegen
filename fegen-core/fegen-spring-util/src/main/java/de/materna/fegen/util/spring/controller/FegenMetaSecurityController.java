@@ -19,17 +19,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.materna.fegen.util.spring.controller
+package de.materna.fegen.util.spring.controller;
 
-import de.materna.fegen.util.spring.annotation.FegenIgnore
-import org.springframework.data.rest.webmvc.BasePathAwareController
-import org.springframework.http.ResponseEntity
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfiguration
-import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import de.materna.fegen.util.spring.annotation.FegenIgnore;
+import de.materna.fegen.util.spring.security.SecurityEvaluator;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.data.rest.webmvc.BasePathAwareController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 /**
  * The endpoints in this controller provide information about
@@ -40,28 +42,21 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @FegenIgnore
 @RequestMapping("/fegen/security")
-class FegenMetaSecurityController(
-    private val webSecurityConfiguration: WebSecurityConfiguration
-)  {
+public class FegenMetaSecurityController {
 
-    private val httpMethods = listOf("GET", "POST", "PUT", "PATCH", "DELETE")
+    private final SecurityEvaluator securityEvaluator;
+
+    public FegenMetaSecurityController(BeanFactory beanFactory) {
+        this.securityEvaluator = SecurityEvaluator.createInstance(beanFactory);
+    }
 
     /**
      * Returns a list of capitalized HTTP methods that the caller of this endpoint may use
      * to call the endpoint at the given path.
      */
     @GetMapping("allowedMethods")
-    fun allowedMethods(
-        @RequestParam path: String
-    ): ResponseEntity<List<String>> {
-        val authentication = SecurityContextHolder.getContext().authentication
-        val privilegeEvaluator = webSecurityConfiguration.privilegeEvaluator()
-
-        val allowedMethods = httpMethods.filter {
-            privilegeEvaluator.isAllowed(null, path, it, authentication)
-        }
-
-        return ResponseEntity.ok(allowedMethods)
+    public ResponseEntity<List<String>> allowedMethods(@RequestParam String path) {
+        return ResponseEntity.ok(securityEvaluator.allowedMethods(path));
     }
 
     /**
@@ -69,13 +64,7 @@ class FegenMetaSecurityController(
      * to call the endpoint at the specified path.
      */
     @GetMapping("isAllowed")
-    fun isAllowed(
-        @RequestParam path: String,
-        @RequestParam method: String
-    ): ResponseEntity<Boolean> {
-        val authentication = SecurityContextHolder.getContext().authentication
-        val privilegeEvaluator = webSecurityConfiguration.privilegeEvaluator()
-
-        return ResponseEntity.ok(privilegeEvaluator.isAllowed(null, path, method, authentication))
+    public ResponseEntity<Boolean> isAllowed(@RequestParam String path, @RequestParam String method) {
+        return ResponseEntity.ok(securityEvaluator.isAllowed(path, method));
     }
 }
