@@ -49,11 +49,17 @@ abstract class BaseMgr(
     protected fun searchForClasses(customPkg: String, annotationClass: Class<out Annotation>): List<Class<*>> {
         val resultClassList: MutableList<Class<*>> = mutableListOf()
         feGenConfig.classesDirArray.forEach { classesDir ->
+            val classesDirPath = classesDir.normalize().absolutePath
+            val customPkgPath = customPkg.replace('.', '/')
             resultClassList.addAll(
-                    File("${classesDir.normalize().absolutePath}/${customPkg.replace('.', '/')}").walkTopDown().filter {
+                    File("$classesDirPath/$customPkgPath").walkTopDown().filter {
                         it.name.endsWith("class")
                     }.map {
-                        domainMgr.classLoader.loadClass("$customPkg.${it.nameWithoutExtension}")
+                        val canonicalName = it.relativeTo(classesDir).path
+                            .replace('/', '.')
+                            .replace('\\', '.')
+                            .removeSuffix(".${it.extension}")
+                        domainMgr.classLoader.loadClass(canonicalName)
                     }.filter { c ->
                         c.getAnnotation(annotationClass) != null
                     }.toList())
