@@ -21,7 +21,6 @@
  */
 package de.materna.fegen.core.generator.types
 
-import com.fasterxml.classmate.members.ResolvedMethod
 import de.materna.fegen.core.*
 import de.materna.fegen.core.domain.*
 import de.materna.fegen.core.domain.ComplexType
@@ -68,20 +67,20 @@ class ProjectionMgr(
         class2Projection.forEach { addFields(it.key, it.value) }
     }
 
-    override fun omitField(field: ResolvedMethod, complexType: ComplexType): Boolean {
+    override fun omitField(field: ClassProperty, complexType: ComplexType): Boolean {
         val projectionType = complexType as ProjectionType
-        val parentField = projectionType.parentType.fields.firstOrNull { it.name == field.fieldName }
-        if (parentField == null) {
-            return false
+        val parentField = projectionType.parentType.fields.firstOrNull { it.name == field.name }
+        return if (parentField == null) {
+            false
         } else {
-            return parentField !is ComplexDTField
+            parentField !is ComplexDTField
         }
     }
 
-    override fun checkField(owningClass: Class<*>, field: ResolvedMethod) {
-        val fieldType = field.fieldType
+    override fun checkField(field: ClassProperty) {
+        val fieldType = field.type
         if (fieldType is Class<*> && fieldType.isEntity) {
-            logger.error("Field \"${field.name}\" in projection \"${owningClass.canonicalName}\" has an entity type.")
+            logger.error("Field \"${field.name}\" in projection \"${field.owningClass.canonicalName}\" has an entity type.")
             logger.error("This will cause issues when trying to modify or delete the entity contained in the field.")
             logger.error("Please use a projection of \"${fieldType.simpleName}\" instead")
         }
@@ -111,4 +110,6 @@ class ProjectionMgr(
             logger.warn(entitiesWithoutBP.join(separator = ", ") { name })
         }
     }
+
+    override fun checkImplicitNullable(property: ClassProperty) {}
 }

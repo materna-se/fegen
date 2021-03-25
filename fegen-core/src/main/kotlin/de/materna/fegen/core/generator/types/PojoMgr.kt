@@ -22,6 +22,7 @@
 package de.materna.fegen.core.generator.types
 
 import de.materna.fegen.core.*
+import de.materna.fegen.core.domain.ClassProperty
 import de.materna.fegen.core.domain.Pojo
 import de.materna.fegen.core.generator.DomainMgr
 import de.materna.fegen.core.generator.FieldMgr
@@ -50,11 +51,11 @@ class PojoMgr(
     }
 
     private fun resolveFields(type: Class<*>) =
-            candidateFields(type).asSequence().sortedBy { it.fieldName }.map { method ->
+            ClassProperty.forClass(type).asSequence().sortedBy { it.name }.map { property ->
                 domainMgr.fieldMgr.dtFieldFromType(
-                        name = method.fieldName,
-                        optional = method.field?.optional ?: false,
-                        type = method.fieldType,
+                        name = property.name,
+                        optional = !property.notNull,
+                        type = property.type,
                         context = FieldMgr.FieldContext(type)
                 )
             }.toList()

@@ -24,11 +24,7 @@ package de.materna.fegen.core
 import com.fasterxml.classmate.MemberResolver
 import com.fasterxml.classmate.ResolvedType
 import com.fasterxml.classmate.TypeResolver
-import com.fasterxml.classmate.members.ResolvedField
-import com.fasterxml.classmate.members.ResolvedMember
 import com.fasterxml.classmate.members.ResolvedMethod
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonProperty
 import de.materna.fegen.core.domain.EndpointMethod
 import org.springframework.data.domain.Pageable
 import org.springframework.data.repository.query.Param
@@ -37,17 +33,10 @@ import org.springframework.data.web.PageableDefault
 import org.springframework.data.web.SortDefault
 import org.springframework.hateoas.PagedModel
 import org.springframework.hateoas.CollectionModel
-import org.springframework.hateoas.EntityModel
-import org.springframework.http.ResponseEntity
-import org.springframework.lang.Nullable
 import org.springframework.web.bind.annotation.*
 import java.lang.reflect.*
 import java.lang.reflect.Parameter
-import java.math.BigDecimal
-import java.net.URI
-import java.time.*
 import javax.persistence.*
-import javax.validation.constraints.NotNull
 
 private val typeResolver by lazy {
     TypeResolver()
@@ -57,9 +46,6 @@ private val memberResolver by lazy {
     MemberResolver(typeResolver)
 }
 
-val ResolvedMethod.fieldName
-    get() = name.substringAfter("get", name.substringAfter("is")).decapitalize()
-
 val ResolvedMethod.fieldType
     get() = if (rawMember.returnType == returnType.erasedType) {
         rawMember.genericReturnType
@@ -67,63 +53,10 @@ val ResolvedMethod.fieldType
         returnType.erasedType
     }
 
-val ResolvedMember<Field>.optional: Boolean
-    get() = !required
-
-val ResolvedMember<Field>.explicitOptional: Boolean
-    get() = hasAnnotation(Nullable::class.java) || hasAnnotation(javax.annotation.Nullable::class.java)
-
-val ResolvedMember<Field>.required: Boolean
-    get() = hasAnnotation(OneToMany::class.java) ||
-            hasAnnotation(ManyToMany::class.java) ||
-            hasManyToOneRequiredAnnotation ||
-            hasOneToOneRequiredAnnotation ||
-            hasColumnRequiredAnnotation ||
-            rawMember.type.isPrimitive ||
-            hasAnnotation(Id::class.java) ||
-            hasAnnotation(NotNull::class.java)
-
-val <T> ResolvedMember<T>.notIgnored: Boolean where T : AccessibleObject, T : Member
-    get() = !hasAnnotation(JsonIgnore::class.java)
-
-val <T> ResolvedMember<T>.writable: Boolean where T : AccessibleObject, T : Member
-    get() = hasAnnotation(JsonProperty::class.java)
-
-fun <T> ResolvedMember<T>.hasAnnotation(annotationType: Class<out Annotation>): Boolean
-        where T : AccessibleObject, T : Member {
-    return rawMember.getAnnotation(annotationType) != null
-}
-
-val ResolvedMember<Field>.hasManyToOneRequiredAnnotation
-    get() = rawMember.getAnnotation(ManyToOne::class.java)?.optional?.let { !it } ?: false
-
-val ResolvedMember<Field>.hasOneToOneRequiredAnnotation
-    get() = rawMember.getAnnotation(OneToOne::class.java)?.optional?.let { !it } ?: false
-
-val ResolvedMember<Field>.hasColumnRequiredAnnotation
-    get() = rawMember.getAnnotation(Column::class.java)?.nullable?.let { !it } ?: false
-
-val ResolvedField.setterName
-    get() = "set${name.capitalize()}"
-
-val ResolvedField.setter
-    get() = memberResolver.resolve(this.declaringType, null, null).memberMethods.find { m ->
-        m.name == setterName
-    }
-
-val ResolvedMethod.field
-    get() = declaringType.findField(fieldName)
-
 fun ResolvedType.findField(fieldName: String) =
         memberResolver.resolve(this, null, null).memberFields.find { f ->
             f.name == fieldName
         }
-
-val Class<*>.getters
-    get() = memberResolver.resolve(typeResolver.resolve(this), null, null).memberMethods.filter { m ->
-        // we are interested in getter methods only...
-        m.name.startsWith("get") || m.name.startsWith("is")
-    }
 
 val Class<*>.isEntity
     get() = getAnnotation(Entity::class.java) != null
@@ -234,12 +167,6 @@ val Method.requestParams
         annotation != null && annotation.value != "projection"
     }
 
-val Method.canReceiveProjection
-    get() = parameters.any {
-        val annotation = it.getAnnotation(RequestParam::class.java)
-        annotation != null && annotation.value == "projection"
-    }
-
 val Parameter.nameREST: String
     get() {
         getAnnotation(PathVariable::class.java)?.let { it.name.ifBlank { it.value } }?.let { if (it.isNotBlank()) return it }
@@ -247,18 +174,3 @@ val Parameter.nameREST: String
         getAnnotation(Param::class.java)?.let { if (!it.value.isBlank()) return it.value }
         return name
     }
-
-val Parameter.isSimpleType
-    get() = type == String::class.java
-            || type == Boolean::class.java
-            || type ==  java.lang.Long::class.java
-            || type == java.lang.Integer::class.java
-            || type ==  java.lang.Double::class.java
-            || type == BigDecimal::class.java
-            || type == java.util.UUID::class.java
-            || type == LocalDate::class.java
-            || type == LocalDateTime::class.java
-            || type == ZonedDateTime::class.java
-            || type == OffsetDateTime::class.java
-            || type == Duration::class.java
-            || type == URI::class.java
