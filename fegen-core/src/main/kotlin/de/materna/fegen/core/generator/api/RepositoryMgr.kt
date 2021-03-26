@@ -30,11 +30,17 @@ import de.materna.fegen.core.generator.FieldMgr
 import de.materna.fegen.core.generator.types.EntityMgr
 import de.materna.fegen.util.spring.annotation.FegenIgnore
 import org.springframework.data.domain.Pageable
+import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.rest.core.annotation.RepositoryRestResource
 import org.springframework.data.rest.core.annotation.RestResource
 import java.lang.reflect.Method
 
-class RepositorySearchMgr(
+/**
+ * Processes JPA repositories belonging to entities.
+ * Sets the corresponding entity to exported if exporting is not intentionally disabled and
+ * adds repository searches to the entity.
+ */
+class RepositoryMgr(
         feGenConfig: FeGenConfig,
         private val logger: FeGenLogger,
         private val entityMgr: EntityMgr,
@@ -42,14 +48,14 @@ class RepositorySearchMgr(
 ) : ApiMgr(feGenConfig, domainMgr) {
 
     private val entity2Repository by lazy {
-        searchForClasses(feGenConfig.repositoryPkg, RepositoryRestResource::class.java)
-                .filter { it.getAnnotation(FegenIgnore::class.java) == null }
+        typesImplementing(feGenConfig.repositoryPkg, JpaRepository::class.java)
                 .associateBy { it.repositoryType }
     }
 
     private val repository2Searches by lazy {
         entity2Repository.values
                 .filter { isRepositoryExported(it) }
+                .filter { it.getAnnotation(FegenIgnore::class.java) == null }
                 .associateWith { methodsInRepo(it) }
     }
 
@@ -62,7 +68,7 @@ class RepositorySearchMgr(
                     .sortedBy { it.name }
 
     private fun isRepositoryExported(repoClass: Class<*>) =
-            repoClass.getAnnotation(RepositoryRestResource::class.java).exported
+            repoClass.getAnnotation(RepositoryRestResource::class.java)?.exported ?: true
 
     private fun isMethodExported(method: Method) =
             method.getAnnotation(RestResource::class.java)?.exported ?: true
@@ -127,11 +133,11 @@ class RepositorySearchMgr(
         }
     }
 
-    fun markEntitiesNotExported() {
+    fun markEntitiesExported() {
         for ((entityClass, repository) in entity2Repository) {
-            if (!isRepositoryExported(repository)) {
+            if (isRepositoryExported(repository)) {
                 val entity = entityMgr.class2Entity[entityClass]!!
-                entity.exported = false
+                entity.exported = true
             }
         }
     }

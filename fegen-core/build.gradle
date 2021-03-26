@@ -17,6 +17,7 @@ dependencies {
     implementation "org.springframework:spring-context:5.1.4.RELEASE"
     implementation "org.springframework.data:spring-data-rest-webmvc:3.2.1.RELEASE"
     implementation "org.springframework.data:spring-data-commons:1.13.11.RELEASE"
+    implementation "org.springframework.data:spring-data-jpa:2.4.6"
     implementation "javax.persistence:javax.persistence-api:2.2"
     implementation "javax.validation:validation-api:2.0.1.Final"
     implementation "org.springframework.data:spring-data-rest-core:3.2.1.RELEASE"

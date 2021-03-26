@@ -46,24 +46,31 @@ abstract class BaseMgr(
         }
     }
 
-    protected fun searchForClasses(customPkg: String, annotationClass: Class<out Annotation>): List<Class<*>> {
-        val resultClassList: MutableList<Class<*>> = mutableListOf()
-        feGenConfig.classesDirArray.forEach { classesDir ->
+    protected fun typesWithAnnotation(customPkg: String, annotationClass: Class<out Annotation>): List<Class<*>> {
+        return typesInPackage(customPkg).filter {
+            it.getAnnotation(annotationClass) != null
+        }
+    }
+
+    protected fun typesImplementing(customPkg: String, superType: Class<*>): List<Class<*>> {
+        return typesInPackage(customPkg).filter {
+            superType.isAssignableFrom(it)
+        }
+    }
+
+    private fun typesInPackage(customPkg: String): List<Class<*>> {
+        return feGenConfig.classesDirArray.flatMap { classesDir ->
             val classesDirPath = classesDir.normalize().absolutePath
             val customPkgPath = customPkg.replace('.', '/')
-            resultClassList.addAll(
-                    File("$classesDirPath/$customPkgPath").walkTopDown().filter {
-                        it.name.endsWith("class")
-                    }.map {
-                        val canonicalName = it.relativeTo(classesDir).path
-                            .replace('/', '.')
-                            .replace('\\', '.')
-                            .removeSuffix(".${it.extension}")
-                        domainMgr.classLoader.loadClass(canonicalName)
-                    }.filter { c ->
-                        c.getAnnotation(annotationClass) != null
-                    }.toList())
+            File("$classesDirPath/$customPkgPath").walkTopDown().filter {
+                it.name.endsWith("class")
+            }.map {
+                val canonicalName = it.relativeTo(classesDir).path
+                    .replace('/', '.')
+                    .replace('\\', '.')
+                    .removeSuffix(".${it.extension}")
+                domainMgr.classLoader.loadClass(canonicalName)
+            }.toList()
         }
-        return resultClassList
     }
 }

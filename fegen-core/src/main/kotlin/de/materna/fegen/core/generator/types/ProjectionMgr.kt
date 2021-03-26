@@ -39,7 +39,7 @@ class ProjectionMgr(
 
     val class2Projection by lazy {
         // Since projections are no Spring components, they have to be looked up separately
-        searchForClasses(feGenConfig.entityPkg, Projection::class.java)
+        typesWithAnnotation(feGenConfig.entityPkg, Projection::class.java)
                 .associateWith { toProjectionType(it) }
     }
 

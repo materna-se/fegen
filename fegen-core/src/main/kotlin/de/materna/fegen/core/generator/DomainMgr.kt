@@ -25,7 +25,7 @@ import de.materna.fegen.core.FeGenConfig
 import de.materna.fegen.core.log.FeGenLogger
 import de.materna.fegen.core.generator.api.CustomEndpointMgr
 import de.materna.fegen.core.generator.api.CustomSearchMgr
-import de.materna.fegen.core.generator.api.RepositorySearchMgr
+import de.materna.fegen.core.generator.api.RepositoryMgr
 import de.materna.fegen.core.generator.types.*
 import java.net.URL
 import java.net.URLClassLoader
@@ -55,7 +55,7 @@ class DomainMgr(
 
     val pojoMgr = PojoMgr(feGenConfig, logger.withContext("FeGen PojoMgr"), this)
 
-    private val repositorySearchMgr = RepositorySearchMgr(feGenConfig, logger.withContext("FeGen RepositorySearchMgr"), entityMgr, this)
+    private val repositorySearchMgr = RepositoryMgr(feGenConfig, logger.withContext("FeGen RepositorySearchMgr"), entityMgr, this)
 
     private val customSearchMgr = CustomSearchMgr(feGenConfig, logger.withContext("FeGen CustomSearchMgr"), entityMgr, this)
 
@@ -72,7 +72,7 @@ class DomainMgr(
 
         embeddableMgr.addFields()
 
-        repositorySearchMgr.markEntitiesNotExported()
+        repositorySearchMgr.markEntitiesExported()
         repositorySearchMgr.addSearchesToEntities()
         repositorySearchMgr.warnIfNoRepositoryClasses()
         repositorySearchMgr.warnIfNoSearchMethods()

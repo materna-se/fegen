@@ -34,7 +34,7 @@ class EmbeddableMgr(
 ): ComplexTypeMgr(feGenConfig, logger, domainMgr) {
 
     val class2Embeddable by lazy {
-        searchForClasses(feGenConfig.entityPkg, Embeddable::class.java)
+        typesWithAnnotation(feGenConfig.entityPkg, Embeddable::class.java)
                 .associateWith { EmbeddableType(name = it.simpleName) }
     }
 

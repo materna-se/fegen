@@ -59,7 +59,7 @@ class EntityMgr(
     }
 
     fun addNameRestOverride() {
-        val repoClasses = searchForClasses(feGenConfig.repositoryPkg, RepositoryRestResource::class.java).toSet()
+        val repoClasses = typesWithAnnotation(feGenConfig.repositoryPkg, RepositoryRestResource::class.java).toSet()
         for (repoClass in repoClasses) {
             val customPath = repoClass.getAnnotation(RepositoryRestResource::class.java).path
             if (customPath.isNotBlank()) {
