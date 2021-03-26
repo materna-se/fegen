@@ -164,7 +164,7 @@ sealed class ClassProperty {
         override val annotatable = listOf(member.rawMember)
 
         override fun notIgnored(): Boolean {
-            return notIgnored(member.rawMember)
+            return !member.isTransient && notIgnored(member.rawMember)
         }
     }
 
