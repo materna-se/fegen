@@ -1,15 +1,11 @@
 # 🧹 FeGen for Spring Boot
 
-FeGen generates frontend code based on your Spring backend so you can consume your Spring Data REST API in a type safe manner.
-Typescript and Kotlin are supported as frontend languages, so you can use FeGen when creating a web app, a native Android app or another Spring application.
+FeGen generates frontend code based on your Spring backend, so you can consume your Spring Data REST API in a type safe manner.
+Typescript and Kotlin are supported as frontend languages, so FeGen helps you create a web app, a native Android app or another Spring application.
+
+If you are new to FeGen, have a look at the [Documentation](https://materna-se.github.io/fegen/)
 
 An example project demonstrating the usage of FeGen can be found in the git submodule `fegen-examples`.
-Run the following command to check it out if you did not clone this repository using `git clone --recurse-submodules`:
-
-```shell script
-git submodule init
-git submodule update
-```
 
 ## Features
 
@@ -538,7 +534,20 @@ Calling a custom endpoint in the frontend works the same as with repository sear
 
 ## Building FeGen
 
-If you want to use a custom build, you can install all FeGen plugins to your local `.m2` directory by running the following command in the root project:
+Clone this repository if you haven't already using
+
+```shell script
+git clone --recurse-submodules
+```
+
+If you have not used the `--recurse-submodules`, execute the following in the cloned directory:
+
+```shell script
+git submodule init
+git submodule update
+```
+
+If you want to use a custom build of FeGen, you can install all FeGen plugins to your local `.m2` directory by running the following command in the root project:
 
 ```
 gradle publishToMavenLocal
@@ -550,12 +559,12 @@ Tests are included in the `fegen-examples` directory and can be run by executing
 
 ```
 cd fegen-examples
-gradle build
+./gradlew build
 ``` 
 
 The `fegen-examples` directory consists of a gradle project that contains the line `includeBuild '..'` in its `settings.gradle`.
 This causes it to use gradle's composite build feature and ensures that the example and tests inside it always use the FeGen instance built from the sources in the directory where this `README.MD` resides.
 
-The source code of FeGen is split into two gradle sub projects that correspond to the frontend languages that code can be generated for.
+The source code of FeGen is split into two gradle subprojects that correspond to the frontend languages that code can be generated for.
 Additionally, `fegen-core` contains the code that is independent of the target language.
 Each of these directories contain two sub projects that contain code that is specific to maven and gradle respectively.
