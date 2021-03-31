@@ -97,17 +97,21 @@ sealed class ClassProperty {
 
     val explicitNullable by lazy {
         annotatable.any {
-            hasAnnotation(it, Nullable::class.java) || hasAnnotation(it, javax.annotation.Nullable::class.java)
+            it.getAnnotation(Column::class.java)?.nullable ?: false ||
+                    hasAnnotation(it, Nullable::class.java) ||
+                    hasAnnotation(it, javax.annotation.Nullable::class.java) ||
+                    it.getAnnotation(ManyToOne::class.java)?.optional ?: false ||
+                    it.getAnnotation(OneToOne::class.java)?.optional ?: false
         }
     }
 
     private val explicitNotNull by lazy {
         annotatable.any {
-            hasAnnotation(it, OneToMany::class.java) ||
+            it.getAnnotation(Column::class.java)?.nullable?.not() ?: false ||
+                    hasAnnotation(it, OneToMany::class.java) ||
                     hasAnnotation(it, ManyToMany::class.java) ||
                     it.getAnnotation(ManyToOne::class.java)?.optional?.not() ?: false ||
                     it.getAnnotation(OneToOne::class.java)?.optional?.not() ?: false ||
-                    it.getAnnotation(Column::class.java)?.nullable?.not() ?: false ||
                     hasAnnotation(it, Id::class.java) ||
                     hasAnnotation(it, NotNull::class.java)
         }
