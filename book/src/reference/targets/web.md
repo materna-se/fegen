@@ -1,1 +1,0 @@
-To use generated code when developing Android apps, create a library project in Android Studio and copy the contents of fegen-kotlin/fegen-kotlin-android-runtime to the source directory into the package de.materna.fegen.adapter.android.
