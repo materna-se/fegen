@@ -18,6 +18,7 @@
     - [Entities](reference/data_model/entities.md)
     - [Relationships](reference/data_model/relationships.md)
     - [Custom Endpoints](./reference/data_model/custom_endpoints.md)
+    - [Embeddables](./reference/data_model/embeddables.md)
     - [@FegenIgnore](reference/data_model/fegen_ignore.md)
   - [Retrieving Data](./reference/retrieving/intro.md)
     - [Paging and Sorting](reference/retrieving/paging_sorting.md)
