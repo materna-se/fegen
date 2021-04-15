@@ -30,3 +30,8 @@
     - [Kotlin](./reference/targets/kotlin.md)
   - [Security](./reference/security.md)
   - [Pitfalls](./reference/pitfalls.md)
+- [Developing FeGen](./developing/intro.md)
+  - [Building](./developing/building.md)
+  - [Architecture](./developing/architecture.md)
+  - [Using a Custom Build Locally](./developing/local_usage.md)
+  - [Contributing](./developing/contributing.md)

@@ -41,36 +41,7 @@ FeGen currently has some limitations such as the following which may be lifted i
 
 ## Building FeGen
 
-Clone this repository if you haven't already using
 
-```shell script
-git clone --recurse-submodules
-```
-
-If you have not used the `--recurse-submodules`, execute the following in the cloned directory:
-
-```shell script
-git submodule init
-git submodule update
-```
-
-If you want to use a custom build of FeGen, you can install all FeGen plugins to your local `.m2` directory by running the following command in the root project:
-
-```
-gradle publishToMavenLocal
-```
-
-To include the built plugins in a gradle project, insert `mavenLocal()` as a repository in the buildscript in `build.gradle`.
-
-Tests are included in the `fegen-examples` directory and can be run by executing the following commands:
-
-```
-cd fegen-examples
-./gradlew build
-``` 
-
-The `fegen-examples` directory consists of a gradle project that contains the line `includeBuild '..'` in its `settings.gradle`.
-This causes it to use gradle's composite build feature and ensures that the example and tests inside it always use the FeGen instance built from the sources in the directory where this `README.MD` resides.
 
 The source code of FeGen is split into two gradle subprojects that correspond to the frontend languages that code can be generated for.
 Additionally, `fegen-core` contains the code that is independent of the target language.
