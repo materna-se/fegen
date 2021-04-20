@@ -23,6 +23,8 @@ package de.materna.fegen.runtime
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 data class EntitySecurity(
         val readOne: Boolean,
@@ -56,7 +58,9 @@ data class EntitySecurity(
                     throw RuntimeException("Server responded with ${response.code}")
                 }
                 val httpBody = response.body ?: throw RuntimeException("No body was sent in response")
-                return objectMapper.readValue(httpBody.byteStream(), object : TypeReference<List<String>>() {})
+                return withContext(Dispatchers.IO) {
+                    objectMapper.readValue(httpBody.byteStream(), object : TypeReference<List<String>>() {})
+                }
             } catch (ex: Exception) {
                 throw java.lang.RuntimeException("Failed to fetch security configuration at $url", ex)
             }

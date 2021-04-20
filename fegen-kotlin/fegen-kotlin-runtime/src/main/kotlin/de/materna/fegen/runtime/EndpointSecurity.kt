@@ -23,6 +23,8 @@ package de.materna.fegen.runtime
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 suspend fun isEndpointCallAllowed(fetchAdapter: FetchAdapter, basePath: String, method: String, path: String): Boolean {
     val url = "$basePath/fegen/security/isAllowed?method=$method&path=$path"
@@ -32,7 +34,9 @@ suspend fun isEndpointCallAllowed(fetchAdapter: FetchAdapter, basePath: String, 
             throw RuntimeException("Server responded with ${response.code}")
         }
         val httpBody = response.body ?: throw RuntimeException("No body was sent in response")
-        return ObjectMapper().readValue(httpBody.byteStream(), object : TypeReference<Boolean>() {})
+        return withContext(Dispatchers.IO) {
+            ObjectMapper().readValue(httpBody.byteStream(), object : TypeReference<Boolean>() {})
+        }
     } catch (ex: Exception) {
         throw java.lang.RuntimeException("Failed to fetch security configuration at $url", ex)
     }

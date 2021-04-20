@@ -26,6 +26,10 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.IOException
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 open class FetchAdapter(
         private val baseUrl: String,
@@ -56,7 +60,17 @@ open class FetchAdapter(
                 .method(method, content)
                 .url(fullUrl)
 
-        val response = client.newCall(request.build()).execute()
+        val response = suspendCoroutine<Response> { continuation ->
+            client.newCall(request.build()).enqueue(object: Callback {
+                override fun onFailure(call: Call, e: IOException) {
+                    continuation.resumeWithException(e)
+                }
+
+                override fun onResponse(call: Call, response: Response) {
+                    continuation.resume(response)
+                }
+            })
+        }
 
         val code = response.code
 
