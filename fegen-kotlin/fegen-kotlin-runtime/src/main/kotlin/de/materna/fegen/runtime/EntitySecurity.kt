@@ -25,37 +25,37 @@ import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 
 data class EntitySecurity(
-    val readOne: Boolean,
-    val readAll: Boolean,
-    val create: Boolean,
-    val update: Boolean,
-    val delete: Boolean
+        val readOne: Boolean,
+        val readAll: Boolean,
+        val create: Boolean,
+        val update: Boolean,
+        val delete: Boolean
 ) {
     companion object {
 
         private val objectMapper = ObjectMapper()
 
-        suspend fun fetch(fetchRequest: FetchRequest, basePath: String, entityPath: String): EntitySecurity {
-            val generalSecurity = fetchAllowedMethods(fetchRequest, basePath, entityPath)
-            val specificSecurity = fetchAllowedMethods(fetchRequest, basePath, "$entityPath/1")
+        suspend fun fetch(fetchAdapter: FetchAdapter, basePath: String, entityPath: String): EntitySecurity {
+            val generalSecurity = fetchAllowedMethods(fetchAdapter, basePath, entityPath)
+            val specificSecurity = fetchAllowedMethods(fetchAdapter, basePath, "$entityPath/1")
 
             return EntitySecurity(
-                readOne = specificSecurity.contains("GET"),
-                readAll = generalSecurity.contains("GET"),
-                create = generalSecurity.contains("POST"),
-                update = specificSecurity.contains("PUT"),
-                delete = specificSecurity.contains("DELETE")
+                    readOne = specificSecurity.contains("GET"),
+                    readAll = generalSecurity.contains("GET"),
+                    create = generalSecurity.contains("POST"),
+                    update = specificSecurity.contains("PUT"),
+                    delete = specificSecurity.contains("DELETE")
             )
         }
 
-        private suspend fun fetchAllowedMethods(fetchRequest: FetchRequest, basePath: String, path: String): List<String> {
+        private suspend fun fetchAllowedMethods(fetchAdapter: FetchAdapter, basePath: String, path: String): List<String> {
             val url = "$basePath/fegen/security/allowedMethods?path=$path"
             try {
-                val response = fetchRequest.get(url)
+                val response = fetchAdapter.get(url)
                 if (!response.isSuccessful) {
-                    throw RuntimeException("Server responded with ${response.code()}")
+                    throw RuntimeException("Server responded with ${response.code}")
                 }
-                val httpBody = response.body() ?: throw RuntimeException("No body was sent in response")
+                val httpBody = response.body ?: throw RuntimeException("No body was sent in response")
                 return objectMapper.readValue(httpBody.byteStream(), object : TypeReference<List<String>>() {})
             } catch (ex: Exception) {
                 throw java.lang.RuntimeException("Failed to fetch security configuration at $url", ex)

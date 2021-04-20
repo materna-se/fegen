@@ -28,12 +28,12 @@ import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
 
-open class RequestAdapter(val request: FetchRequest) {
+open class RequestAdapter(val fetchAdapter: FetchAdapter) {
 
     val creatingMapper = createCreatingMapper()
 
     private fun createCreatingMapper(): ObjectMapper {
-        val mapper = request.mapper.copy()
+        val mapper = fetchAdapter.mapper.copy()
         val module = SimpleModule()
         module.addSerializer(ApiObj::class.java, object: StdSerializer<ApiObj<*>>(ApiObj::class.java) {
             override fun serialize(value: ApiObj<*>, gen: JsonGenerator, provider: SerializerProvider) {
@@ -59,7 +59,7 @@ open class RequestAdapter(val request: FetchRequest) {
     ) = doPageRequest(
             url = url,
             method = method,
-            bodyContent = request.mapper.writeValueAsString(body),
+            bodyContent = fetchAdapter.mapper.writeValueAsString(body),
             embeddedPropName = embeddedPropName,
             projectionName = projectionName,
             page = page,
@@ -98,7 +98,7 @@ open class RequestAdapter(val request: FetchRequest) {
         fullUrl = if (hasSize) "$fullUrl${if (hasProjection || hasPage) "&" else firstConnector}size=$size" else fullUrl
         fullUrl = if (hasSort) "$fullUrl${if (hasProjection || hasPage || hasSize) "&" else firstConnector}sort=$sort" else fullUrl
 
-        val res = request.fetch(
+        val res = fetchAdapter.fetch(
                 url = fullUrl,
                 method = method,
                 contentType = contentType,
@@ -106,8 +106,8 @@ open class RequestAdapter(val request: FetchRequest) {
                 ignoreBasePath = ignoreBasePath
         )
         val dto: ApiHateoasPage<U, T> =
-                request.mapper.readValue(
-                        res.body()?.string() ?: "",
+                fetchAdapter.mapper.readValue(
+                        res.body?.string() ?: "",
                         type
                 )
         val items = dto._embedded.getValue(embeddedPropName).map { it.toObj() }
@@ -125,7 +125,7 @@ open class RequestAdapter(val request: FetchRequest) {
     ) = doListRequest(
             url = url,
             method = method,
-            bodyContent = request.mapper.writeValueAsString(body),
+            bodyContent = fetchAdapter.mapper.writeValueAsString(body),
             embeddedPropName = embeddedPropName,
             projectionName = projectionName,
             type = type,
@@ -154,14 +154,14 @@ open class RequestAdapter(val request: FetchRequest) {
         fullUrl = if (hasProjection) "$fullUrl${firstConnector}projection=$projectionName" else fullUrl
 
         try {
-            val res = request.fetch(
+            val res = fetchAdapter.fetch(
                     url = fullUrl,
                     method = method,
                     contentType = contentType,
                     bodyContent = bodyContent,
                     ignoreBasePath = ignoreBasePath
             )
-            val dto: ApiHateoasList<U, T> = request.mapper.readValue(res.body()?.string() ?: "No result", type)
+            val dto: ApiHateoasList<U, T> = fetchAdapter.mapper.readValue(res.body?.string() ?: "No result", type)
             return dto._embedded.getOrDefault(embeddedPropName, emptyList()).map { it.toObj() }
         } catch (e: BadStatusCodeException) {
             when {
@@ -180,7 +180,7 @@ open class RequestAdapter(val request: FetchRequest) {
         return doListRequestSimple(
                 url = url,
                 method = method,
-                bodyContent = if (body != null ) request.mapper.writeValueAsString(body) else "",
+                bodyContent = if (body != null ) fetchAdapter.mapper.writeValueAsString(body) else "",
                 ignoreBasePath = ignoreBasePath
         )
     }
@@ -194,14 +194,14 @@ open class RequestAdapter(val request: FetchRequest) {
     ): List<U> {
 
         try {
-            val res = request.fetch(
+            val res = fetchAdapter.fetch(
                     url = url,
                     method = method,
                     contentType = contentType,
                     bodyContent = bodyContent,
                     ignoreBasePath = ignoreBasePath
             )
-            return request.mapper.readValue(res.body()?.string() ?: "No result", Array<U>::class.java).toList()
+            return fetchAdapter.mapper.readValue(res.body?.string() ?: "No result", Array<U>::class.java).toList()
         } catch (e: BadStatusCodeException) {
             when (e.statusCode) {
                 404 -> return emptyList()
@@ -209,7 +209,7 @@ open class RequestAdapter(val request: FetchRequest) {
             }
         }
     }
-    
+
     suspend inline fun <reified T : ApiObj<U>, reified U : ApiDto<T>, V> doSingleRequest(
             url: String,
             method: String = "GET",
@@ -219,7 +219,7 @@ open class RequestAdapter(val request: FetchRequest) {
     ) = doSingleRequest<T, U>(
             url = url,
             method = method,
-            bodyContent = request.mapper.writeValueAsString(body),
+            bodyContent = fetchAdapter.mapper.writeValueAsString(body),
             projectionName = projectionName,
             ignoreBasePath = ignoreBasePath
     )
@@ -241,7 +241,7 @@ open class RequestAdapter(val request: FetchRequest) {
 
         fullUrl = if (projectionName != null) "$fullUrl${firstConnector}projection=$projectionName" else fullUrl
 
-        val res = request.fetch(
+        val res = fetchAdapter.fetch(
                 url = fullUrl,
                 method = method,
                 contentType = contentType,
@@ -249,7 +249,7 @@ open class RequestAdapter(val request: FetchRequest) {
                 ignoreBasePath = ignoreBasePath
         )
 
-        val dto = request.mapper.readValue(res.body()?.string() ?: "No result", U::class.java)
+        val dto = fetchAdapter.mapper.readValue(res.body?.string() ?: "No result", U::class.java)
         return dto.toObj()
     }
 
@@ -261,7 +261,7 @@ open class RequestAdapter(val request: FetchRequest) {
     ) = doSingleRequestWithoutReturnValueTransformation<U>(
             url = url,
             method = method,
-            bodyContent = request.mapper.writeValueAsString(body),
+            bodyContent = fetchAdapter.mapper.writeValueAsString(body),
             ignoreBasePath = ignoreBasePath
     )
 
@@ -273,7 +273,7 @@ open class RequestAdapter(val request: FetchRequest) {
             ignoreBasePath: Boolean = false
     ): U {
 
-        val res = request.fetch(
+        val res = fetchAdapter.fetch(
                 url = url,
                 method = method,
                 contentType = contentType,
@@ -281,7 +281,7 @@ open class RequestAdapter(val request: FetchRequest) {
                 ignoreBasePath = ignoreBasePath
         )
 
-        return request.mapper.readValue(res.body()?.string() ?: "No result", U::class.java)
+        return fetchAdapter.mapper.readValue(res.body?.string() ?: "No result", U::class.java)
     }
 
     suspend inline fun <V> doVoidRequest(
@@ -293,7 +293,7 @@ open class RequestAdapter(val request: FetchRequest) {
     ) = doVoidRequest(
             url = url,
             method = method,
-            bodyContent = request.mapper.writeValueAsString(body),
+            bodyContent = fetchAdapter.mapper.writeValueAsString(body),
             projectionName = projectionName,
             ignoreBasePath = ignoreBasePath
     )
@@ -314,7 +314,7 @@ open class RequestAdapter(val request: FetchRequest) {
 
         fullUrl = if (projectionName != null) "$fullUrl${firstConnector}projection=$projectionName" else fullUrl
 
-        request.fetch(
+        fetchAdapter.fetch(
                 url = fullUrl,
                 method = method,
                 contentType = contentType,
@@ -338,16 +338,16 @@ open class RequestAdapter(val request: FetchRequest) {
     suspend inline fun <reified TNew : ApiBase<T, U>, reified T : ApiObj<U>, reified U : ApiDto<T>> createObject(
             newObject: TNew, createURI: String
     ): T = doSingleRequest<T, U>(
-                url = createURI,
-                method = "POST",
-                bodyContent = creatingMapper.writeValueAsString(newObject)
-        )
+            url = createURI,
+            method = "POST",
+            bodyContent = creatingMapper.writeValueAsString(newObject)
+    )
 
     suspend inline fun <reified T : ApiObj<U>, reified U : ApiDto<T>> updateObject(obj: T) =
             doSingleRequest<T, U>(
                     url = removeTemplatesFromHref(obj._links.self),
                     method = "PUT",
-                    bodyContent = request.mapper.writeValueAsString(obj)
+                    bodyContent = fetchAdapter.mapper.writeValueAsString(obj)
             )
 
     suspend inline fun <reified T : ApiObj<*>> deleteObject(existingObject: T) =

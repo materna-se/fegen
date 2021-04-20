@@ -19,19 +19,19 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.materna.fegen.adapter.android
+package de.materna.fegen.runtime
 
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.ObjectMapper
 
-suspend fun isEndpointCallAllowed(fetchRequest: FetchRequest, method: String, path: String): Boolean {
-    val url = "/api/fegen/security/isAllowed?method=$method&path=$path"
+suspend fun isEndpointCallAllowed(fetchAdapter: FetchAdapter, basePath: String, method: String, path: String): Boolean {
+    val url = "$basePath/fegen/security/isAllowed?method=$method&path=$path"
     try {
-        val response = fetchRequest.get(url)
+        val response = fetchAdapter.get(url)
         if (!response.isSuccessful) {
-            throw RuntimeException("Server responded with ${response.code()}")
+            throw RuntimeException("Server responded with ${response.code}")
         }
-        val httpBody = response.body() ?: throw RuntimeException("No body was sent in response")
+        val httpBody = response.body ?: throw RuntimeException("No body was sent in response")
         return ObjectMapper().readValue(httpBody.byteStream(), object : TypeReference<Boolean>() {})
     } catch (ex: Exception) {
         throw java.lang.RuntimeException("Failed to fetch security configuration at $url", ex)

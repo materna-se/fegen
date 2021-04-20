@@ -13,7 +13,7 @@ repositories {
 dependencies {
     compileOnly gradleApi()
     implementation localGroovy()
-    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     implementation project(':fegen-core')
     implementation project(':fegen-core:fegen-gradle')
     implementation project(':fegen-kotlin')

@@ -21,7 +21,10 @@
  */
 package de.materna.fegen.runtime
 
-open class BaseClient<T>(
-    open val apiClient: T,
-    open val requestAdapter: RequestAdapter
-)
+import okhttp3.Response
+import java.lang.RuntimeException
+
+data class BadStatusCodeException(
+        val statusCode: Int,
+        val response: Response
+): RuntimeException("Bad status code $statusCode: ${response.message}")

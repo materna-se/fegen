@@ -80,7 +80,7 @@ class CustomControllerGenerator(
             .addAnnotation(AnnotationSpec.Companion.builder(Suppress::class).addMember("%S", "UNUSED").build())
             .returns(Boolean::class)
             .addStatement("val url = %P", path)
-            .addStatement("return %M(requestAdapter.request, %S, %S, url)", isEndpointCallAllowed, "/${feGenKotlin.restBasePath}", endpoint.method)
+            .addStatement("return %M(requestAdapter.fetchAdapter, %S, %S, url)", isEndpointCallAllowed, "/${feGenKotlin.restBasePath}", endpoint.method)
             .build()
     }
 

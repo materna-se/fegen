@@ -1,5 +1,7 @@
-apply plugin: 'base'
-apply plugin: 'com.github.node-gradle.node'
+plugins {
+    id "base"
+    id "com.github.node-gradle.node" version "3.0.1"
+}
 
 npmInstall {
     inputs.file 'package.json'

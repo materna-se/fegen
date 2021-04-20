@@ -53,27 +53,27 @@ fun FeGenKotlin.toApiClientKt() = """
     """.trimIndent() else ""}
     ${customControllers.join(indent = 2) { "import ${frontendPkg}.controller.${name}Client" }}
 
-    open class ApiClient(val request: FetchRequest) {
-        val adapter: RequestAdapter
+    open class ApiClient(val fetchAdapter: FetchAdapter) {
+        val requestAdapter: RequestAdapter
         
         init {
             ${if (!feGenConfig.datesAsString) """
-                request.mapper.registerModule(JavaTimeModule())
-                request.mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                fetchAdapter.mapper.registerModule(JavaTimeModule())
+                fetchAdapter.mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
             """.doIndent(3) else ""}
-            request.mapper.registerKotlinModule()
-            adapter = RequestAdapter(request)
+            fetchAdapter.mapper.registerKotlinModule()
+            requestAdapter = RequestAdapter(fetchAdapter)
         }
     
         ${entityTypes.filter { it.exported }.join(indent = 2) {
     """
-            open val ${nameClient.decapitalize()} by lazy { $nameClient(apiClient = this, requestAdapter = adapter) }
+            open val ${nameClient.decapitalize()} by lazy { $nameClient(apiClient = this, requestAdapter = requestAdapter) }
             open val ${nameRepository.decapitalize()} by lazy { ${nameRepository}(client = ${nameClient.decapitalize()}) }
         """.trimIndent()
 }}
         ${customControllers.join(indent = 2) {
     """
-            open val ${name.decapitalize()}Client by lazy { ${name}Client(adapter) }
+            open val ${name.decapitalize()}Client by lazy { ${name}Client(requestAdapter) }
     """.trimIndent()
 }}
     }
@@ -149,7 +149,7 @@ fun FeGenKotlin.toApiClientKt() = """
 
             suspend fun delete(id: Long) = requestAdapter.deleteObject(id, "${uriREST(restBasePath)}")
             
-            suspend fun allowedMethods(): EntitySecurity = EntitySecurity.fetch(requestAdapter.request, "$restBasePath", "/${uriREST(restBasePath)}")
+            suspend fun allowedMethods(): EntitySecurity = EntitySecurity.fetch(requestAdapter.fetchAdapter, "$restBasePath", "/${uriREST(restBasePath)}")
 
 
             ${entityFields.join(indent = 3, separator = "\n\n") dtField@{
@@ -203,7 +203,7 @@ fun FeGenKotlin.toApiClientKt() = """
 
                 ${if (optional || list) """
                     suspend fun $deleteFromAssociation(obj: ${this@domainType.name}, childToDelete: ${type.name}) =
-                        requestAdapter.request.delete(
+                        requestAdapter.fetchAdapter.delete(
                             url = "${this@domainType.uriREST(restBasePath)}/${"$"}{obj.id}/$name/${"$"}{childToDelete.id}"
                         )
                 """.doIndent(4)
@@ -366,7 +366,7 @@ if (paging) """
 
 private fun Search.buildIsAllowedFunction(projection: ProjectionType? = null, restBasePath: String) = """
     suspend fun isSearch${name.capitalize()}${projection?.projectionTypeInterfaceName ?: ""}Allowed(): Boolean {
-        return isEndpointCallAllowed(requestAdapter.request, "/$restBasePath", "GET", "/$restBasePath/$path")
+        return isEndpointCallAllowed(requestAdapter.fetchAdapter, "/$restBasePath", "GET", "/$restBasePath/$path")
     }
 """.trimIndent()
 

@@ -6,7 +6,6 @@ group 'com.github.materna-se.fegen'
 version "$fegen_core_version${fegen_snapshot ? '-SNAPSHOT' : ''}"
 
 repositories {
-    jcenter()
     mavenCentral()
 }
 

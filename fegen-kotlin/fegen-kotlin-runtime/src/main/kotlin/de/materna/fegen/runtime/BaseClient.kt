@@ -19,9 +19,9 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-package de.materna.fegen.adapter.android
+package de.materna.fegen.runtime
 
 open class BaseClient<T>(
-    open val apiClient: T,
-    open val requestAdapter: RequestAdapter
+        open val apiClient: T,
+        open val requestAdapter: RequestAdapter
 )

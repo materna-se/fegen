@@ -1,6 +1,6 @@
 buildscript {
     repositories {
-        jcenter()
+        mavenCentral()
     }
     dependencies {
         classpath "org.jetbrains.kotlin:kotlin-noarg:$kotlin_version"
@@ -8,10 +8,13 @@ buildscript {
     }
 }
 
-apply plugin: 'org.jetbrains.kotlin.jvm'
-apply plugin: 'org.jetbrains.kotlin.plugin.jpa'
-apply plugin: 'org.springframework.boot'
-apply plugin: 'io.spring.dependency-management'
+plugins {
+    id "org.jetbrains.kotlin.jvm"
+    id "org.jetbrains.kotlin.plugin.jpa"
+    id "org.springframework.boot"
+    id "io.spring.dependency-management"
+}
+
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 
@@ -19,12 +22,11 @@ group 'com.github.materna-se.fegen'
 version "$fegen_spring_util_version${fegen_snapshot ? '-SNAPSHOT' : ''}"
 
 repositories {
-    jcenter()
     mavenCentral()
 }
 
 dependencies {
-    compileOnly "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+    compileOnly "org.jetbrains.kotlin:kotlin-stdlib-jdk8:$kotlin_version"
     compileOnly "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
 
     compileOnly "org.springframework.boot:spring-boot-starter-web"
