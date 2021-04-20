@@ -26,15 +26,15 @@ import {apiHelper} from "../index";
 export abstract class BaseClient<C, N, D extends Dto> {
 
     // tslint:disable-next-line:variable-name
-    protected _requestAdapter: RequestAdapter = new RequestAdapter();
+    protected readonly _requestAdapter: RequestAdapter;
     // tslint:disable-next-line:variable-name
-    protected _apiClient: C;
+    protected readonly _apiClient: C;
     // tslint:disable-next-line:variable-name
-    protected _uri: string;
+    protected readonly _uri: string;
     // tslint:disable-next-line:variable-name
-    protected _embeddedPropName: string;
+    protected readonly _embeddedPropName: string;
 
-    protected constructor(uri: string, embeddedPropName: string, apiClient: C, requestAdapter?: RequestAdapter) {
+    protected constructor(uri: string, embeddedPropName: string, apiClient: C, requestAdapter: RequestAdapter) {
         this._requestAdapter = requestAdapter || this._requestAdapter;
         this._apiClient = apiClient;
         this._uri = uri;
@@ -92,7 +92,7 @@ export abstract class BaseClient<C, N, D extends Dto> {
         let fullUrl = `${this._uri}/${id}`;
         fullUrl = hasProjection ? `${fullUrl}?projection=${projection}` : fullUrl;
 
-        const response =  await this._requestAdapter.getRequest().get(fullUrl);
+        const response =  await this._requestAdapter.fetchAdapter.get(fullUrl);
         if(response.status === 404) return undefined;
         if(!response.ok){ throw response; }
 

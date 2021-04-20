@@ -42,7 +42,7 @@ fun FeGenWeb.toEntityClientTS() = entityTypes.filter { it.exported }.join(separa
     """
 export class $nameClient extends BaseClient<ApiClient, $nameNew, $name> {
 
-    constructor(apiClient: ApiClient, requestAdapter?: RequestAdapter){
+    constructor(apiClient: ApiClient, requestAdapter: RequestAdapter){
         super("${uriREST(restBasePath)}", "${English.plural(name.decapitalize())}", apiClient, requestAdapter);
         this.readOne = this.readOne.bind(this);
         this.readProjection = this.readProjection.bind(this);
@@ -118,14 +118,14 @@ private fun deleteEntityTemplate(entityType: EntityType, restBasePath: String) =
     entityType.entityFields.join(indent = 1, separator = "\n\n") dtField@{
         """
     public async $deleteFromAssociation(returnType: ${entityType.name}, childToDelete: ${type.name}) {
-        await this._requestAdapter.getRequest().delete(`${entityType.uriREST(restBasePath)}/${'$'}{returnType.id}/$name/${'$'}{childToDelete.id}`);
+        await this._requestAdapter.fetchAdapter.delete(`${entityType.uriREST(restBasePath)}/${'$'}{returnType.id}/$name/${'$'}{childToDelete.id}`);
     }""".trimIndent()
     }
 }"""
 
 private fun allowedMethodsTemplate(entityType: EntityType, restBasePath: String): String = """
     public allowedMethods(): Promise<EntitySecurity> {
-        return EntitySecurity.fetch(this._requestAdapter.getRequest(), "$restBasePath", "/${entityType.uriREST(restBasePath)}");
+        return EntitySecurity.fetch(this._requestAdapter.fetchAdapter, "$restBasePath", "/${entityType.uriREST(restBasePath)}");
     }
 """
 
@@ -152,7 +152,7 @@ private fun associationEntityTemplate(entityType: EntityType, projectionTypes: L
         let fullUrl = apiHelper.removeParamsFromNavigationHref(obj._links.${name});
         fullUrl = hasProjection ? `${'$'}{fullUrl}?projection=${'$'}{projection}` : fullUrl;
     
-        const response = await this._requestAdapter.getRequest().get(fullUrl);
+        const response = await this._requestAdapter.fetchAdapter.get(fullUrl);
         if(response.status === 404) { return ${if (list) "[]" else "undefined"}; }
         if(!response.ok){ throw response; }
         ${
@@ -221,20 +221,18 @@ private fun searchEntityTemplate(entityType: EntityType, restBasePath: String) =
 
         return@search """
     public async search${name.capitalize()}<T extends ${returnType.name}>(${parameters.paramDecl}${if (parameters.isNotEmpty()) ", " else ""}$pagingParameters): Promise<$returnDeclaration> {
-        const request = this._requestAdapter.getRequest();
-        
         const parameters: {[key: string]: string | number | boolean | undefined} = {${parameters.join(separator = ", ") { name }}};
         ${if (paging) configurePagingParameters else ""}    
         const url = stringHelper.appendParams("$restBasePath/$path", parameters);
     
-        const response = await request.get(url);
+        const response = await this._requestAdapter.fetchAdapter.get(url);
         const responseObj = ((await response.json()) as $responseType);
         
         $responseHandling
     }
     
     public async isSearch${name.capitalize()}Allowed(): Promise<boolean> {
-        return isEndpointCallAllowed(this._requestAdapter.getRequest(), "/$restBasePath", "GET", "/$restBasePath/$path");
+        return isEndpointCallAllowed(this._requestAdapter.fetchAdapter, "/$restBasePath", "GET", "/$restBasePath/$path");
     }""".trimIndent()
     }.trimIndent()
 }"""

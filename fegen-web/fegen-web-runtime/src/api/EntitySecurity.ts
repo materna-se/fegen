@@ -19,7 +19,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import {FetchRequest} from "./FetchAdapter";
+import {FetchAdapter} from "./FetchAdapter";
 
 
 export default class EntitySecurity {
@@ -32,9 +32,9 @@ export default class EntitySecurity {
         readonly remove: boolean
     ) {}
 
-    static async fetch(fetchRequest: FetchRequest, basePath: string, entityPath: string): Promise<EntitySecurity> {
-        const generalSecurity = await this.fetchAllowedMethods(fetchRequest, basePath, entityPath);
-        const specificSecurity = await this.fetchAllowedMethods(fetchRequest, basePath, `${entityPath}/1`);
+    static async fetch(fetchAdapter: FetchAdapter, basePath: string, entityPath: string): Promise<EntitySecurity> {
+        const generalSecurity = await this.fetchAllowedMethods(fetchAdapter, basePath, entityPath);
+        const specificSecurity = await this.fetchAllowedMethods(fetchAdapter, basePath, `${entityPath}/1`);
 
         return new EntitySecurity(
             specificSecurity.indexOf("GET") !== -1,
@@ -45,11 +45,11 @@ export default class EntitySecurity {
         )
     }
 
-    private static async fetchAllowedMethods(fetchRequest: FetchRequest, basePath: string, path: string): Promise<string[]> {
+    private static async fetchAllowedMethods(fetchAdapter: FetchAdapter, basePath: string, path: string): Promise<string[]> {
         const url = `${basePath}/fegen/security/allowedMethods?path=${path}`;
         let response;
         try {
-            response = await fetchRequest.get(url);
+            response = await fetchAdapter.get(url);
         } catch (ex) {
             throw new Error(`Failed to fetch security configuration at ${url}: ${ex}`);
         }

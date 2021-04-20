@@ -34,10 +34,7 @@ import {
     Dto,
 } from "./api/ApiTypes";
 import {BaseClient} from "./api/BaseClient";
-import {FetchRequest} from "./api/FetchAdapter";
-import {FetchRequestWrapperReact} from "./api/FetchRequestWrapperReact"
-import {FetchRequestWrapper} from "./api/FetchRequestWrapperReactNative"
-import ITokenAuthenticationHelper from "./api/ITokenAuthenticationHelper";
+import {FetchAdapter} from "./api/FetchAdapter";
 import RequestAdapter from "./api/RequestAdapter";
 import EntitySecurity from "./api/EntitySecurity";
 import { isEndpointCallAllowed } from "./api/EndpointSecurity";
@@ -54,10 +51,7 @@ export {
     PageLinks,
     Items,
     BaseClient,
-    FetchRequest,
-    FetchRequestWrapperReact,
-    FetchRequestWrapper,
-    ITokenAuthenticationHelper,
+    FetchAdapter,
     RequestAdapter,
     Dto,
     Entity,

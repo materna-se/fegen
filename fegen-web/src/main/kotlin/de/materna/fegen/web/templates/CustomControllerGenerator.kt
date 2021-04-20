@@ -53,12 +53,10 @@ class CustomControllerGenerator(
             
             export class $clientName {
             
-                private readonly requestAdapter = new RequestAdapter();
+                private readonly requestAdapter: RequestAdapter;
                 
-                constructor(requestAdapter?: RequestAdapter) {
-                    if (requestAdapter) {
-                        this.requestAdapter = requestAdapter;
-                    }
+                constructor(requestAdapter: RequestAdapter) {
+                    this.requestAdapter = requestAdapter;
                 }
                 
                 ${endpointMethods.doIndent(4)}
@@ -114,7 +112,7 @@ class CustomControllerGenerator(
         return """
             public is${name}Allowed($paramDecl): Promise<boolean> {
                 const url = `${endpoint.parentController.baseUri}/${endpoint.uriPatternString}`;
-                return isEndpointCallAllowed(this.requestAdapter.getRequest(), "/${feGenWeb.restBasePath}", "${endpoint.method}", url);
+                return isEndpointCallAllowed(this.requestAdapter.fetchAdapter, "/${feGenWeb.restBasePath}", "${endpoint.method}", url);
             }
         """.trimIndent()
     }
@@ -123,7 +121,7 @@ class CustomControllerGenerator(
         val returnValue = endpoint.returnValue
         return """
         public async ${endpoint.name}(${endpoint.params.join(separator = ", ") { parameter(true) }}${pagingParams(endpoint)}): Promise<${clientMethodReturnType(endpoint)}>  {
-            const request = this.requestAdapter.getRequest();
+            const request = this.requestAdapter.fetchAdapter;
     
             const baseUrl = `${endpoint.parentController.baseUri}/${endpoint.uriPatternString}`${if (endpoint.canReceiveProjection) """, projection && `projection=${'$'}{projection}`""" else ""};
     

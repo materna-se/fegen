@@ -19,45 +19,27 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import {StringHelper} from '../helpers/stringHelper';
+import stringHelper from '../helpers/stringHelper';
 import apiHelper from './ApiHelper';
 import {
-    ApiHateoasObjectBase,
     ApiHateoasObjectReadMultiple,
-    ApiNavigationLinks, Dto, Entity,
+    Dto, Entity,
     PagedItems, WithId
 } from './ApiTypes';
-import FetchRequestWrapperReact from './FetchRequestWrapperReact';
-import ITokenAuthenticationHelper from './ITokenAuthenticationHelper';
-
-const stringHelper = new StringHelper();
+import FetchAdapter, {FetchResponse} from './FetchAdapter';
 
 export default class RequestAdapter {
-    public readonly baseUrl: string = "";
-    private authHelper: ITokenAuthenticationHelper | undefined;
 
-    constructor(baseUrl?: string, authHelper?: ITokenAuthenticationHelper) {
-        this.authHelper = authHelper;
-        this.baseUrl = baseUrl || this.baseUrl;
+    readonly fetchAdapter: FetchAdapter;
 
-        this.getRequest = this.getRequest.bind(this);
+    constructor(fetchAdapter: FetchAdapter) {
+        this.fetchAdapter = fetchAdapter;
+
         this.getPage = this.getPage.bind(this);
 
         this.createObject = this.createObject.bind(this);
         this.deleteObject = this.deleteObject.bind(this);
         this.updateObject = this.updateObject.bind(this);
-
-
-        this.moveObjectUp = this.moveObjectUp.bind(this);
-        this.moveObjectDown = this.moveObjectDown.bind(this);
-        this.getObjectsCollection = this.getObjectsCollection.bind(this);
-
-        this.createObjectAndAddWithAssociation = this.createObjectAndAddWithAssociation.bind(this);
-        this.deleteObjectAndAssociation = this.deleteObjectAndAssociation.bind(this);
-    }
-
-    public getRequest() {
-        return new FetchRequestWrapperReact(this.baseUrl, this.authHelper);
     }
 
     public async getPage<T extends Dto>(url: string, embeddedPropName: string, projectionName?: string, page?: number, size?: number, sort?: string): Promise<PagedItems<T>> {
@@ -76,7 +58,7 @@ export default class RequestAdapter {
         fullUrl = hasSize ? `${fullUrl}${hasProjection || hasPage ? "&" : firstConnector}size=${size}` : fullUrl;
         fullUrl = hasSort ? `${fullUrl}${hasProjection || hasPage || hasSize ? "&" : firstConnector}sort=${sort}` : fullUrl;
 
-        const response = await this.getRequest().get(fullUrl);
+        const response = await this.fetchAdapter.get(fullUrl);
         await RequestAdapter.assertOk(response);
 
         const obj = ((await response.json()) as ApiHateoasObjectReadMultiple<T[]>);
@@ -88,8 +70,8 @@ export default class RequestAdapter {
         };
     }
 
-    public postJsonData(url: string, bodyContent: string): Promise<Response> {
-        return this.getRequest().post(url, {
+    public postJsonData(url: string, bodyContent: string): Promise<FetchResponse> {
+        return this.fetchAdapter.post(url, {
             headers: {
                 "content-type": "application/json"
             },
@@ -107,7 +89,7 @@ export default class RequestAdapter {
     }
 
     public async updateObject<T extends Dto>(obj: T): Promise<T & Entity> {
-        const response = await this.getRequest().put(apiHelper.removeParamsFromNavigationHref(obj._links.self), {
+        const response = await this.fetchAdapter.put(apiHelper.removeParamsFromNavigationHref(obj._links.self), {
             headers: {
                 "content-type": "application/json"
             },
@@ -119,7 +101,7 @@ export default class RequestAdapter {
         return apiHelper.injectIds(storedEntity);
     }
 
-    private static async assertOk(response: Response): Promise<void> {
+    private static async assertOk(response: FetchResponse): Promise<void> {
         if (!response.ok) {
             const body = await response.text();
             throw Error(`Received ${response.status} - ${response.statusText} response: ${body}`)
@@ -127,15 +109,15 @@ export default class RequestAdapter {
     }
 
     public async deleteObject<T extends Entity>(existingObject: T): Promise<void> {
-        const response = await this.getRequest().delete(apiHelper.removeParamsFromNavigationHref(existingObject._links.self));
+        const response = await this.fetchAdapter.delete(apiHelper.removeParamsFromNavigationHref(existingObject._links.self));
         await RequestAdapter.assertOk(response);
     }
 
     public async adaptAnyToMany(
         baseURL: string,
         uris: string[]
-    ): Promise<Response> {
-        return await this.getRequest().put(baseURL, {
+    ): Promise<FetchResponse> {
+        return await this.fetchAdapter.put(baseURL, {
             headers: {
                 "content-type": "text/uri-list"
             },
@@ -146,7 +128,7 @@ export default class RequestAdapter {
     public async adaptAnyToOne(
         baseURL: string,
         uri: string
-    ): Promise<Response> {
+    ): Promise<FetchResponse> {
         return await this.adaptAnyToMany(baseURL, [uri])
     }
 
@@ -162,13 +144,13 @@ export default class RequestAdapter {
             throw new Error("No href found to remove");
         }
 
-        const assocUrl = stringHelper.getStringWitoutTrailingSlash(href) + "/" + collectionPropertyName;
+        const assocUrl = stringHelper.getStringWithoutTrailingSlash(href) + "/" + collectionPropertyName;
 
         const uris: string[] = ((objectWithCollection[collectionPropertyName] as unknown) as Entity[])
             .filter(o => !!o._links && apiHelper.removeParamsFromNavigationHref(o._links.self) !== hrefRemove)
             .map(o => !!o._links && apiHelper.removeParamsFromNavigationHref(o._links.self)) as string[];
 
-        const associationResponse = await this.getRequest().put(assocUrl, {
+        const associationResponse = await this.fetchAdapter.put(assocUrl, {
             headers: {
                 "content-type": "text/uri-list"
             },
@@ -190,9 +172,9 @@ export default class RequestAdapter {
             throw new Error("No href found to add");
         }
 
-        const assocUrl = stringHelper.getStringWitoutTrailingSlash(href) + "/" + property;
+        const assocUrl = stringHelper.getStringWithoutTrailingSlash(href) + "/" + property;
 
-        const associationResponse = await this.getRequest().post(assocUrl, {
+        const associationResponse = await this.fetchAdapter.post(assocUrl, {
             headers: {
                 "content-type": "text/uri-list"
             },
@@ -213,130 +195,8 @@ export default class RequestAdapter {
             throw new Error("No hrefs found or empty hrefs in object list");
         }
 
-        const assocUrl = stringHelper.getStringWitoutTrailingSlash(href) + "/" + property;
+        const assocUrl = stringHelper.getStringWithoutTrailingSlash(href) + "/" + property;
         const associationResponse = await this.adaptAnyToMany(assocUrl, hrefs);
         await RequestAdapter.assertOk(associationResponse);
-    }
-
-    public async moveObjectUp<T extends Entity, TMove extends Entity>(objToBeMovedUp: TMove, objectWithCollection: T, collectionPropertyName: keyof T): Promise<void> {
-
-        const href = objectWithCollection._links ? apiHelper.removeParamsFromNavigationHref(objectWithCollection._links.self) : "";
-        const hrefMoveUp = objToBeMovedUp._links ? apiHelper.removeParamsFromNavigationHref(objToBeMovedUp._links.self) : "";
-
-        if (!href) {
-            throw new Error("No href found");
-        }
-
-        if (!hrefMoveUp) {
-            throw new Error("No href found to move up");
-        }
-
-        const assocUrl = stringHelper.getStringWitoutTrailingSlash(href) + "/" + collectionPropertyName;
-
-        let index = -1;
-        const uris: string[] = ((objectWithCollection[collectionPropertyName] as any) as Entity[])
-            .map((o, i) => {
-                if (o.id === objToBeMovedUp.id) {
-                    index = i
-                }
-                return !!o._links && apiHelper.removeParamsFromNavigationHref(o._links.self)
-            }) as string[];
-        if (index === -1) {
-            throw new Error("Failed to find entry with matching href");
-        }
-        // swap index-1 with index to move task up:
-        [uris[index - 1], uris[index]] = [uris[index], uris[index - 1]];
-        this.adaptAnyToMany(assocUrl, uris)
-    }
-
-    public async moveObjectDown<T extends Entity, TMove extends Entity>(objToBeMovedUp: TMove, objectWithCollection: T, collectionPropertyName: keyof T): Promise<void> {
-
-        const href = objectWithCollection._links ? apiHelper.removeParamsFromNavigationHref(objectWithCollection._links.self) : "";
-        const hrefMoveDown = objToBeMovedUp._links ? apiHelper.removeParamsFromNavigationHref(objToBeMovedUp._links.self) : "";
-
-        if (!href) {
-            throw new Error("No href found");
-        }
-
-        if (!hrefMoveDown) {
-            throw new Error("No href found to move down");
-        }
-
-        const assocUrl = stringHelper.getStringWitoutTrailingSlash(href) + "/" + collectionPropertyName;
-
-        let index = -1;
-        const uris: string[] = ((objectWithCollection[collectionPropertyName] as any) as Entity[])
-            .map((o, i) => {
-                if (o.id === objToBeMovedUp.id) {
-                    index = i
-                }
-                return !!o._links && apiHelper.removeParamsFromNavigationHref(o._links.self)
-            }) as string[];
-        if (index === -1) {
-            throw new Error("Failed to find entry with matching href");
-        }
-        // swap index-1 with index to move task up:
-        [uris[index], uris[index + 1]] = [uris[index + 1], uris[index]];
-        this.adaptAnyToMany(assocUrl, uris)
-    }
-
-    // TODO: we might get better results by even more generic parameters
-    public async getObjectsCollection<T extends Entity, K extends keyof T & keyof ApiNavigationLinks>(obj: T, collectionPropertyName: K, embeddedName: string): Promise<T[K]> {
-        if (!obj._links) {
-            throw new Error("No links in object");
-        }
-
-        const link = obj._links[collectionPropertyName];
-        if (!link || !link.href) {
-            throw new Error("No href found in link property");
-        }
-
-        const response = await this.getRequest().get(apiHelper.removeParamsFromNavigationHref(link));
-
-        await RequestAdapter.assertOk(response);
-
-        return ((await response.json()) as ApiHateoasObjectBase<T[K]>)._embedded[embeddedName];
-    }
-
-    public async getObjectsReference<T extends Entity, K extends keyof T & keyof ApiNavigationLinks>(obj: T, collectionPropertyName: K, embeddedName: string | undefined): Promise<T[K]> {
-        if (!obj._links) {
-            throw new Error("No links in object");
-        }
-
-        const link = obj._links[collectionPropertyName];
-        if (!link || !link.href) {
-            throw new Error("No href found in link property");
-        }
-
-        const response = await this.getRequest().get(apiHelper.removeParamsFromNavigationHref(link));
-
-        await RequestAdapter.assertOk(response);
-
-        return embeddedName ? ((await response.json()) as ApiHateoasObjectBase<T[K]>)._embedded[embeddedName] : ((await response.json()) as T[K]);
-    }
-
-    public async createObjectAndAddWithAssociation<C extends Entity, CNew, P extends Entity, K extends keyof P["_links"]>
-    (newObject: CNew, objectWithCollection: P, collectionPropertyName: K, createURI: string): Promise<C> {
-
-        const href = apiHelper.removeParamsFromNavigationHref((objectWithCollection)._links.self);
-        if (!href) {
-            throw new Error("No self-href found for object");
-        }
-
-        const storedEntity: C = await this.createObject<C>(newObject, createURI);
-        await this.addToObj(storedEntity, objectWithCollection, collectionPropertyName);
-        return apiHelper.injectIds(storedEntity);
-    }
-
-    public async deleteObjectAndAssociation<TDelete extends Entity, T extends Entity, K extends keyof T>
-    (objectToDelete: TDelete, objectWithCollection: T, collectionPropertyName: K): Promise<void> {
-
-        const href = apiHelper.removeParamsFromNavigationHref((objectWithCollection)._links.self);
-        if (!href) {
-            throw new Error("No self-href found for object");
-        }
-
-        await this.removeObjectFromCollection(objectToDelete, objectWithCollection, collectionPropertyName);
-        await this.deleteObject(objectToDelete);
     }
 }

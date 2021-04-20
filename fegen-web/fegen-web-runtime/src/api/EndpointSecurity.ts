@@ -19,14 +19,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import {FetchRequest} from "./FetchAdapter";
+import {FetchAdapter} from "./FetchAdapter";
 
 
-export const isEndpointCallAllowed = async (fetchRequest: FetchRequest, basePath: string, method: string, path: string): Promise<boolean> => {
+export const isEndpointCallAllowed = async (fetchAdapter: FetchAdapter, basePath: string, method: string, path: string): Promise<boolean> => {
     const url = `${basePath}/fegen/security/isAllowed?method=${method}&path=${path}`;
     let response;
     try {
-        response = await fetchRequest.get(url);
+        response = await fetchAdapter.get(url);
     } catch (ex) {
         throw new Error(`Failed to fetch security configuration at ${url}: ${ex}`);
     }

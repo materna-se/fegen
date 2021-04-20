@@ -23,51 +23,33 @@ export class StringHelper {
 
     constructor() {
         this.generateGuid = this.generateGuid.bind(this);
-        this.joinClassNames = this.joinClassNames.bind(this);
-        this.joinManyClassNames = this.joinManyClassNames.bind(this);
     }
 
     public appendParams(url: string, parameters: {[key: string]: string | number | boolean | undefined}): string {
         let result = url;
-        let seperator = "?";
+        let separator = "?";
         for (const key in parameters) {
             const value = parameters[key];
-            if (value === undefined) {
-                continue;
-            } else {
-                result += seperator + key + "=" + encodeURIComponent(value.toString());
-                seperator = "&"
+            if (value !== undefined) {
+                result += separator + key + "=" + encodeURIComponent(value.toString());
+                separator = "&"
             }
         }
         return result;
     }
 
-    public getPercentageString(amount: number, wholeAmount: number, precision?: number): string {
-        if (wholeAmount < 0 || amount < 0) { return `Fehler bei Berechnung von % (${amount} von ${wholeAmount})`; }
-
-        if (wholeAmount === 0 && amount === 0) { return ("100%"); }
-
-        const precisionFactor = Math.pow(10, precision || 0);
-        return (Math.round((amount / wholeAmount) * 100 * precisionFactor) / precisionFactor) + `%`;
-    }
-
     public generateGuid(): string {
 
-        const first = this.getStringWithFourHexValues() + this.getStringWithFourHexValues();
-        const sec = this.getStringWithFourHexValues();
-        const third = this.getStringWithFourHexValues();
-        const fourth = this.getStringWithFourHexValues();
-        const fifth = this.getStringWithFourHexValues() + this.getStringWithFourHexValues() + this.getStringWithFourHexValues();
+        const first = StringHelper.getStringWithFourHexValues() + StringHelper.getStringWithFourHexValues();
+        const sec = StringHelper.getStringWithFourHexValues();
+        const third = StringHelper.getStringWithFourHexValues();
+        const fourth = StringHelper.getStringWithFourHexValues();
+        const fifth = StringHelper.getStringWithFourHexValues() + StringHelper.getStringWithFourHexValues() + StringHelper.getStringWithFourHexValues();
 
         return (first + "-" + sec + "-" + third + "-" + fourth + "-" + fifth);
     }
 
-
-    public getSubstringIfTooLong(value: string, maxLength: number) {
-        return value && value.length > maxLength ? value.substr(0, maxLength) : value;
-    }
-
-    public getStringWitoutTrailingSlash(url: string) {
+    public getStringWithoutTrailingSlash(url: string) {
 
         let subResult = url;
 
@@ -77,29 +59,12 @@ export class StringHelper {
         return subResult;
     }
 
-    public joinClassNames(names1: string | undefined | boolean, names2: string | undefined | boolean) {
-        const result =
-            names1 || names2 ?
-                ((names1 ? names1 : "") + (names2 ? `${names1 ? " " : ""}${names2}` : "")) :
-                undefined;
-
-        return result;
-    }
-
-    public joinManyClassNames(...names: Array<string | undefined | boolean>) {
-        let result: string | undefined;
-        for (const name of names) {
-            result = this.joinClassNames(result, name);
-        }
-        return result;
-    }
-
     public createCssUrlString(url: string): string | undefined {
         if (!url) { return undefined; }
         return `url(${url})`
     }
 
-    private getStringWithFourHexValues(): string {
+    private static getStringWithFourHexValues(): string {
         // tslint:disable-next-line:no-bitwise
         return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
     }
