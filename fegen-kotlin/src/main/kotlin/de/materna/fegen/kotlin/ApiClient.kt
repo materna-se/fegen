@@ -384,7 +384,7 @@ if (paging) """
 """.trimIndent()
 
 private fun Search.buildBlockingIsAllowedFunction(projection: ProjectionType? = null) = """
-    suspend fun isSearch${name.capitalize()}${projection?.projectionTypeInterfaceName ?: ""}Allowed(): Boolean {
+    fun isSearch${name.capitalize()}${projection?.projectionTypeInterfaceName ?: ""}Allowed(): Boolean {
         return runBlocking { client.isSearch${name.capitalize()}${projection?.projectionTypeInterfaceName ?: ""}Allowed() }
     }
 """.trimIndent()
