@@ -26,7 +26,6 @@ import de.materna.fegen.core.domain.*
 import de.materna.fegen.core.domain.ProjectionType
 import de.materna.fegen.core.domain.Search
 import org.atteo.evo.inflector.English
-
 /**
  * Generates the ApiClient class which helps to navigate to the different clients as well as the client classes itself.
  *
@@ -58,8 +57,17 @@ fun FeGenKotlin.toApiClientKt() = """
         
         init {
             ${if (!feGenConfig.datesAsString) """
-                fetchAdapter.mapper.registerModule(JavaTimeModule())
-                fetchAdapter.mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                val javaTimeExists = try {
+                    // Check that java.time exists, first. Might not be the case e.g. on android
+                    Class.forName("java.time.Instant", false, this.javaClass.getClassLoader())
+                    true
+                } catch (ex: ClassNotFoundException) {
+                    false
+                }
+                if (javaTimeExists) {
+                    fetchAdapter.mapper.registerModule(JavaTimeModule())
+                    fetchAdapter.mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                }
             """.doIndent(3) else ""}
             fetchAdapter.mapper.registerKotlinModule()
             requestAdapter = RequestAdapter(fetchAdapter)
@@ -322,6 +330,7 @@ fun FeGenKotlin.toApiClientKt() = """
     """.trimIndent()
 }}
 """.trimIndent()
+
 
 private fun Search.buildFunction(projection: ProjectionType? = null, restBasePath: String) = """
     suspend fun search${name.capitalize()}${projection?.projectionTypeInterfaceName
