@@ -169,15 +169,78 @@
 <p>FeGen helps you write web and mobile apps with Spring Boot backends.
 It does so by generating client code based on your Spring server, so you can access your Spring Data REST API in a type safe manner.
 Typescript and Kotlin are supported as frontend languages, so you can use FeGen when creating a web app, a native Android app or another Spring application.</p>
-<h2 id="why-fegen"><a class="header" href="#why-fegen">Why FeGen?</a></h2>
-<p>What FeGen basically does is generating types and methods for a client to use the API of a spring application.
-In that way, its goals are similar to projects like OpenAPI and GraphQL.
-FeGen's disadvantage compared to those technologies is, that it only works for Spring Boot backends.</p>
-<p>However, this is also a major advantage, since FeGen can leverage the APIs that Spring Data REST offers by default.
-When using FeGen, you are able to simply define a data structure using JPA entities, create the corresponding repositories, and FeGen will give you methods and types to simply create, read, update and delete those entities.
-For use cases that are not too complex, this greatly reduces the amount of boilerplate code you need to write.</p>
-<p>You can also define repository and custom searches in FeGen that will provide you with only a subset of the available entities.
-In more complicated cases, you can also use custom endpoints to have full control over what happens in the backend and what is returned by it.</p>
+<h2 id="idea"><a class="header" href="#idea">Idea</a></h2>
+<p>With Spring Data Rest it is already very convenient to create a REST API to persist data by just specifying the data model using entities like this one:</p>
+<pre><code class="language-java">@Entity
+public class Country {
+    
+    public long id;
+    
+    public String name;
+    
+    public int population;
+
+    @OneToMany(mappedBy = &quot;country&quot;)
+    public List&lt;City&gt; cities;
+}
+</code></pre>
+<p>You just need to specify matching repositories, and Spring Data Rest will provide you with a HATEOAS API that supports all CRUD operations:</p>
+<pre><code class="language-java">public interface CountryRepository extends JpaRepository&lt;Country, Long&gt; {}
+</code></pre>
+<p>If you want to e.g. create a new country from within a web application, you can now use the following code:</p>
+<pre><code class="language-typescript">const counrty = await fetch(&quot;http://example.com/countries&quot;, {
+    method: &quot;POST&quot;,
+    body: {
+        name: &quot;Germany&quot;,
+        population: 80_000_000,
+        cities: []
+    }
+});
+</code></pre>
+<p>However, creating REST requests that conform to the HATEOAS that Spring expects can be quite cumbersome.
+This is how you would add a city to a country:</p>
+<pre><code class="language-typescript">fetch(&quot;http://example.com/cities&quot;, {
+    method: &quot;POST&quot;,
+    body: {
+        name: &quot;Dortmund&quot;,
+        population: 600_000,
+        counrty: counrty._links.self.href
+    }
+})
+</code></pre>
+<p>Although HATEOAS is not overly complicated, it is easy to make a mistake e.g. by misspelling the URL or a property name, using the wrong method or supplying an object as a related entity instead of a link.
+Also, if you change your API later on, you will have to manually check for all the places in your frontend where you have used it.</p>
+<p>This is where FeGen comes into play.
+You can add it to your Spring Boot project, and it will look at the entities and repositories you defined and generate frontend code in Typescript or Kotlin so you can access your API without worrying about the HATEOAS details:</p>
+<pre><code class="language-typescript">const country = await apiClient.countryClient.create({
+    name: &quot;germany&quot;,
+    population: 80_000_000,
+    cities: []
+});
+
+apiClient.cityClient.create({
+    name: &quot;Dortmund&quot;,
+    population: 600_000,
+    country
+});
+</code></pre>
+<p>As you can see, this has multiple advantages:</p>
+<ul>
+<li>You do not need to know how HATEOAS works</li>
+<li>Generated types for entities prevent mistakes and give you auto completion</li>
+<li>When you change your API, obsolete usages in your frontend will cause compiler errors, so you can easily spot and fix them</li>
+<li>The code is more readable as it better conveys its intent</li>
+<li>Less boilerplate code</li>
+</ul>
+<p>As with Spring and Spring Data REST, with FeGen, you are not constrained to simple CRUD operations.
+You can use paging, sorting, custom searches and projections to access your data.
+Moreover, FeGen also generates code to access the methods within controllers.</p>
+<h2 id="architecture"><a class="header" href="#architecture">Architecture</a></h2>
+<p>This is how a full stack application using FeGen may be structured:</p>
+<p><img src="./architecture.svg" alt="Architecture" /></p>
+<p>In the simplest case, you can just define some entities <em>(1)</em> as well as the corresponding repositories <em>(2)</em> and FeGen enables you to read and modify those entities from within your frontend code <em>(3)</em> as in the code examples you just saw.
+If you need more fine-grained control, you can also define your own endpoints in a Spring controller <em>(4)</em> which may use entities or plain java classes that you defined <em>(5)</em> and FeGen will generate corresponding types and methods to invoke those endpoints <em>(6)</em>.
+Finally, if you need to access an endpoint in a way that FeGen does not currently support (such as file up- or download), you can of course always directly access your Spring server from your frontend <em>(7)</em>.</p>
 <h2 id="getting-started"><a class="header" href="#getting-started">Getting started</a></h2>
 <p>If you are new to FeGen, please follow the <a href="./quickstart/intro.html">Quick Start Guide</a> to get an idea of how FeGen works and how you can use it.
 Once you finished the <a href="./quickstart/intro.html">Quick Start Guide</a>, you can go more into detail and e.g. learn how to use FeGen to access your backend from Android or another Spring application, by referring to the <a href="./reference/intro.html">Reference Documentation</a>.</p>
@@ -1626,7 +1689,7 @@ git submodule update
 </code></pre>
 <p>The <code>fegen-examples</code> directory consists of a gradle project that contains the line <code>includeBuild '..'</code> in its <code>settings.gradle</code>.
 This causes it to use gradle's composite build feature and ensures that the example and tests inside it always use the FeGen instance built from the sources in the directory where this <code>README.MD</code> resides.</p>
-<h1 id="architecture"><a class="header" href="#architecture">Architecture</a></h1>
+<h1 id="architecture-1"><a class="header" href="#architecture-1">Architecture</a></h1>
 <p>Once you have successfully built FeGen and ran the tests, you can focus on making the changes you have in mind.
 This page gives an overview over the directory structure of the FeGen repository.</p>
 <h2 id="project-structure"><a class="header" href="#project-structure">Project structure</a></h2>
