@@ -1,23 +1,29 @@
 # Kotlin
 
-There are two reasons you might be interested in generating Kotlin code.
+Besides Typescript, FeGen can also generate Kotlin code.
+This enables you to use FeGen when calling your API from an Android app.
+You can also use the generated code in another backend application such as another Spring Boot server.
 
-You can either create a gradle project that depends on the inter-service runtime.
-This enables you to call the API that the code was generated for from another Spring application.
+## Setup
 
-The other option is to create an Android library to use the Spring API in an Android application.
+In both cases, you will need to add the FeGen Kotlin runtime to your `build.gradle` (or your `pom.xml`):
 
-## Inter service
+```groovy
+implementation "com.github.materna-se.fegen:fegen-kotlin-runtime:1.0-RC9"
+```
 
-To make your Spring API available to other Spring applications, create a gradle project to contain the generated code and add the following dependencies to your `build.gradle`:
+Especially in the android case, you need to make sure that you are using at least Java 1.8 when building your app.
+You can achieve this by adding the following to the `android` section of your `build.gradle`:
 
-- `com.github.materna-se.fegen:fegen-kotlin-interservice-runtime:1.0-RC9`
-- `org.jetbrains.kotlinx:kotlinx-coroutines-core:1.3.3`
-- `com.fasterxml.jackson.module:jackson-module-kotlin:2.10.1`
+```groovy
+compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+}
+kotlinOptions { jvmTarget = "1.8" }
+```
 
-## Android
-
-To use generated code when developing Android apps, create a library project in Android Studio and copy the contents of `fegen-kotlin/fegen-kotlin-android-runtime` to the source directory into the package `de.materna.fegen.adapter.android`.
+Analogous to Typescript, you might want to create a dedicated Gradle project that you generate your code into and that other Kotlin projects can depend on.
 
 ## Using the generated API
 
