@@ -50,7 +50,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath "com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC8"
+        classpath("com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC9")
     }
 }
 ```
@@ -58,7 +58,7 @@ buildscript {
 To actually apply FeGen to the project, add the following line below (not within) the `plugins { ... }` section:
 
 ```groovy
-apply plugin: 'de.materna.fegen.web'
+apply(plugin = "de.materna.fegen.web")
 ```
 
 To use custom endpoints with recent Spring versions, add `fegen-spring-util` as a dependency.
@@ -67,7 +67,7 @@ This is also a prerequisite for FeGen Security to work, as it provides a Spring 
 ```groovy
 dependencies {
     // ...
-    implementation "com.github.materna-se.fegen:fegen-spring-util:1.0-RC8"
+    implementation("com.github.materna-se.fegen:fegen-spring-util:1.0-RC9")
 }
 ```
 
@@ -78,7 +78,7 @@ The last change to the `build.gradle` file is adding the configuration for FeGen
 Place this below the `dependencies { ... }` section:
 
 ```groovy
-fegenWeb {
+configure<de.materna.fegen.web.gradle.FeGenWebGradlePluginExtension> {
 	scanPkg = "com.example.backend"
 	frontendPath = "../frontend/src/api-client"
 }
@@ -93,47 +93,63 @@ We will create the referenced directory later.
 
 After those steps, your `build.gradle` should look as follows:
 
-```groovy
+```kotlin
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 buildscript {
     repositories {
         mavenCentral()
     }
     dependencies {
-        classpath "com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC8"
+        classpath("com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC9")
     }
 }
 
+apply(plugin = "de.materna.fegen.web")
+
 plugins {
-    id 'org.springframework.boot' version '2.4.4'
-    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-    id 'java'
+    id("org.springframework.boot") version "2.4.5"
+    id("io.spring.dependency-management") version "1.0.11.RELEASE"
+    kotlin("jvm") version "1.4.32"
+    kotlin("plugin.spring") version "1.4.32"
+    kotlin("plugin.jpa") version "1.4.32"
 }
 
-apply plugin: 'de.materna.fegen.web'
-
-group = 'com.example'
-version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '11'
+group = "com.example"
+version = "0.0.1-SNAPSHOT"
+java.sourceCompatibility = JavaVersion.VERSION_11
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-data-rest'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    runtimeOnly 'com.h2database:h2'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
+    implementation("org.springframework.boot:spring-boot-starter-data-rest")
+    implementation("org.springframework.boot:spring-boot-starter-web")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
+    implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
+    runtimeOnly("com.h2database:h2")
+    testImplementation("org.springframework.boot:spring-boot-starter-test")
+    implementation("com.github.materna-se.fegen:fegen-spring-util:1.0-RC9")
+
 }
 
-fegenWeb {
-  scanPkg = "com.example.backend"
-  frontendPath = "../frontend/src/api-client"
+tasks.withType<KotlinCompile> {
+    kotlinOptions {
+        freeCompilerArgs = listOf("-Xjsr305=strict")
+        jvmTarget = "11"
+    }
 }
 
-test {
+tasks.withType<Test> {
     useJUnitPlatform()
+}
+
+configure<de.materna.fegen.web.gradle.FeGenWebGradlePluginExtension> {
+    scanPkg = "com.example.backend"
+    frontendPath = "../frontend/src/api-client"
 }
 ```
 

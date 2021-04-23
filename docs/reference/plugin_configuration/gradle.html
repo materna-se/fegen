@@ -175,22 +175,22 @@ You will need gradle version <code>6.0.1</code> or later for the plugin to work.
     }
     dependencies {
         ...
-        classpath &quot;com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC9&quot; // For Typescript
-        classpath &quot;com.github.materna-se.fegen:fegen-kotlin-gradle-plugin:1.0-RC9&quot; // For Kotlin
+        classpath(&quot;com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC9&quot;) // For Typescript
+        classpath(&quot;com.github.materna-se.fegen:fegen-kotlin-gradle-plugin:1.0-RC9&quot;) // For Kotlin
     }
 }
 </code></pre>
 <p>Then you need to apply the plugin(s) to your project.</p>
-<pre><code>apply plugin: 'de.materna.fegen.web'
-apply plugin: 'de.materna.fegen.kotlin'
+<pre><code>apply(plugin = &quot;de.materna.fegen.web&quot;)
+apply(plugin = &quot;de.materna.fegen.kotlin&quot;)
 </code></pre>
 <p>Applying the plugin enables you to configure the FeGen plugins using the <code>fegenWeb</code> and <code>fegenKotlin</code> sections.</p>
-<pre><code>fegenWeb {
+<pre><code>configure&lt;de.materna.fegen.web.gradle.FeGenWebGradlePluginExtension&gt; {
     scanPkg = &quot;com.example.your.main.package&quot;
     frontendPath = &quot;../frontend/src/generated-client&quot;
 }
 
-fegenKotlin {
+configure&lt;de.materna.fegen.web.gradle.FeGenKotlinGradlePluginExtension&gt; {
     scanPkg = &quot;com.example.your.main.package&quot;
     frontendPath = &quot;../android-app/src/main/kotlin&quot;
     frontendPkg = &quot;com.example.your.main.package.api&quot;
@@ -203,7 +203,7 @@ fegenKotlin {
 This ensures that links required by FeGen will be added to the return values of custom endpoints.</p>
 <pre><code>dependencies {
     ...
-    implementation &quot;com.github.materna-se.fegen:fegen-spring-util:1.0-RC9&quot;
+    implementation(&quot;com.github.materna-se.fegen:fegen-spring-util:1.0-RC9&quot;)
 }
 </code></pre>
 <p>Once you are happy with your configuration, you can run the following command to have FeGen generate the client code in Typescript.</p>

@@ -168,7 +168,7 @@
 An example for this could be longitude and latitude which should be two fields that every entity should have if a physical location can be associated with it.</p>
 <p>Spring supports this by letting you define classes and mark them as embeddable:</p>
 <pre><code class="language-java">@Embeddable
-class Location {
+class Coordinates {
 
     public long longitude;
     
@@ -182,12 +182,19 @@ public class City {
     // ...
     
     @Embedded
-    private Location location;
+    private Coordinates location;
+
+    @Projection(name = &quot;baseProjection&quot;, types = {City::class})
+    interface BaseProjection {
+        // ...
+        Coordinates getLocation();
+    }
 }
 </code></pre>
-<p>FeGen will generate a <code>location</code> field in the <code>City</code> type that will contain the two fields <code>longitude</code> and <code>latitude</code>.</p>
+<p>Take note that you also need to add <code>@Embedded</code> fields to your base projection.
+FeGen will generate a <code>location</code> field in the <code>City</code> type that will contain the two fields <code>longitude</code> and <code>latitude</code>.</p>
 <p>At the time of writing, FeGen only supports primitive fields in <code>@Embeddable</code> classes.
-This means that using types other than boolean, numbers and strings (like entities) won't work. </p>
+This means that using types other than boolean, numbers and strings (like entities) won't work.</p>
 
                     </main>
 

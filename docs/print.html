@@ -304,18 +304,18 @@ Add the following lines at the top of your <code>build.gradle</code> file for gr
         mavenCentral()
     }
     dependencies {
-        classpath &quot;com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC8&quot;
+        classpath(&quot;com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC9&quot;)
     }
 }
 </code></pre>
 <p>To actually apply FeGen to the project, add the following line below (not within) the <code>plugins { ... }</code> section:</p>
-<pre><code class="language-groovy">apply plugin: 'de.materna.fegen.web'
+<pre><code class="language-groovy">apply(plugin = &quot;de.materna.fegen.web&quot;)
 </code></pre>
 <p>To use custom endpoints with recent Spring versions, add <code>fegen-spring-util</code> as a dependency.
 This is also a prerequisite for FeGen Security to work, as it provides a Spring controller with meta information about security.</p>
 <pre><code class="language-groovy">dependencies {
     // ...
-    implementation &quot;com.github.materna-se.fegen:fegen-spring-util:1.0-RC8&quot;
+    implementation(&quot;com.github.materna-se.fegen:fegen-spring-util:1.0-RC9&quot;)
 }
 </code></pre>
 <blockquote>
@@ -324,7 +324,7 @@ To learn more, refer to the <a href="quickstart/../reference/security.html">FeGe
 </blockquote>
 <p>The last change to the <code>build.gradle</code> file is adding the configuration for FeGen web.
 Place this below the <code>dependencies { ... }</code> section:</p>
-<pre><code class="language-groovy">fegenWeb {
+<pre><code class="language-groovy">configure&lt;de.materna.fegen.web.gradle.FeGenWebGradlePluginExtension&gt; {
 	scanPkg = &quot;com.example.backend&quot;
 	frontendPath = &quot;../frontend/src/api-client&quot;
 }
@@ -337,46 +337,62 @@ We will create the referenced directory later.</p>
 To learn what configuration options exist, refer to the <a href="quickstart/../reference/plugin_configuration/plugin_configuration.html">Plugin Configuration</a> page of the reference documentation.</p>
 </blockquote>
 <p>After those steps, your <code>build.gradle</code> should look as follows:</p>
-<pre><code class="language-groovy">buildscript {
+<pre><code class="language-kotlin">import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+buildscript {
     repositories {
         mavenCentral()
     }
     dependencies {
-        classpath &quot;com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC8&quot;
+        classpath(&quot;com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC9&quot;)
     }
 }
 
+apply(plugin = &quot;de.materna.fegen.web&quot;)
+
 plugins {
-    id 'org.springframework.boot' version '2.4.4'
-    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
-    id 'java'
+    id(&quot;org.springframework.boot&quot;) version &quot;2.4.5&quot;
+    id(&quot;io.spring.dependency-management&quot;) version &quot;1.0.11.RELEASE&quot;
+    kotlin(&quot;jvm&quot;) version &quot;1.4.32&quot;
+    kotlin(&quot;plugin.spring&quot;) version &quot;1.4.32&quot;
+    kotlin(&quot;plugin.jpa&quot;) version &quot;1.4.32&quot;
 }
 
-apply plugin: 'de.materna.fegen.web'
-
-group = 'com.example'
-version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '11'
+group = &quot;com.example&quot;
+version = &quot;0.0.1-SNAPSHOT&quot;
+java.sourceCompatibility = JavaVersion.VERSION_11
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
-    implementation 'org.springframework.boot:spring-boot-starter-data-rest'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    runtimeOnly 'com.h2database:h2'
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation(&quot;org.springframework.boot:spring-boot-starter-data-jpa&quot;)
+    implementation(&quot;org.springframework.boot:spring-boot-starter-data-rest&quot;)
+    implementation(&quot;org.springframework.boot:spring-boot-starter-web&quot;)
+    implementation(&quot;com.fasterxml.jackson.module:jackson-module-kotlin&quot;)
+    implementation(&quot;org.jetbrains.kotlin:kotlin-reflect&quot;)
+    implementation(&quot;org.jetbrains.kotlin:kotlin-stdlib-jdk8&quot;)
+    runtimeOnly(&quot;com.h2database:h2&quot;)
+    testImplementation(&quot;org.springframework.boot:spring-boot-starter-test&quot;)
+    implementation(&quot;com.github.materna-se.fegen:fegen-spring-util:1.0-RC9&quot;)
+
 }
 
-fegenWeb {
-  scanPkg = &quot;com.example.backend&quot;
-  frontendPath = &quot;../frontend/src/api-client&quot;
+tasks.withType&lt;KotlinCompile&gt; {
+    kotlinOptions {
+        freeCompilerArgs = listOf(&quot;-Xjsr305=strict&quot;)
+        jvmTarget = &quot;11&quot;
+    }
 }
 
-test {
+tasks.withType&lt;Test&gt; {
     useJUnitPlatform()
+}
+
+configure&lt;de.materna.fegen.web.gradle.FeGenWebGradlePluginExtension&gt; {
+    scanPkg = &quot;com.example.backend&quot;
+    frontendPath = &quot;../frontend/src/api-client&quot;
 }
 </code></pre>
 <p>To finish setting up the backend, add the <code>@Fegen</code> annotation from the FeGen runtime to your <code>BackendApplication</code>, so it looks like this:</p>
@@ -867,22 +883,22 @@ You will need gradle version <code>6.0.1</code> or later for the plugin to work.
     }
     dependencies {
         ...
-        classpath &quot;com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC9&quot; // For Typescript
-        classpath &quot;com.github.materna-se.fegen:fegen-kotlin-gradle-plugin:1.0-RC9&quot; // For Kotlin
+        classpath(&quot;com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC9&quot;) // For Typescript
+        classpath(&quot;com.github.materna-se.fegen:fegen-kotlin-gradle-plugin:1.0-RC9&quot;) // For Kotlin
     }
 }
 </code></pre>
 <p>Then you need to apply the plugin(s) to your project.</p>
-<pre><code>apply plugin: 'de.materna.fegen.web'
-apply plugin: 'de.materna.fegen.kotlin'
+<pre><code>apply(plugin = &quot;de.materna.fegen.web&quot;)
+apply(plugin = &quot;de.materna.fegen.kotlin&quot;)
 </code></pre>
 <p>Applying the plugin enables you to configure the FeGen plugins using the <code>fegenWeb</code> and <code>fegenKotlin</code> sections.</p>
-<pre><code>fegenWeb {
+<pre><code>configure&lt;de.materna.fegen.web.gradle.FeGenWebGradlePluginExtension&gt; {
     scanPkg = &quot;com.example.your.main.package&quot;
     frontendPath = &quot;../frontend/src/generated-client&quot;
 }
 
-fegenKotlin {
+configure&lt;de.materna.fegen.web.gradle.FeGenKotlinGradlePluginExtension&gt; {
     scanPkg = &quot;com.example.your.main.package&quot;
     frontendPath = &quot;../android-app/src/main/kotlin&quot;
     frontendPkg = &quot;com.example.your.main.package.api&quot;
@@ -895,7 +911,7 @@ fegenKotlin {
 This ensures that links required by FeGen will be added to the return values of custom endpoints.</p>
 <pre><code>dependencies {
     ...
-    implementation &quot;com.github.materna-se.fegen:fegen-spring-util:1.0-RC9&quot;
+    implementation(&quot;com.github.materna-se.fegen:fegen-spring-util:1.0-RC9&quot;)
 }
 </code></pre>
 <p>Once you are happy with your configuration, you can run the following command to have FeGen generate the client code in Typescript.</p>
@@ -1233,7 +1249,7 @@ Instead, return a <code>TextNode</code> wrapped in a <code>ReponseEntity</code>.
 An example for this could be longitude and latitude which should be two fields that every entity should have if a physical location can be associated with it.</p>
 <p>Spring supports this by letting you define classes and mark them as embeddable:</p>
 <pre><code class="language-java">@Embeddable
-class Location {
+class Coordinates {
 
     public long longitude;
     
@@ -1247,12 +1263,19 @@ public class City {
     // ...
     
     @Embedded
-    private Location location;
+    private Coordinates location;
+
+    @Projection(name = &quot;baseProjection&quot;, types = {City::class})
+    interface BaseProjection {
+        // ...
+        Coordinates getLocation();
+    }
 }
 </code></pre>
-<p>FeGen will generate a <code>location</code> field in the <code>City</code> type that will contain the two fields <code>longitude</code> and <code>latitude</code>.</p>
+<p>Take note that you also need to add <code>@Embedded</code> fields to your base projection.
+FeGen will generate a <code>location</code> field in the <code>City</code> type that will contain the two fields <code>longitude</code> and <code>latitude</code>.</p>
 <p>At the time of writing, FeGen only supports primitive fields in <code>@Embeddable</code> classes.
-This means that using types other than boolean, numbers and strings (like entities) won't work. </p>
+This means that using types other than boolean, numbers and strings (like entities) won't work.</p>
 <h1 id="fegenignore"><a class="header" href="#fegenignore">@FegenIgnore</a></h1>
 <p>Sometimes you might want to exclude a <a href="reference/data_model/./custom_endpoints.html">custom endpoint</a> or a <a href="reference/data_model/../retrieving/repository_searches.html">repository</a> or <a href="reference/data_model/../retrieving/custom_searches.html">custom search</a> from FeGen code generation, so FeGen will ignore the respective endpoint.
 One of those use cases could be that it uses a feature like file up- or download that FeGen does not currently support.</p>

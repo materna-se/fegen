@@ -7,7 +7,7 @@ Spring supports this by letting you define classes and mark them as embeddable:
 
 ```java
 @Embeddable
-class Location {
+class Coordinates {
 
     public long longitude;
     
@@ -24,11 +24,18 @@ public class City {
     // ...
     
     @Embedded
-    private Location location;
+    private Coordinates location;
+
+    @Projection(name = "baseProjection", types = {City::class})
+    interface BaseProjection {
+        // ...
+        Coordinates getLocation();
+    }
 }
 ```
 
+Take note that you also need to add `@Embedded` fields to your base projection.
 FeGen will generate a `location` field in the `City` type that will contain the two fields `longitude` and `latitude`.
 
 At the time of writing, FeGen only supports primitive fields in `@Embeddable` classes.
-This means that using types other than boolean, numbers and strings (like entities) won't work. 
+This means that using types other than boolean, numbers and strings (like entities) won't work.

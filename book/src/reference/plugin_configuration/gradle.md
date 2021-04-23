@@ -13,8 +13,8 @@ buildscript {
     }
     dependencies {
         ...
-        classpath "com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC9" // For Typescript
-        classpath "com.github.materna-se.fegen:fegen-kotlin-gradle-plugin:1.0-RC9" // For Kotlin
+        classpath("com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC9") // For Typescript
+        classpath("com.github.materna-se.fegen:fegen-kotlin-gradle-plugin:1.0-RC9") // For Kotlin
     }
 }
 ```
@@ -22,19 +22,19 @@ buildscript {
 Then you need to apply the plugin(s) to your project.
 
 ```
-apply plugin: 'de.materna.fegen.web'
-apply plugin: 'de.materna.fegen.kotlin'
+apply(plugin = "de.materna.fegen.web")
+apply(plugin = "de.materna.fegen.kotlin")
 ```
 
 Applying the plugin enables you to configure the FeGen plugins using the `fegenWeb` and `fegenKotlin` sections.
 
 ```
-fegenWeb {
+configure<de.materna.fegen.web.gradle.FeGenWebGradlePluginExtension> {
     scanPkg = "com.example.your.main.package"
     frontendPath = "../frontend/src/generated-client"
 }
 
-fegenKotlin {
+configure<de.materna.fegen.web.gradle.FeGenKotlinGradlePluginExtension> {
     scanPkg = "com.example.your.main.package"
     frontendPath = "../android-app/src/main/kotlin"
     frontendPkg = "com.example.your.main.package.api"
@@ -49,7 +49,7 @@ This ensures that links required by FeGen will be added to the return values of 
 ```
 dependencies {
     ...
-    implementation "com.github.materna-se.fegen:fegen-spring-util:1.0-RC9"
+    implementation("com.github.materna-se.fegen:fegen-spring-util:1.0-RC9")
 }
 ```
 
