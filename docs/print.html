@@ -1746,9 +1746,17 @@ Do not make any manual changes to this directory, but call <code>./mdbook build<
 <p>This directory contains the license header plugin that is used by Gradle to check that each file in the repository has the correct license header set.</p>
 <h1 id="using-a-custom-build-locally"><a class="header" href="#using-a-custom-build-locally">Using a Custom Build Locally</a></h1>
 <p>If you want to use a custom build of FeGen in your project, you can install all FeGen plugins to your local <code>.m2</code> directory by running the following command in the root project:</p>
-<pre><code class="language-shell">gradle publishToMavenLocal
+<pre><code class="language-shell">./gradlew publishToMavenLocal
 </code></pre>
-<p>To include the built plugins in a gradle project, insert <code>mavenLocal()</code> as a repository in the buildscript in your <code>build.gradle</code>.</p>
+<p>To include the built plugins in a gradle project, insert <code>mavenLocal()</code> as a repository for your dependencies as well as your buildscript in your <code>build.gradle</code>.
+If you are using a Kotlin client, you also need to add <code>mavenLocal()</code> in the <code>repositories</code> section of your client's <code>build.gradle</code>.
+If you are generating Typescript code, you need to specify the relative path to the <code>fegen-web/fegen-web-runtime</code> directory within the FeGen repository in the client's <code>package.json</code>:</p>
+<pre><code class="language-json">{
+  &quot;dependencies&quot;: {
+    &quot;@materna-se/fegen-runtime&quot;: &quot;../../fegen/fegen-web/fegen-web-runtime&quot;
+  }
+}
+</code></pre>
 <h1 id="contributing"><a class="header" href="#contributing">Contributing</a></h1>
 <p>If you have fixed a bug or added a feature, you are welcome to contribute it back to the main FeGen repository.
 There is no CI/CD pipeline yet, but still make sure your pull request fulfills the following criteria:</p>
