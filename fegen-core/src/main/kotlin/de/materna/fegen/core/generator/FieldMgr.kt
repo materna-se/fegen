@@ -56,69 +56,73 @@ class FieldMgr(
             justSettable: Boolean = false,
             context: ErrorContext
     ): DTField {
-        val simpleType = SimpleType.fromType(type)
-        return if (simpleType != null) {
-            SimpleDTField(
-                    name,
-                    list,
-                    optional,
-                    justSettable,
-                    simpleType
-            )
-        } else {
-            when (type) {
-                is Class<*> -> when {
-                    type.isEnum -> EnumDTField(
-                            name = name,
-                            list = list,
-                            optional = optional,
-                            justSettable = justSettable,
-                            type = domainMgr.enumMgr.resolveEnum(type)
-                    )
-                    type.isEntity -> EntityDTField(
-                            name = name,
-                            list = list,
-                            optional = optional,
-                            justSettable = justSettable,
-                            type = domainMgr.entityMgr.class2Entity[type]
-                                    ?: throw RuntimeException("Could not resolve entity type $type")
-                    )
-                    type.isEmbeddable -> EmbeddableDTField(
-                            name = name,
-                            justSettable = justSettable,
-                            type = domainMgr.embeddableMgr.class2Embeddable[type]
-                                    ?: throw RuntimeException("Could not resolve embedded type $type")
-                    )
-                    type.isProjection -> ProjectionDTField(
-                            name = name,
-                            list = list,
-                            optional = optional,
-                            justSettable = justSettable,
-                            type = domainMgr.projectionMgr.class2Projection[type]
-                                    ?: throw RuntimeException("Could not resolve projection type $type")
-                    )
-                    else -> PojoDTField(
-                            name = name,
-                            list = list,
-                            optional = optional,
-                            justSettable = justSettable,
-                            type = domainMgr.pojoMgr.resolvePojo(type)
-                    )
+        try {
+            val simpleType = SimpleType.fromType(type)
+            return if (simpleType != null) {
+                SimpleDTField(
+                        name,
+                        list,
+                        optional,
+                        justSettable,
+                        simpleType
+                )
+            } else {
+                when (type) {
+                    is Class<*> -> when {
+                        type.isEnum -> EnumDTField(
+                                name = name,
+                                list = list,
+                                optional = optional,
+                                justSettable = justSettable,
+                                type = domainMgr.enumMgr.resolveEnum(type)
+                        )
+                        type.isEntity -> EntityDTField(
+                                name = name,
+                                list = list,
+                                optional = optional,
+                                justSettable = justSettable,
+                                type = domainMgr.entityMgr.class2Entity[type]
+                                        ?: throw RuntimeException("Could not resolve entity type $type")
+                        )
+                        type.isEmbeddable -> EmbeddableDTField(
+                                name = name,
+                                justSettable = justSettable,
+                                type = domainMgr.embeddableMgr.class2Embeddable[type]
+                                        ?: throw RuntimeException("Could not resolve embedded type $type")
+                        )
+                        type.isProjection -> ProjectionDTField(
+                                name = name,
+                                list = list,
+                                optional = optional,
+                                justSettable = justSettable,
+                                type = domainMgr.projectionMgr.class2Projection[type]
+                                        ?: throw RuntimeException("Could not resolve projection type $type")
+                        )
+                        else -> PojoDTField(
+                                name = name,
+                                list = list,
+                                optional = optional,
+                                justSettable = justSettable,
+                                type = domainMgr.pojoMgr.resolvePojo(type)
+                        )
+                    }
+                    is ParameterizedType -> {
+                        if (!java.lang.Iterable::class.java.isAssignableFrom(type.rawType as Class<*>)) throw IllegalStateException("Cannot handle ${type}.")
+                        // recursive call for list types (with boolean parameter 'list' set to true)
+                        dtFieldFromType(
+                                name,
+                                type.actualTypeArguments.first(),
+                                true,
+                                false,
+                                justSettable,
+                                context
+                        )
+                    }
+                    else -> throw IllegalStateException("UNKNOWN non-class '$name': ${type.typeName} & ${type::class.java.name} ${context.context()}")
                 }
-                is ParameterizedType -> {
-                    if (!java.lang.Iterable::class.java.isAssignableFrom(type.rawType as Class<*>)) throw IllegalStateException("Cannot handle ${type}.")
-                    // recursive call for list types (with boolean parameter 'list' set to true)
-                    dtFieldFromType(
-                            name,
-                            type.actualTypeArguments.first(),
-                            true,
-                            false,
-                            justSettable,
-                            context
-                    )
-                }
-                else -> throw IllegalStateException("UNKNOWN non-class '$name': ${type.typeName} & ${type::class.java.name} ${context.context()}")
             }
+        } catch (ex: Exception) {
+            throw RuntimeException("Failed to resolve field $name with type ${type.typeName}", ex)
         }
     }
 }

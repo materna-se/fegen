@@ -73,38 +73,42 @@ class CustomEndpointMgr(
                     }
 
     private fun customEndpoint(controller: CustomController, method: Method): CustomEndpoint {
-        val (url, endpointMethod) = method.requestMapping!!
-        return CustomEndpoint(
-                parentController = controller,
-                name = method.name,
-                url = url,
-                method = endpointMethod,
-                pathVariables = method.pathVariables.map {
-                    domainMgr.fieldMgr.dtFieldFromType(
-                            name = it.nameREST,
+        try {
+            val (url, endpointMethod) = method.requestMapping!!
+            return CustomEndpoint(
+                    parentController = controller,
+                    name = method.name,
+                    url = url,
+                    method = endpointMethod,
+                    pathVariables = method.pathVariables.map {
+                        domainMgr.fieldMgr.dtFieldFromType(
+                                name = it.nameREST,
+                                type = it.parameterizedType,
+                                context = FieldMgr.ParameterContext(method)
+                        ) as ValueDTField
+                    },
+                    requestParams = method.requestParams.map {
+                        val req = it.getAnnotation(RequestParam::class.java)
+                        domainMgr.fieldMgr.dtFieldFromType(
+                                name = it.nameREST,
+                                type = it.parameterizedType,
+                                optional = !req.required,
+                                context = FieldMgr.ParameterContext(method)
+                        ) as ValueDTField
+                    },
+                    body = method.requestBody?.let {
+                        it -> domainMgr.fieldMgr.dtFieldFromType(
+                            name = "body",
                             type = it.parameterizedType,
                             context = FieldMgr.ParameterContext(method)
-                    ) as ValueDTField
-                },
-                requestParams = method.requestParams.map {
-                    val req = it.getAnnotation(RequestParam::class.java)
-                    domainMgr.fieldMgr.dtFieldFromType(
-                            name = it.nameREST,
-                            type = it.parameterizedType,
-                            optional = !req.required,
-                            context = FieldMgr.ParameterContext(method)
-                    ) as ValueDTField
-                },
-                body = method.requestBody?.let {
-                    it -> domainMgr.fieldMgr.dtFieldFromType(
-                        name = "body",
-                        type = it.parameterizedType,
-                        context = FieldMgr.ParameterContext(method)
-                ) as? ComplexDTField
-                },
-                returnValue = resolveReturnType(method),
-                canReceiveProjection = canReceiveProjection(method)
-        )
+                    ) as? ComplexDTField
+                    },
+                    returnValue = resolveReturnType(method),
+                    canReceiveProjection = canReceiveProjection(method)
+            )
+        } catch (ex: Exception) {
+            throw RuntimeException("Failed to process endpoint ${method.declaringClass}::${method.name}")
+        }
     }
 
     private fun isCustomControllerMethod(controller: Class<*>, method: Method): Boolean =

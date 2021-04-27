@@ -109,26 +109,30 @@ class RepositoryMgr(
     fun addSearchesToEntities() {
         for ((repository, searches) in repository2Searches) {
             for (search in searches) {
-                val resultType = search.declaringClass.repositoryType
-                val domainType = entityMgr.class2Entity[resultType]
-                        ?: throw RuntimeException("Repository $repository for unknown entity $resultType encountered")
-                domainType.searches +=
-                        Search(
-                                name = search.getAnnotation(RestResource::class.java)?.path ?: search.name,
-                                paging = search.repoPaging,
-                                list = search.repoList,
-                                parameters = search.parameters
-                                        .filter { p -> !Pageable::class.java.isAssignableFrom(p.type) }
-                                        .map { p ->
-                                            domainMgr.fieldMgr.dtFieldFromType(
-                                                    name = p.nameREST,
-                                                    type = p.type,
-                                                    context = FieldMgr.ParameterContext(search)
-                                            ) as ValueDTField
-                                        }.toList(),
-                                returnType = domainType,
-                                inRepo = true
-                        )
+                try {
+                    val resultType = search.declaringClass.repositoryType
+                    val domainType = entityMgr.class2Entity[resultType]
+                            ?: throw RuntimeException("Repository $repository for unknown entity $resultType encountered")
+                    domainType.searches +=
+                            Search(
+                                    name = search.getAnnotation(RestResource::class.java)?.path ?: search.name,
+                                    paging = search.repoPaging,
+                                    list = search.repoList,
+                                    parameters = search.parameters
+                                            .filter { p -> !Pageable::class.java.isAssignableFrom(p.type) }
+                                            .map { p ->
+                                                domainMgr.fieldMgr.dtFieldFromType(
+                                                        name = p.nameREST,
+                                                        type = p.type,
+                                                        context = FieldMgr.ParameterContext(search)
+                                                ) as ValueDTField
+                                            }.toList(),
+                                    returnType = domainType,
+                                    inRepo = true
+                            )
+                } catch (ex: Exception) {
+                    throw RuntimeException("Failed to process repository search ${search.declaringClass}::${search.name}", ex)
+                }
             }
         }
     }

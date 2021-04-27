@@ -27,6 +27,7 @@ import de.materna.fegen.core.domain.Pojo
 import de.materna.fegen.core.generator.DomainMgr
 import de.materna.fegen.core.generator.FieldMgr
 import de.materna.fegen.core.log.FeGenLogger
+import kotlin.RuntimeException
 
 class PojoMgr(
         feGenConfig: FeGenConfig,
@@ -45,18 +46,26 @@ class PojoMgr(
             // It is crucial to insert the pojo into the map before resolving its fields
             class2Pojo[type] = result
             // because resolveFields may run into a stack overflow when encountering recursive types otherwise
-            result.fields = resolveFields(type)
+            try {
+                result.fields = resolveFields(type)
+            } catch (ex: Exception) {
+                throw RuntimeException("Failed to resolve fields of type ${type.canonicalName}", ex)
+            }
         }
         return result
     }
 
     private fun resolveFields(type: Class<*>) =
             ClassProperty.forClass(type).asSequence().sortedBy { it.name }.map { property ->
-                domainMgr.fieldMgr.dtFieldFromType(
-                        name = property.name,
-                        optional = !property.notNull,
-                        type = property.type,
-                        context = FieldMgr.FieldContext(type)
-                )
+                try {
+                    domainMgr.fieldMgr.dtFieldFromType(
+                            name = property.name,
+                            optional = !property.notNull,
+                            type = property.type,
+                            context = FieldMgr.FieldContext(type)
+                    )
+                } catch (ex: Exception) {
+                    throw RuntimeException("Failed to resolve field ${property.name}", ex)
+                }
             }.toList()
 }

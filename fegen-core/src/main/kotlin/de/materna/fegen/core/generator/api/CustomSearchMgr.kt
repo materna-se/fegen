@@ -100,34 +100,38 @@ class CustomSearchMgr(
     fun addSearchesToEntities() {
         for ((controller, searches) in controller2Searches) {
             for (search in searches) {
-                val requestMapping = search.getAnnotation(RequestMapping::class.java) ?: break
+                try {
+                    val requestMapping = search.getAnnotation(RequestMapping::class.java) ?: break
 
-                // Try to retrieve search type via return type. If this is not possible, try to extract the name from the request mapping.
-                // If nothing works, the code will die :).
-                val domainType = (search.entityType?.let { entityMgr.class2Entity[it] }
-                        ?: entityMgr.class2Entity.values.first { it.name == search.searchTypeName })
-                val searchName = requestMapping.value.firstOrNull() ?: requestMapping.path.firstOrNull()
-                if (searchName == null) {
-                    logger.warn("Custom search method ${controller.simpleName}::${search.name} will be ignored because neither value nor path is specified for its RequestMapping annotation")
-                    break
+                    // Try to retrieve search type via return type. If this is not possible, try to extract the name from the request mapping.
+                    // If nothing works, the code will die :).
+                    val domainType = (search.entityType?.let { entityMgr.class2Entity[it] }
+                            ?: entityMgr.class2Entity.values.first { it.name == search.searchTypeName })
+                    val searchName = requestMapping.value.firstOrNull() ?: requestMapping.path.firstOrNull()
+                    if (searchName == null) {
+                        logger.warn("Custom search method ${controller.simpleName}::${search.name} will be ignored because neither value nor path is specified for its RequestMapping annotation")
+                        break
+                    }
+                    domainType.searches +=
+                            Search(
+                                    name = requestMapping.value.firstOrNull() ?: requestMapping.path.first(),
+                                    paging = search.paging,
+                                    list = search.list,
+                                    parameters = search.requestParams.map { p ->
+                                        val requestParam = p.getAnnotation(RequestParam::class.java)
+                                        domainMgr.fieldMgr.dtFieldFromType(
+                                                name = p.nameREST,
+                                                type = p.type,
+                                                optional = !requestParam.required,
+                                                context = FieldMgr.FieldContext(controller)
+                                        ) as ValueDTField // TODO split typeToDTReference into two parts in order to omit cast...
+                                    }.toList(),
+                                    returnType = domainType,
+                                    inRepo = false
+                            )
+                } catch (ex: Exception) {
+                    throw RuntimeException("Failed to process custom search ${search.declaringClass}::${search.name}", ex)
                 }
-                domainType.searches +=
-                        Search(
-                            name = requestMapping.value.firstOrNull() ?: requestMapping.path.first(),
-                            paging = search.paging,
-                            list = search.list,
-                            parameters = search.requestParams.map { p ->
-                                val requestParam = p.getAnnotation(RequestParam::class.java)
-                                domainMgr.fieldMgr.dtFieldFromType(
-                                    name = p.nameREST,
-                                    type = p.type,
-                                    optional = !requestParam.required,
-                                    context = FieldMgr.FieldContext(controller)
-                                ) as ValueDTField // TODO split typeToDTReference into two parts in order to omit cast...
-                            }.toList(),
-                            returnType = domainType,
-                            inRepo = false
-                        )
             }
         }
     }
