@@ -40,7 +40,7 @@ class SearchController {
 Those methods must adhere to the following rules to work with FeGen:
 
 - They have a `@RequestMapping` annotation
-- Their parameters must have a `@RequestParam` annotation
+- Their parameters must have a `@RequestParam` annotation (request body or path variables are not supported yet)
 - They have a return type of the form `ResponseEntity<CollectionModel<EntityModel<P>>>` where `P` is a projection
 
 Using a custom search in the frontend works the same as with repository searches.
