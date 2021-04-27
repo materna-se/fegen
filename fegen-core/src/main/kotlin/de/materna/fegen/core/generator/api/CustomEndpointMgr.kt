@@ -132,7 +132,7 @@ class CustomEndpointMgr(
     fun warnIfNoControllerMethods() {
         if (controllers.map { it.endpoints }.all { it.isEmpty() }) {
             logger.info("No custom controller search methods were found")
-            logger.warn("Custom endpoints must be methods annotated with RequestMapping")
+            logger.info("Custom endpoints must be methods annotated with RequestMapping")
         } else {
             logger.info("Custom controller methods found: ${controllers.map { it.endpoints }.sumBy { it.size }}")
         }
