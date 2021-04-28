@@ -19,7 +19,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import {FetchAdapter} from "./FetchAdapter";
+import {FetchAdapter} from "./fetch/FetchAdapter";
+import {extractSecurityResponse} from "./EndpointSecurity";
 
 
 export default class EntitySecurity {
@@ -53,9 +54,6 @@ export default class EntitySecurity {
         } catch (ex) {
             throw new Error(`Failed to fetch security configuration at ${url}: ${ex}`);
         }
-        if (!response.ok) {
-            throw new Error(`Failed to fetch security configuration at ${url}: Server responded with ${response.status}`);
-        }
-        return await response.json();
+        return extractSecurityResponse(url, response);
     }
 }

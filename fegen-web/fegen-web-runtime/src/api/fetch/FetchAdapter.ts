@@ -19,32 +19,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+import {FetchFn, FetchOptions, FetchResponse} from "./FetchTypes";
+import {Interceptor} from "./Interceptor";
 
-export type FetchHeaders = {
-    append(name: string, value: string): void;
-    delete(name: string): void;
-    get(name: string): string | null;
-    has(name: string): boolean;
-    set(name: string, value: string): void;
-};
-
-export type FetchOptions = {
-    body?: string,
-    headers?: Record<string, string>,
-    method?: string
-};
-
-export type FetchResponse = {
-    readonly headers: FetchHeaders;
-    readonly ok: boolean;
-    readonly redirected: boolean;
-    readonly status: number;
-    readonly statusText: string;
-    json(): Promise<any>;
-    text(): Promise<string>;
-};
-
-export type FetchFn = (url: string , options?: FetchOptions) => Promise<FetchResponse>;
+export interface FetchAdapterOptions {
+    baseUrl?: string;
+    interceptors?: Interceptor[];
+    fetchImpl?: FetchFn
+}
 
 export class FetchAdapter {
 
@@ -52,10 +34,25 @@ export class FetchAdapter {
 
     private readonly fetchImpl: FetchFn;
 
-    constructor(baseUrl?: string, fetchImpl?: FetchFn) {
-        this.baseUrl = baseUrl ?? "";
-        this.fetchImpl = fetchImpl ?? window.fetch.bind(window);
+    constructor(options?: FetchAdapterOptions) {
+        this.baseUrl = options?.baseUrl ?? "";
+        const fetchImpl = options?.fetchImpl ?? window.fetch.bind(window);
+        this.fetchImpl = FetchAdapter.wrapInterceptors(fetchImpl, options?.interceptors ?? []);
         this.fetch = this.fetch.bind(this);
+    }
+
+    private static wrapInterceptors(fetchFn: FetchFn, interceptors: Interceptor[]): FetchFn {
+        let result = fetchFn;
+        for (const interceptor of interceptors ?? []) {
+            result = FetchAdapter.wrapInterceptor(result, interceptor);
+        }
+        return result;
+    }
+
+    private static wrapInterceptor(fetchFn: FetchFn, interceptor: Interceptor): FetchFn {
+        return (url, options) => {
+            return interceptor(url, options, fetchFn);
+        }
     }
 
     public async fetch(url: string, options?: FetchOptions, dontApplyBasePath?: boolean): Promise<FetchResponse> {

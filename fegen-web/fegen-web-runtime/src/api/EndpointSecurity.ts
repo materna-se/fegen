@@ -19,8 +19,18 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-import {FetchAdapter} from "./FetchAdapter";
+import {FetchAdapter} from "./fetch/FetchAdapter";
+import {FetchResponse} from "./fetch/FetchTypes";
 
+export const extractSecurityResponse = (url: string, response: FetchResponse): any => {
+    if (response.ok) {
+        return response.json();
+    } else if (response.status === 404) {
+        throw new Error("Security endpoint not found. Make sure you included the FeGen utils dependency and Spring Security in your backend");
+    } else {
+        throw new Error(`Failed to fetch security configuration at ${url}: Server returned error code ${response.status}`);
+    }
+}
 
 export const isEndpointCallAllowed = async (fetchAdapter: FetchAdapter, basePath: string, method: string, path: string): Promise<boolean> => {
     const url = `${basePath}/fegen/security/isAllowed?method=${method}&path=${path}`;
@@ -30,5 +40,5 @@ export const isEndpointCallAllowed = async (fetchAdapter: FetchAdapter, basePath
     } catch (ex) {
         throw new Error(`Failed to fetch security configuration at ${url}: ${ex}`);
     }
-    return response.json();
+    return extractSecurityResponse(url, response);
 }

@@ -26,7 +26,8 @@ import {
     Dto, Entity,
     PagedItems, WithId
 } from './ApiTypes';
-import FetchAdapter, {FetchResponse} from './FetchAdapter';
+import FetchAdapter from './fetch/FetchAdapter';
+import {FetchResponse} from "./fetch/FetchTypes";
 
 export default class RequestAdapter {
 

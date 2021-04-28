@@ -34,10 +34,11 @@ import {
     Dto,
 } from "./api/ApiTypes";
 import {BaseClient} from "./api/BaseClient";
-import {FetchAdapter} from "./api/FetchAdapter";
+import {FetchAdapter} from "./api/fetch/FetchAdapter";
 import RequestAdapter from "./api/RequestAdapter";
 import EntitySecurity from "./api/EntitySecurity";
 import { isEndpointCallAllowed } from "./api/EndpointSecurity";
+import { Interceptor } from "./api/fetch/Interceptor";
 
 export {
     stringHelper,
@@ -56,5 +57,6 @@ export {
     Dto,
     Entity,
     EntitySecurity,
-    isEndpointCallAllowed
+    isEndpointCallAllowed,
+    Interceptor
 };
