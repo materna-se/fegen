@@ -1222,8 +1222,7 @@ public class CustomEndpointController {
 <p>If you are using Kotlin, you should add the <code>open</code> modifier to the class declaration.</p>
 <p>For a controller to be recognized as a container for custom endpoints, it needs to fulfill the following criteria:</p>
 <ul>
-<li>It must have a <code>@RestController</code> annotation</li>
-<li>It must have a <code>@RequestMapping</code> annotation whose value or <code>path</code> that ends with the same segment as an entity's REST endpoint. (For a <code>User</code> entity it should end with <code>/users</code> and for an <code>Address</code> entity it should end with <code>/addresses</code>)</li>
+<li>It must have a <code>@RestController</code> and a <code>@RequestMapping</code> annotation</li>
 </ul>
 <p>Take note that the <code>spring.data.rest.base-path</code> you specified in <code>application.properties</code> will not be applied to the <code>@RequestMapping</code> unless you also add the annotation <code>@BasePathAwareController</code>.</p>
 <p>You can then specify custom endpoints in such classes where parameters are annotated with <code>@RequestParam</code>, <code>@PathVariable</code> or <code>@RequestBody</code>.</p>
