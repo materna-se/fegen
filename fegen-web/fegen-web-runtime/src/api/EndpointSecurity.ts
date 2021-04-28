@@ -26,7 +26,7 @@ export const extractSecurityResponse = (url: string, response: FetchResponse): a
     if (response.ok) {
         return response.json();
     } else if (response.status === 404) {
-        throw new Error("Security endpoint not found. Make sure you included the FeGen utils dependency and Spring Security in your backend");
+        throw new Error("Security endpoint not found. Make sure you included the FeGen utils dependency and Spring Security in your backend and annotated your application with @Fegen");
     } else {
         throw new Error(`Failed to fetch security configuration at ${url}: Server returned error code ${response.status}`);
     }
