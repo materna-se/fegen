@@ -125,7 +125,7 @@ private fun deleteEntityTemplate(entityType: EntityType, restBasePath: String) =
 
 private fun allowedMethodsTemplate(entityType: EntityType, restBasePath: String): String = """
     public allowedMethods(): Promise<EntitySecurity> {
-        return EntitySecurity.fetch(this._requestAdapter.fetchAdapter, "$restBasePath", "/${entityType.uriREST(restBasePath)}");
+        return EntitySecurity.fetch(this._requestAdapter.fetchAdapter, "$restBasePath", "${entityType.uriREST(restBasePath)}");
     }
 """
 

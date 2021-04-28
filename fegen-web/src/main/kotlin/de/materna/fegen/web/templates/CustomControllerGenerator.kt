@@ -112,7 +112,7 @@ class CustomControllerGenerator(
         return """
             public is${name}Allowed($paramDecl): Promise<boolean> {
                 const url = `/${endpoint.parentController.baseUri}/${endpoint.uriPatternString}`;
-                return isEndpointCallAllowed(this.requestAdapter.fetchAdapter, "/${feGenWeb.restBasePath}", "${endpoint.method}", url);
+                return isEndpointCallAllowed(this.requestAdapter.fetchAdapter, "${feGenWeb.restBasePath}", "${endpoint.method}", url);
             }
         """.trimIndent()
     }
