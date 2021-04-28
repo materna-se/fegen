@@ -111,7 +111,7 @@ class CustomControllerGenerator(
         val paramDecl = endpoint.pathVariables.join(separator = ", ") { parameter() }
         return """
             public is${name}Allowed($paramDecl): Promise<boolean> {
-                const url = `${endpoint.parentController.baseUri}/${endpoint.uriPatternString}`;
+                const url = `/${endpoint.parentController.baseUri}/${endpoint.uriPatternString}`;
                 return isEndpointCallAllowed(this.requestAdapter.fetchAdapter, "/${feGenWeb.restBasePath}", "${endpoint.method}", url);
             }
         """.trimIndent()
@@ -123,7 +123,7 @@ class CustomControllerGenerator(
         public async ${endpoint.name}(${endpoint.params.join(separator = ", ") { parameter(true) }}${pagingParams(endpoint)}): Promise<${clientMethodReturnType(endpoint)}>  {
             const request = this.requestAdapter.fetchAdapter;
     
-            const baseUrl = `${endpoint.parentController.baseUri}/${endpoint.uriPatternString}`${if (endpoint.canReceiveProjection) """, projection && `projection=${'$'}{projection}`""" else ""};
+            const baseUrl = `/${endpoint.parentController.baseUri}/${endpoint.uriPatternString}`${if (endpoint.canReceiveProjection) """, projection && `projection=${'$'}{projection}`""" else ""};
     
             const params = {${endpoint.requestParams.join(separator = ", ") { name }}${pagingRequestParams(endpoint)}};
     

@@ -72,7 +72,7 @@ class CustomControllerGenerator(
 
     private fun isAllowedMethod(endpoint: CustomEndpoint): FunSpec {
         val name = "is${endpoint.name.capitalize()}Allowed"
-        val path = "${endpoint.parentController.baseUri}/${uriPatternString(endpoint)}"
+        val path = "/${endpoint.parentController.baseUri}/${uriPatternString(endpoint)}"
         val isEndpointCallAllowed = MemberName("de.materna.fegen.runtime", "isEndpointCallAllowed")
         return FunSpec.builder(name)
             .addModifiers(KModifier.SUSPEND)
@@ -259,7 +259,7 @@ class CustomControllerGenerator(
 
     private fun defineUrl(endpoint: CustomEndpoint): CodeBlock {
         val appendParams = MemberName("de.materna.fegen.runtime", "appendParams")
-        val path = "${endpoint.parentController.baseUri}/${uriPatternString(endpoint)}"
+        val path = "/${endpoint.parentController.baseUri}/${uriPatternString(endpoint)}"
         val params = endpoint.requestParams.joinParameters { "\"${it.name}\" to ${it.name}" }
         return CodeBlock.builder().add("val url = %P.%M(%L)\n", path, appendParams, params).build()
     }

@@ -55,7 +55,7 @@ class CustomEndpointMgr(
     private fun createCustomController(clazz: Class<*>): CustomController {
         val requestMapping = clazz.getAnnotation(RequestMapping::class.java)
         val basePath = requestMapping.value.firstOrNull() ?: requestMapping.path.firstOrNull()
-        val result = CustomController(name = clazz.simpleName, baseUri = basePath)
+        val result = CustomController(name = clazz.simpleName, baseUri = basePath?.removePrefix("/"))
         result.endpoints.addAll(controllerMethods(clazz, result))
         return result
     }
