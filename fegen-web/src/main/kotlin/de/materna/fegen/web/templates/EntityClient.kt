@@ -133,27 +133,27 @@ private fun associationEntityTemplate(entityType: EntityType, projectionTypes: L
     ${
     entityType.entityFields.join(indent = 1, separator = "\n\n") dtField@{
         """
-    public async $readAssociation(obj: ${entityType.nameDto}): Promise<${if (list) declaration else "$declaration | undefined"}> {
+    public async $readAssociation(obj: ${entityType.nameDto}): Promise<${if (list || !optional) declaration else "$declaration | undefined"}> {
         return this.${readAssociation}Projection<${type.declaration}>(obj);
     }
 
     ${
             projectionTypes.filter { it.parentType == type }.join(indent = 1, separator = "\n\n") {
                 """
-    public async ${this@dtField.readAssociation}Projection$fullProjectionName(obj: ${entityType.nameDto}): Promise<${if (this@dtField.list) "$fullProjectionName[]" else "$fullProjectionName | undefined"}> {
+    public async ${this@dtField.readAssociation}Projection$fullProjectionName(obj: ${entityType.nameDto}): Promise<${if (this@dtField.list) "$fullProjectionName[]" else if (this@dtField.optional) "$fullProjectionName | undefined" else fullProjectionName}> {
         return this.${this@dtField.readAssociation}Projection<$fullProjectionName>(obj, "$projectionName");
     }
     """
             }
         }
 
-    public async ${readAssociation}Projection<T extends Dto>(obj: ${entityType.nameDto}, projection?: string): Promise<${if (list) "T[]" else "T | undefined"}> {
+    public async ${readAssociation}Projection<T extends Dto>(obj: ${entityType.nameDto}, projection?: string): Promise<${if (list) "T[]" else if (optional) "T | undefined" else "T"}> {
         const hasProjection = !!projection;
         let fullUrl = apiHelper.removeParamsFromNavigationHref(obj._links.${name});
         fullUrl = hasProjection ? `${'$'}{fullUrl}?projection=${'$'}{projection}` : fullUrl;
     
         const response = await this._requestAdapter.fetchAdapter.get(fullUrl);
-        if(response.status === 404) { return ${if (list) "[]" else "undefined"}; }
+        ${if (optional || list) "if(response.status === 404) { return ${if (list) "[]" else "undefined"}; }" else ""}
         if(!response.ok){ throw response; }
         ${
             if (list) """
