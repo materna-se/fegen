@@ -43,7 +43,7 @@ export class FetchAdapter {
 
     private static wrapInterceptors(fetchFn: FetchFn, interceptors: Interceptor[]): FetchFn {
         let result = fetchFn;
-        for (const interceptor of interceptors ?? []) {
+        for (const interceptor of interceptors.reverse() ?? []) {
             result = FetchAdapter.wrapInterceptor(result, interceptor);
         }
         return result;
