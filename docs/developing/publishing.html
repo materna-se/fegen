@@ -1,0 +1,275 @@
+<!DOCTYPE HTML>
+<html lang="en" class="sidebar-visible no-js light">
+    <head>
+        <!-- Book generated using mdBook -->
+        <meta charset="UTF-8">
+        <title>Publishing - FeGen</title>
+        
+        
+
+
+        <!-- Custom HTML head -->
+        
+
+
+        <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="theme-color" content="#ffffff" />
+
+        
+        <link rel="icon" href="../favicon.svg">
+        
+        
+        <link rel="shortcut icon" href="../favicon.png">
+        
+        <link rel="stylesheet" href="../css/variables.css">
+        <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/chrome.css">
+        
+        <link rel="stylesheet" href="../css/print.css" media="print">
+        
+
+        <!-- Fonts -->
+        <link rel="stylesheet" href="../FontAwesome/css/font-awesome.css">
+        
+        <link rel="stylesheet" href="../fonts/fonts.css">
+        
+
+        <!-- Highlight.js Stylesheets -->
+        <link rel="stylesheet" href="../highlight.css">
+        <link rel="stylesheet" href="../tomorrow-night.css">
+        <link rel="stylesheet" href="../ayu-highlight.css">
+
+        <!-- Custom theme stylesheets -->
+        
+
+        
+    </head>
+    <body>
+        <!-- Provide site root to javascript -->
+        <script type="text/javascript">
+            var path_to_root = "../";
+            var default_theme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "navy" : "light";
+        </script>
+
+        <!-- Work around some values being stored in localStorage wrapped in quotes -->
+        <script type="text/javascript">
+            try {
+                var theme = localStorage.getItem('mdbook-theme');
+                var sidebar = localStorage.getItem('mdbook-sidebar');
+
+                if (theme.startsWith('"') && theme.endsWith('"')) {
+                    localStorage.setItem('mdbook-theme', theme.slice(1, theme.length - 1));
+                }
+
+                if (sidebar.startsWith('"') && sidebar.endsWith('"')) {
+                    localStorage.setItem('mdbook-sidebar', sidebar.slice(1, sidebar.length - 1));
+                }
+            } catch (e) { }
+        </script>
+
+        <!-- Set the theme before any content is loaded, prevents flash -->
+        <script type="text/javascript">
+            var theme;
+            try { theme = localStorage.getItem('mdbook-theme'); } catch(e) { }
+            if (theme === null || theme === undefined) { theme = default_theme; }
+            var html = document.querySelector('html');
+            html.classList.remove('no-js')
+            html.classList.remove('light')
+            html.classList.add(theme);
+            html.classList.add('js');
+        </script>
+
+        <!-- Hide / unhide sidebar before it is displayed -->
+        <script type="text/javascript">
+            var html = document.querySelector('html');
+            var sidebar = 'hidden';
+            if (document.body.clientWidth >= 1080) {
+                try { sidebar = localStorage.getItem('mdbook-sidebar'); } catch(e) { }
+                sidebar = sidebar || 'visible';
+            }
+            html.classList.remove('sidebar-visible');
+            html.classList.add("sidebar-" + sidebar);
+        </script>
+
+        <nav id="sidebar" class="sidebar" aria-label="Table of contents">
+            <div class="sidebar-scrollbox">
+                <ol class="chapter"><li class="chapter-item expanded affix "><a href="../intro.html">Introduction</a></li><li class="chapter-item expanded "><a href="../quickstart/intro.html"><strong aria-hidden="true">1.</strong> Quick Start Guide</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../quickstart/setup.html"><strong aria-hidden="true">1.1.</strong> Setup</a></li><li class="chapter-item expanded "><a href="../quickstart/backend.html"><strong aria-hidden="true">1.2.</strong> Backend</a></li><li class="chapter-item expanded "><a href="../quickstart/frontend.html"><strong aria-hidden="true">1.3.</strong> Frontend</a></li><li class="chapter-item expanded "><a href="../quickstart/further_reading.html"><strong aria-hidden="true">1.4.</strong> Further Reading</a></li></ol></li><li class="chapter-item expanded "><a href="../reference/intro.html"><strong aria-hidden="true">2.</strong> Reference Documentation</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../reference/plugin_configuration/intro.html"><strong aria-hidden="true">2.1.</strong> Plugin Configuration</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../reference/plugin_configuration/gradle.html"><strong aria-hidden="true">2.1.1.</strong> Gradle</a></li><li class="chapter-item expanded "><a href="../reference/plugin_configuration/maven.html"><strong aria-hidden="true">2.1.2.</strong> Maven</a></li><li class="chapter-item expanded "><a href="../reference/plugin_configuration/configuration_options.html"><strong aria-hidden="true">2.1.3.</strong> Configuration Options</a></li><li class="chapter-item expanded "><a href="../reference/plugin_configuration/backend.html"><strong aria-hidden="true">2.1.4.</strong> Backend Configuration</a></li></ol></li><li class="chapter-item expanded "><a href="../reference/data_model/intro.html"><strong aria-hidden="true">2.2.</strong> Data Model</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../reference/data_model/entities.html"><strong aria-hidden="true">2.2.1.</strong> Entities</a></li><li class="chapter-item expanded "><a href="../reference/data_model/relationships.html"><strong aria-hidden="true">2.2.2.</strong> Relationships</a></li><li class="chapter-item expanded "><a href="../reference/data_model/custom_endpoints.html"><strong aria-hidden="true">2.2.3.</strong> Custom Endpoints</a></li><li class="chapter-item expanded "><a href="../reference/data_model/embeddables.html"><strong aria-hidden="true">2.2.4.</strong> Embeddables</a></li><li class="chapter-item expanded "><a href="../reference/data_model/fegen_ignore.html"><strong aria-hidden="true">2.2.5.</strong> @FegenIgnore</a></li></ol></li><li class="chapter-item expanded "><a href="../reference/retrieving/intro.html"><strong aria-hidden="true">2.3.</strong> Retrieving Data</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../reference/retrieving/paging_sorting.html"><strong aria-hidden="true">2.3.1.</strong> Paging and Sorting</a></li><li class="chapter-item expanded "><a href="../reference/retrieving/projections.html"><strong aria-hidden="true">2.3.2.</strong> Projections</a></li><li class="chapter-item expanded "><a href="../reference/retrieving/repository_searches.html"><strong aria-hidden="true">2.3.3.</strong> Repository Searches</a></li><li class="chapter-item expanded "><a href="../reference/retrieving/custom_searches.html"><strong aria-hidden="true">2.3.4.</strong> Custom Searches</a></li></ol></li><li class="chapter-item expanded "><a href="../reference/targets/intro.html"><strong aria-hidden="true">2.4.</strong> Targets</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../reference/targets/typescript.html"><strong aria-hidden="true">2.4.1.</strong> Typescript</a></li><li class="chapter-item expanded "><a href="../reference/targets/kotlin.html"><strong aria-hidden="true">2.4.2.</strong> Kotlin</a></li></ol></li><li class="chapter-item expanded "><a href="../reference/security.html"><strong aria-hidden="true">2.5.</strong> Security</a></li><li class="chapter-item expanded "><a href="../reference/pitfalls.html"><strong aria-hidden="true">2.6.</strong> Pitfalls</a></li></ol></li><li class="chapter-item expanded "><a href="../developing/intro.html"><strong aria-hidden="true">3.</strong> Developing FeGen</a></li><li><ol class="section"><li class="chapter-item expanded "><a href="../developing/building.html"><strong aria-hidden="true">3.1.</strong> Building</a></li><li class="chapter-item expanded "><a href="../developing/architecture.html"><strong aria-hidden="true">3.2.</strong> Architecture</a></li><li class="chapter-item expanded "><a href="../developing/local_usage.html"><strong aria-hidden="true">3.3.</strong> Using a Custom Build Locally</a></li><li class="chapter-item expanded "><a href="../developing/contributing.html"><strong aria-hidden="true">3.4.</strong> Contributing</a></li><li class="chapter-item expanded "><a href="../developing/publishing.html" class="active"><strong aria-hidden="true">3.5.</strong> Publishing</a></li></ol></li></ol>
+            </div>
+            <div id="sidebar-resize-handle" class="sidebar-resize-handle"></div>
+        </nav>
+
+        <div id="page-wrapper" class="page-wrapper">
+
+            <div class="page">
+                
+                <div id="menu-bar-hover-placeholder"></div>
+                <div id="menu-bar" class="menu-bar sticky bordered">
+                    <div class="left-buttons">
+                        <button id="sidebar-toggle" class="icon-button" type="button" title="Toggle Table of Contents" aria-label="Toggle Table of Contents" aria-controls="sidebar">
+                            <i class="fa fa-bars"></i>
+                        </button>
+                        <button id="theme-toggle" class="icon-button" type="button" title="Change theme" aria-label="Change theme" aria-haspopup="true" aria-expanded="false" aria-controls="theme-list">
+                            <i class="fa fa-paint-brush"></i>
+                        </button>
+                        <ul id="theme-list" class="theme-popup" aria-label="Themes" role="menu">
+                            <li role="none"><button role="menuitem" class="theme" id="light">Light (default)</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="rust">Rust</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="coal">Coal</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="navy">Navy</button></li>
+                            <li role="none"><button role="menuitem" class="theme" id="ayu">Ayu</button></li>
+                        </ul>
+                        
+                        <button id="search-toggle" class="icon-button" type="button" title="Search. (Shortkey: s)" aria-label="Toggle Searchbar" aria-expanded="false" aria-keyshortcuts="S" aria-controls="searchbar">
+                            <i class="fa fa-search"></i>
+                        </button>
+                        
+                    </div>
+
+                    <h1 class="menu-title">FeGen</h1>
+
+                    <div class="right-buttons">
+                        
+                        <a href="../print.html" title="Print this book" aria-label="Print this book">
+                            <i id="print-button" class="fa fa-print"></i>
+                        </a>
+                        
+                        
+                    </div>
+                </div>
+
+                
+                <div id="search-wrapper" class="hidden">
+                    <form id="searchbar-outer" class="searchbar-outer">
+                        <input type="search" name="search" id="searchbar" name="searchbar" placeholder="Search this book ..." aria-controls="searchresults-outer" aria-describedby="searchresults-header">
+                    </form>
+                    <div id="searchresults-outer" class="searchresults-outer hidden">
+                        <div id="searchresults-header" class="searchresults-header"></div>
+                        <ul id="searchresults">
+                        </ul>
+                    </div>
+                </div>
+                
+
+                <!-- Apply ARIA attributes after the sidebar and the sidebar toggle button are added to the DOM -->
+                <script type="text/javascript">
+                    document.getElementById('sidebar-toggle').setAttribute('aria-expanded', sidebar === 'visible');
+                    document.getElementById('sidebar').setAttribute('aria-hidden', sidebar !== 'visible');
+                    Array.from(document.querySelectorAll('#sidebar a')).forEach(function(link) {
+                        link.setAttribute('tabIndex', sidebar === 'visible' ? 0 : -1);
+                    });
+                </script>
+
+                <div id="content" class="content">
+                    <main>
+                        <h1 id="publishing"><a class="header" href="#publishing">Publishing</a></h1>
+<p>This guide describes the process of publishing all JVM artefacts on Maven Central as well as publishing the web runtime on <code>npmjs.org</code>.</p>
+<h2 id="one-time-preparation"><a class="header" href="#one-time-preparation">One-time preparation</a></h2>
+<p>First you will need an account on <a href="https://www.npmjs.com">npmjs.com</a> and need to join the <code>materna-se</code> organization.
+Then you execute <code>npm login</code> and enter your credentials in the prompt.</p>
+<p>You will also need a <a href="https://issues.sonatype.org/secure/Signup!default.jspa">Sonatype Jira Account</a> to be able to publish to Maven Central.
+It will have to be activated for the groupId <code>com.github.materna-se</code> as seen in the following ticket: <a href="https://issues.sonatype.org/browse/OSSRH-55108">https://issues.sonatype.org/browse/OSSRH-55108</a>.
+Talk to Jonas Tamimi for details.</p>
+<p>While you are waiting for the activation, you can generate a personalized GPG key.
+To do that, follow steps 8-10 of the &quot;Prerequisite Steps&quot; of this guide: <a href="https://dzone.com/articles/publish-your-artifacts-to-maven-central">https://dzone.com/articles/publish-your-artifacts-to-maven-central</a>.
+Make sure to remember the Key ID from the line <code>key 27835B3BD2A2061F marked as ultimately trusted</code>.</p>
+<p>Afterwards, perform step 7 of the &quot;Publishing Steps&quot; where you upload your public key to a key server.</p>
+<p>To make sure that the FeGen gradle project finds your key, you need to have the following lines in the file <code>.gradle/gradle.properties</code> within your home directory:</p>
+<pre><code class="language-properties">mavenCentral.username=your_sonatype_org_username
+mavenCentral.password=your_sonatype_org_password
+signing.keyId=02468ACE
+signing.secretKeyRingFile=/home/clemens/.gradle/secring.gpg
+</code></pre>
+<p>The last value points to a file within a directory, where you will have to execute the following command to save your GPG key:</p>
+<pre><code class="language-shell">gpg --export-secret-keys -o secring.gpg
+</code></pre>
+<p>The second to last value must be the ID of the key you generated earlier.</p>
+<h2 id="publishing-1"><a class="header" href="#publishing-1">Publishing</a></h2>
+<ol>
+<li><strong>Increment all Versions</strong><br />
+First you will need to increment the version of all maven artifacts and, if applicable, of the web runtime.
+The first ones reside in the top level <code>build.gradle</code> file. I strongly recommend setting all versions here on the same value and thereby accepting also publishing artifacts without changes.
+The version of the web runtime can be adjusted in the file <code>fegen-web/fegen-web-runtime/package.json</code>.
+It is important to also adapt all references to FeGen versions. They can be located in the various <code>build.gradle</code> files as well as in the documentation within the <code>book</code> directory.
+You can use the global (project wide) search to look for the old versions.
+Afterwards, you will need to rebuild the book (Execute <code>./mdbook build</code> in <code>/book</code>, see <a href="./architecture.html#book">Architecture</a>).
+When you are done, commit your changes.</li>
+<li><strong>Execute Maven Publish</strong><br />
+Execute <code>./gradlew publish</code> in your root directory. A dialog will pop up where you will need to enter the password for your GPG key.</li>
+<li><strong>Confirm Upload to Maven Central</strong><br />
+The uploaded files of the <code>publish</code> task will end up <a href="https://oss.sonatype.org/#welcome">here</a>.
+Log in using the button in the top right and click on <code>Staging Repositories</code> on the left.
+Your upload should be in the list, and you can check whether all files have been successfully uploaded.
+Then you can select each uploaded artifact and click <code>Close</code> and <code>Release</code> on the toolbar.</li>
+<li><strong>Publishing the Web Runtime</strong><br />
+Execute <code>npm publish</code> in <code>fegen-web/fegen-web-runtime</code>.</li>
+<li><strong>Merging into the main branch</strong><br />
+The <code>master</code> branch should always represent the current state.
+That is why you should merge the <code>develop</code> branch into it using <code>--no-ff</code>.</li>
+<li><strong>Tagging</strong><br />
+Tag the commit created by the merge with the version number of the Maven artifacts and the version of the web runtime.</li>
+<li><strong>Switch back to develop</strong><br />
+To prevent accidentally committing on the <code>master</code> branch, it is best to immediately switch back to <code>develop</code>.</li>
+</ol>
+
+                    </main>
+
+                    <nav class="nav-wrapper" aria-label="Page navigation">
+                        <!-- Mobile navigation buttons -->
+                        
+                            <a rel="prev" href="../developing/contributing.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <i class="fa fa-angle-left"></i>
+                            </a>
+                        
+
+                        
+
+                        <div style="clear: both"></div>
+                    </nav>
+                </div>
+            </div>
+
+            <nav class="nav-wide-wrapper" aria-label="Page navigation">
+                
+                    <a rel="prev" href="../developing/contributing.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <i class="fa fa-angle-left"></i>
+                    </a>
+                
+
+                
+            </nav>
+
+        </div>
+
+        
+
+        
+
+        
+
+        
+        <script type="text/javascript">
+            window.playground_copyable = true;
+        </script>
+        
+
+        
+
+        
+        <script src="../elasticlunr.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../mark.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../searcher.js" type="text/javascript" charset="utf-8"></script>
+        
+
+        <script src="../clipboard.min.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../highlight.js" type="text/javascript" charset="utf-8"></script>
+        <script src="../book.js" type="text/javascript" charset="utf-8"></script>
+
+        <!-- Custom JS scripts -->
+        
+
+        
+
+    </body>
+</html>

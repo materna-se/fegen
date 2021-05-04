@@ -35,3 +35,4 @@
   - [Architecture](./developing/architecture.md)
   - [Using a Custom Build Locally](./developing/local_usage.md)
   - [Contributing](./developing/contributing.md)
+  - [Publishing](./developing/publishing.md)
