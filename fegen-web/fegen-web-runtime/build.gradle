@@ -3,11 +3,6 @@ plugins {
     id "com.github.node-gradle.node" version "3.0.1"
 }
 
-npmInstall {
-    inputs.file 'package.json'
-    outputs.file 'package-lock.json'
-}
-
 npm_run_build {
     dependsOn npmInstall
 }

@@ -47,7 +47,6 @@ fun FeGenWeb.toApiClientTS() = """
         apiHelper, stringHelper, Dto, Entity, EntitySecurity, isEndpointCallAllowed
     } from '@materna-se/fegen-runtime';
     import { ${entityTypes.filter { it.exported }.join(separator = ", ") { "$nameNew, $nameDto, $name" }} } from './Entities';
-    import { ${enumTypes.join(separator = ", ") { name }} } from './Entities';
     import { ${projectionTypes.join(separator = ", ") { fullProjectionName }} } from './Entities';
     ${customControllers.join(indent = 1) { "import { $nameClient } from './controller/$nameClient';" }}
 

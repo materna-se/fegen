@@ -96,7 +96,7 @@ private val SimpleType.initialization
     }
 
 private val EnumType.initialization
-    get() = "$name.${constants.first()}"
+    get() = "\"${constants.first()}\""
 
 
 private val ComplexType.initialization

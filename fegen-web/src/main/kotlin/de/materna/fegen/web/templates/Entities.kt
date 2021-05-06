@@ -52,7 +52,7 @@ private fun DomainType.toDeclaration() = when (this) {
 
 private fun EntityType.toDeclaration() = """
     /**
-     * This type is used for creaing this domain type. It can be created in the frontend
+     * This type is used for creating this domain type. It can be created in the frontend
      * (in order to store it to the backend, for example) as it does neither have mandatory `_links` nor `id`.
      */
     export interface $nameNew {
@@ -95,9 +95,7 @@ private fun ProjectionType.toDeclaration() = """
 """.trimIndent()
 
 private fun EnumType.toDeclaration() = """
-    export enum $name {
-        ${constants.join(indent = 2, separator = ",\n") { "$this = \"${this}\"" }}
-    }
+    export type $name = ${constants.join(indent = 2, separator = "\n| ") { "\"$this\"" }};
 """.trimIndent()
 
 private fun DTField.toDeclaration(optional: Boolean = false) = """
