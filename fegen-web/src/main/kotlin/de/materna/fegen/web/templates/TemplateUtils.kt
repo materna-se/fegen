@@ -96,3 +96,15 @@ fun responseHandling(multiplicity: RestMultiplicity, nameRest: String): String {
     """.trimIndent()
   }
 }
+
+fun String.convertCamelToCapitalSnakeCase(): String {
+  val snakeCase = StringBuilder()
+  for(character in this) {
+    if(character.isUpperCase()) {
+      snakeCase.append("_${character}")
+    } else {
+      snakeCase.append(character.toUpperCase())
+    }
+  }
+  return snakeCase.removePrefix("_").toString()
+}

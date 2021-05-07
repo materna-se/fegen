@@ -94,9 +94,13 @@ private fun ProjectionType.toDeclaration() = """
     }
 """.trimIndent()
 
-private fun EnumType.toDeclaration() = """
-    export type $name = ${constants.join(indent = 2, separator = "\n| ") { "\"$this\"" }};
+private fun EnumType.toDeclaration(): String {
+    val variants = name.convertCamelToCapitalSnakeCase() + "_VARIANTS"
+    return """
+    export const $variants = [${constants.join(separator = ", ") { "\"$this\"" }}] as const;
+    export type $name = typeof $variants[number];
 """.trimIndent()
+}
 
 private fun DTField.toDeclaration(optional: Boolean = false) = """
     $name${if (optional) "?" else ""}: $declaration${if (justSettable || this.optional) " | null" else ""}
