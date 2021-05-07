@@ -62,6 +62,10 @@ class ApiHelper {
     }
 
     public injectIdsInObjectAndProperties<T extends object>(obj: T): T {
+        if (typeof obj !== "object") {
+            return obj;
+        }
+
         const result: T = {
             // Any due to cast of generic is forbidden in 3.1.4
             ...(obj as any),
