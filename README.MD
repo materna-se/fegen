@@ -1,6 +1,6 @@
 # 🧹 FeGen for Spring Boot
 
-FeGen generates frontend code based on your Spring backend, so you can consume your Spring Data REST API in a type safe manner.
+FeGen generates client code based on your Spring backend, so you can consume your Spring Data REST API in a type safe manner.
 Typescript and Kotlin are supported as frontend languages, so FeGen helps you create a web app, a native Android app or another Spring application.
 
 **If you are new to FeGen, have a look at the [Documentation](https://materna-se.github.io/fegen/).**
