@@ -1,4 +1,4 @@
-# Gradle
+# Maven
 
 The first step to use FeGen is to include the FeGen plugins for either Typescript, Kotlin or both in your build file.
 If you are using maven, add the following configuration to the `build/plugins` section of your `pom.xml` to generate a Typescript client using FeGen:
