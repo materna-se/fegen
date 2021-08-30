@@ -36,6 +36,9 @@ FeGen currently has some limitations such as the following which may be lifted i
 - A plugin for Swift (to use in iOS apps) exists, but is not yet publicly released
 - Generating code for API endpoints used to up- or download files is not supported
 - There are some tests for the generated code, however, currently no CI/CD pipeline exists
+- Bean Validation support (similar to FeGen's support for Spring Security)
+- Support for [Feign](https://github.com/OpenFeign/feign) as a generation target for service-2-service communication
+- [OpenAPI](https://github.com/OAI/OpenAPI-Specification) interoperability
 
 
 
