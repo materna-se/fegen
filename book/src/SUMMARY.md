@@ -16,6 +16,7 @@
     - [Backend Configuration](./reference/plugin_configuration/backend.md)
   - [Data Model](./reference/data_model/intro.md)
     - [Entities](reference/data_model/entities.md)
+    - [POJOs](reference/data_model/pojos.md)
     - [Relationships](reference/data_model/relationships.md)
     - [Custom Endpoints](./reference/data_model/custom_endpoints.md)
     - [Embeddables](./reference/data_model/embeddables.md)
