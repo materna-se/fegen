@@ -11,6 +11,7 @@ Add the `@Entity` annotation to it to tell Spring and FeGen that instances of th
 Create a public field named `id` of type `long` within the class and annotate it with `@Id` and `@GeneratedValue`.
 This ID will be used by FeGen to refer to specific instances of the `TodoItem` when changing or deleting them and it will be automatically assigned to an entity when it is created.
 Also add a `String` field named `text` to the class that will contain the description of the todo item and a `boolean` field `done`.
+Since we are using Java for this guide, you also have to add the default `getter` and `setter` methods for all fields
 
 Your class should now look like this:
 
@@ -29,8 +30,32 @@ public class TodoItem {
     public long id;
 
     public String text;
-    
+
     public boolean done;
+
+    public long getId() {
+      return id;
+    }
+
+    public void setId(long id) {
+      this.id = id;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public boolean isDone() {
+        return done;
+    }
+
+    public void setDone(boolean done) {
+        this.done = done;
+    }
 }
 ```
 
@@ -125,6 +150,30 @@ public class TodoItem {
     public String text;
 
     public boolean done;
+
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public String getText() {
+        return text;
+    }
+
+    public void setText(String text) {
+        this.text = text;
+    }
+
+    public boolean isDone() {
+        return done;
+    }
+
+    public void setDone(boolean done) {
+        this.done = done;
+    }
 
     @Projection(name = "baseProjection", types = {TodoItem.class})
     interface BaseProjection {

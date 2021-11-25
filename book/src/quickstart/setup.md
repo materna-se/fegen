@@ -12,7 +12,7 @@ mkdir todo-app
 
 To create the web server for your application, you can use the spring initializr.
 Go to [https://start.spring.io/](https://start.spring.io/).
-Select the `Gradle Project` and `Java` radio buttons and change the artifact metadata to `backend` (The name will automaticaly change as well).
+Select the `Gradle Project` and `Java` radio buttons, change the artifact metadata to `backend` (The name will automaticaly change as well) and choose Java `14` or above.
 
 > FeGen also supports Maven and Kotlin, but they are not used in this guide in order to keep it simple.
 > If you want to know how to configure FeGen with Maven, refer to the [Maven](../reference/plugin_configuration/maven.md) page of the reference documentation.
@@ -27,6 +27,7 @@ To use your Spring Boot application as a backend for your web application, you w
     - to simplify accessing the database from your backend code by creating entities
 - `Rest Repositories`
     - for your website to be able to directly access your database to via REST
+- `Spring Security`
 
 After adding those, click the `Generate` button and download the zip file.
 Extract the contained `backend` directory into the `todo-app` directory you created earlier, so your directory structure looks as follows:
@@ -50,7 +51,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC9")
+        classpath "com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC8"
     }
 }
 ```
@@ -58,7 +59,7 @@ buildscript {
 To actually apply FeGen to the project, add the following line below (not within) the `plugins { ... }` section:
 
 ```groovy
-apply(plugin = "de.materna.fegen.web")
+apply plugin: 'de.materna.fegen.web'
 ```
 
 To use custom endpoints with recent Spring versions, add `fegen-spring-util` as a dependency.
@@ -67,7 +68,7 @@ This is also a prerequisite for FeGen Security to work, as it provides a Spring 
 ```groovy
 dependencies {
     // ...
-    implementation("com.github.materna-se.fegen:fegen-spring-util:1.0-RC9")
+    implementation "com.github.materna-se.fegen:fegen-spring-util:1.0-RC8"
 }
 ```
 
@@ -78,7 +79,7 @@ The last change to the `build.gradle` file is adding the configuration for FeGen
 Place this below the `dependencies { ... }` section:
 
 ```groovy
-configure<de.materna.fegen.web.gradle.FeGenWebGradlePluginExtension> {
+fegenWeb {
 	scanPkg = "com.example.backend"
 	frontendPath = "../frontend/src/api-client"
 }
@@ -93,61 +94,48 @@ We will create the referenced directory later.
 
 After those steps, your `build.gradle` should look as follows:
 
-```kotlin
-import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-
+```groovy
 buildscript {
     repositories {
         mavenCentral()
     }
     dependencies {
-        classpath("com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC9")
+        classpath "com.github.materna-se.fegen:fegen-web-gradle-plugin:1.0-RC8"
     }
 }
 
-apply(plugin = "de.materna.fegen.web")
-
 plugins {
-    id("org.springframework.boot") version "2.4.5"
-    id("io.spring.dependency-management") version "1.0.11.RELEASE"
-    kotlin("jvm") version "1.4.32"
-    kotlin("plugin.spring") version "1.4.32"
-    kotlin("plugin.jpa") version "1.4.32"
+    id 'org.springframework.boot' version '2.6.0'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'java'
 }
+
+apply plugin: 'de.materna.fegen.web'
 
 group = "com.example"
 version = "0.0.1-SNAPSHOT"
-java.sourceCompatibility = JavaVersion.VERSION_11
+sourceCompatibility = '14'
 
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-    implementation("org.springframework.boot:spring-boot-starter-data-rest")
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
-    implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8")
-    runtimeOnly("com.h2database:h2")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    implementation("com.github.materna-se.fegen:fegen-spring-util:1.0-RC9")
-
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-data-rest'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    runtimeOnly 'com.h2database:h2'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    implementation "com.github.materna-se.fegen:fegen-spring-util:1.0-RC8"
 }
 
-tasks.withType<KotlinCompile> {
-    kotlinOptions {
-        freeCompilerArgs = listOf("-Xjsr305=strict")
-        jvmTarget = "11"
-    }
-}
-
-tasks.withType<Test> {
+test {
     useJUnitPlatform()
 }
 
-configure<de.materna.fegen.web.gradle.FeGenWebGradlePluginExtension> {
+fegenWeb {
     scanPkg = "com.example.backend"
     frontendPath = "../frontend/src/api-client"
 }
@@ -165,7 +153,6 @@ public class BackendApplication {
 	}
 
 }
-
 ```
 
 ## Creating the frontend
